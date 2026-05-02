@@ -327,6 +327,8 @@ function mCover(){
 }
 function mTools(){
   return`<div class="mhd"><div class="mt">旅程工具</div><div class="mcl" onclick="setU({modal:null})">✕</div></div>
+<div class="fg"><label class="fl">同步代碼</label><input type="text" id="trip-code" value="${esc(cloud.tripId||'')}" placeholder="例：tokyo2026" autocomplete="off" autocapitalize="none"><div class="tip">同一個同步代碼就是同一份旅程。建議只用英文、數字和短橫線。</div></div>
+<div class="ar"><button class="btn" style="flex:1;padding:10px;" onclick="switchTrip(false)">切換到這個代碼</button><button class="btn" style="flex:1;padding:10px;" onclick="switchTrip(true)">複製目前旅程到新代碼</button></div>
 <div class="fg"><label class="fl">旅行總預算（NT$）</label><input type="number" inputmode="numeric" value="${S.budget||''}" placeholder="例：50000" oninput="S.budget=this.value"></div>
 <div class="ar"><button class="btn bp" style="flex:1;padding:10px;" onclick="setD({budget:Number(S.budget||0),modal:null})">儲存預算</button><button class="btn" style="flex:1;padding:10px;" onclick="exportTrip()">封存旅程</button></div>
 <div class="ar"><button class="btn" style="flex:1;padding:10px;" onclick="exportCSV()">匯出帳目 CSV</button><button class="btn" style="flex:1;padding:10px;" onclick="document.getElementById('import-trip').click()">匯入旅程檔</button></div>
@@ -408,6 +410,20 @@ async function copyShareLink(){
   const url=location.href;
   try{await navigator.clipboard.writeText(url);alert('分享連結已複製');}
   catch{prompt('複製這個分享連結',url);}
+}
+async function switchTrip(copyCurrent){
+  const raw=document.getElementById('trip-code')?.value?.trim();
+  const tripId=(raw||uid()).replace(/[^a-zA-Z0-9_-]/g,'-').slice(0,60);
+  if(!tripId){alert('請輸入同步代碼');return;}
+  if(copyCurrent&&cloud.ready&&cloud.doc){
+    const data={tripName:S.tripName,cover:S.cover,budget:Number(S.budget||0),days:S.days,travelers:S.travelers,expenses:S.expenses,updatedAt:new Date().toISOString()};
+    try{await cloud.doc.firestore.collection('trips').doc(tripId).set(data,{merge:true});}
+    catch{alert('複製失敗，請確認 Firestore 規則已發布。');return;}
+  }
+  localStorage.setItem('travel-trip-id',tripId);
+  const params=new URLSearchParams(location.search);
+  params.set('trip',tripId);
+  location.href=`${location.pathname}?${params.toString()}${location.hash}`;
 }
 function dLoc(dayId,locId){const days=JSON.parse(JSON.stringify(S.days));const day=days.find(d=>d.id===dayId);day.locations=day.locations.filter(l=>l.id!==locId);setD({days});}
 function mvLoc(dayId,locId,dir){
