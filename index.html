@@ -109,7 +109,17 @@ input:focus,select:focus,textarea:focus{border-color:#42a787;box-shadow:0 0 0 3p
 .cover-choice{height:78px;border-radius:14px;border:2px solid transparent;background-size:cover;background-position:center;cursor:pointer;position:relative;overflow:hidden}
 .cover-choice.on{border-color:#0f5e5e}
 .cover-choice span{position:absolute;left:8px;bottom:7px;color:#fff;font-size:12px;font-weight:900;text-shadow:0 1px 6px rgba(0,0,0,.45)}
-.tool-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+.tool-row{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:14px}
+.tmpl-btn{padding:8px 13px;border-radius:12px;font-size:13px;font-weight:700;cursor:pointer;border:1px solid rgba(0,0,0,.06);display:inline-flex;align-items:center;gap:6px;white-space:nowrap;transition:opacity .15s,transform .1s}
+.tmpl-btn:active{transform:scale(.97)}
+.arrow-btn{min-height:30px;width:30px;padding:0;border-radius:8px;font-size:15px;display:flex;align-items:center;justify-content:center}
+.arrow-btn:disabled{opacity:.25;cursor:not-allowed}
+.drag-grip{display:inline-flex;align-items:center;justify-content:center;width:28px;min-height:30px;border-radius:8px;color:#aebcb7;font-size:16px;cursor:grab;border:1px solid var(--line);background:#fafcfb;letter-spacing:-.5px;user-select:none}
+.drag-grip:active{cursor:grabbing;color:#8ad5b6}
+.loc-cat-badge{display:inline-flex;align-items:center;gap:3px;padding:3px 8px;border-radius:999px;font-size:11px;font-weight:800;vertical-align:middle;white-space:nowrap}
+.loc-card-wrap .card{border-left-width:3px;border-left-style:solid}
+.loc-card-wrap.dragging{opacity:.35;transform:scale(.98)}
+.loc-card-wrap.drag-over .card{border-color:#42a787!important;box-shadow:0 0 0 2px rgba(66,167,135,.25)!important}
 .budget-card{padding:14px;background:#fff;border:1px solid var(--line);border-radius:var(--r);margin-bottom:12px;box-shadow:0 8px 24px rgba(31,59,53,.05)}
 .budget-line{height:9px;border-radius:999px;background:#edf2f0;overflow:hidden;margin-top:8px}
 .budget-fill{height:100%;border-radius:999px;background:#1d9e75}
@@ -158,15 +168,23 @@ const COVERS=[
   ['山景','https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=1600&q=80'],
   ['夜色','https://images.unsplash.com/photo-1477959858617-67f85cf4f1df?auto=format&fit=crop&w=1600&q=80']
 ];
-const CR=[[/車票|機票|捷運|巴士|高鐵|火車|計程車|uber|渡輪|停車|加油|交通|船|飛機/i,'交通'],[/餐廳|早餐|午餐|晚餐|咖啡|飲料|小吃|甜點|吃飯|用餐|食物|拉麵|壽司|便當|酒吧|居酒屋/i,'餐飲'],[/飯店|旅館|民宿|住宿|hotel|hostel/i,'住宿'],[/門票|入場|博物館|景區|景點|遊樂|展覽/i,'景點'],[/購物|紀念品|超市|便利店|藥妝|伴手禮/i,'購物']];
+const CR=[
+  [/車票|機票|捷運|巴士|高鐵|火車|計程車|uber|taxi|渡輪|停車|加油|交通|船|飛機|纜車|地鐵|機場|airport|bus|ferry|rail|transit|station|碼頭|港口|shuttle/i,'交通'],
+  [/餐廳|早餐|午餐|晚餐|咖啡|飲料|小吃|甜點|吃飯|用餐|食物|拉麵|壽司|便當|酒吧|居酒屋|牛排|燒肉|火鍋|串燒|燒烤|生魚片|壽喜燒|豆腐|麵包|海鮮|烤肉|food|restaurant|cafe|bar|izakaya|ramen|sushi|yakiniku|bbq|bistro|bakery|brunch|diner|eatery|dining|noodle|buffet/i,'餐飲'],
+  [/飯店|旅館|民宿|住宿|hotel|hostel|motel|inn|resort|青旅|膠囊|背包客|guesthouse|airbnb|suite|lodge|villa|staying/i,'住宿'],
+  [/門票|入場|博物館|景區|景點|遊樂|展覽|神社|寺廟|寺院|佛寺|公園|城堡|宮殿|古城|水族館|動物園|主題樂園|歷史|文化|美術館|藝術|夜市|老街|瀑布|海灘|山頂|觀景|gallery|museum|temple|shrine|castle|park|aquarium|zoo|attraction|tower|garden|palace|monument|ruins|landmark|beach|market|festival|tour/i,'景點'],
+  [/購物|紀念品|超市|便利店|藥妝|伴手禮|百貨|市集|免稅|逛街|商場|outlet|mall|shopping|store|drugstore|souvenir|duty.free|boutique|品牌/i,'購物']
+];
 const CATS=['交通','餐飲','住宿','景點','購物','其他'];
 const CUR={TWD:1,JPY:.22,USD:32,EUR:35,KRW:.024,HKD:4.1,THB:.9};
 const CUR_LABEL={TWD:'NT$',JPY:'¥',USD:'US$',EUR:'€',KRW:'₩',HKD:'HK$',THB:'฿'};
 const TMPL=[
-  {name:'餐廳訂位',data:{name:'餐廳',address:'',phone:'',time:'18:30',notes:'訂位 / 確認低消'}},
-  {name:'飯店入住',data:{name:'飯店',address:'',phone:'',time:'15:00',notes:'確認入住時間與行李寄放'}},
-  {name:'機場交通',data:{name:'機場交通',address:'',phone:'',time:'',notes:'預留通關與交通時間'}},
-  {name:'景點門票',data:{name:'景點',address:'',phone:'',time:'10:00',notes:'確認營業時間與門票'}}
+  {name:'餐廳訂位',cat:'餐飲',data:{name:'餐廳',address:'',phone:'',time:'18:30',notes:'訂位 / 確認低消'}},
+  {name:'飯店入住',cat:'住宿',data:{name:'飯店',address:'',phone:'',time:'15:00',notes:'確認入住時間與行李寄放'}},
+  {name:'機場交通',cat:'交通',data:{name:'機場交通',address:'',phone:'',time:'',notes:'預留通關與交通時間'}},
+  {name:'景點門票',cat:'景點',data:{name:'景點',address:'',phone:'',time:'10:00',notes:'確認營業時間與門票'}},
+  {name:'購物行程',cat:'購物',data:{name:'購物',address:'',phone:'',time:'',notes:'確認營業時間與結帳方式'}},
+  {name:'其他地點',cat:'其他',data:{name:'',address:'',phone:'',time:'',notes:''}}
 ];
 const AVATARS=['🙂','😎','🌸','🧳','🍜','☕','📷','🗺️','⭐','🍀','🐵','🦊'];
 const CE={交通:'🚗',餐飲:'🍜',住宿:'🏨',景點:'🎫',購物:'🛍️',其他:'📌'};
@@ -285,6 +303,7 @@ function render(){
   const te=S.expenses.reduce((s,e)=>s+expValue(e),0);
   const {b,tx}=settle(S.expenses,S.travelers);
   root.innerHTML=`<div class="app">${hdr(te)}${gnav()}<main class="body">${S.view==='itinerary'?itin(ad,si):''}${S.view==='expenses'?exps(te):''}${S.view==='split'?splt(b,tx,te):''}</main></div>${S.modal?buildModal():''}`;
+  setTimeout(()=>{const t=document.querySelector('.day-tabs .dtab.on');if(t)t.scrollIntoView({inline:'nearest',block:'nearest',behavior:'instant'});},0);
 }
 function hdr(te){
   const count=S.days.reduce((sum,d)=>sum+(d.locations?.length||0),0);
@@ -301,8 +320,18 @@ function itin(day,si){
   if(!day)return'';
   const tabs=S.days.map((d,i)=>`<button class="dtab${i===si?' on':''}" onclick="setU({dayIdx:${i}})">${esc(d.title)}${d.date?` (${d.date})`:''}</button>`).join('');
   const nd=S.days.length+1;
-  const locs=!day.locations.length?`<div class="empty"><div style="font-size:30px;margin-bottom:8px;">📍</div>尚無地點，開始規劃吧！</div>`:day.locations.map((l,i)=>`<div class="card"><div class="loc-wrap"><div class="loc-time">${esc(l.time||'--:--')}</div><div class="loc-body"><div class="loc-name">📍 ${esc(l.name)}</div>${l.address?`<div class="loc-addr">${esc(l.address)}</div>`:''}${l.phone?`<div class="loc-phone">電話：<a href="tel:${esc(l.phone)}">${esc(l.phone)}</a></div>`:''}${l.notes?`<div class="loc-note">${esc(l.notes)}</div>`:''}<div class="brow"><button class="btn" onclick="mvLoc('${day.id}','${l.id}',-1)" ${i===0?'disabled':''}>上移</button><button class="btn" onclick="mvLoc('${day.id}','${l.id}',1)" ${i===day.locations.length-1?'disabled':''}>下移</button>${l.address?`<a href="${mu(l.address)}" target="_blank" rel="noopener"><button class="btn bp">地圖</button></a><a href="${nu(l.address)}" target="_blank" rel="noopener"><button class="btn ba">導航</button></a>`:''}${l.phone?`<a href="tel:${esc(l.phone)}"><button class="btn">打電話</button></a>`:''}<button class="btn" onclick="oLoc('${l.id}')">編輯</button><button class="btn br" onclick="dLoc('${day.id}','${l.id}')">刪除</button></div></div></div></div>`).join('');
-  const tpl=TMPL.map((t,i)=>`<button class="btn" onclick="oLoc('',${i})">${esc(t.name)}</button>`).join('');
+  const locs=!day.locations.length?`<div class="empty"><div style="font-size:30px;margin-bottom:8px;">📍</div>尚無地點，開始規劃吧！</div>`:day.locations.map((l,i)=>{
+    const cat=l.category||ac(`${l.name} ${l.notes||''} ${l.address||''}`);
+    const hasCat=cat!=='其他';
+    const badge=hasCat?`<span class="loc-cat-badge" style="background:${CB[cat]};color:${CF[cat]};">${CE[cat]} ${cat}</span>`:`<span class="loc-cat-badge" style="background:#F1EFE8;color:#666;">${CE['其他']} 其他</span>`;
+    const borderColor=hasCat?CBr[cat]:'#d9e2df';
+    const RES_LABEL={booked:'✅ 已訂位',pending:'⏳ 待確認',no_need:'—— 不需訂位'};
+    const RES_COLOR={booked:'#e7f6f0',pending:'#fff8ec',no_need:'#f5f5f5'};
+    const RES_TEXT={booked:'#085041',pending:'#8b540c',no_need:'#888'};
+    const resBadge=l.reservation&&RES_LABEL[l.reservation]?`<span class="loc-cat-badge" style="background:${RES_COLOR[l.reservation]};color:${RES_TEXT[l.reservation]};">${RES_LABEL[l.reservation]}${l.resCode?` · ${esc(l.resCode)}`:''}</span>`:'';
+    return`<div class="loc-card-wrap" draggable="true" ondragstart="dragStart(event,'${day.id}','${l.id}')" ondragover="dragOver(event)" ondragleave="dragLeave(event)" ondrop="dragDrop(event,'${day.id}','${l.id}')" ondragend="dragEnd()"><div class="card" style="border-left-color:${borderColor};"><div class="loc-wrap"><div class="loc-time">${esc(l.time||'--:--')}</div><div class="loc-body"><div class="loc-name" style="display:flex;align-items:center;gap:7px;flex-wrap:wrap;">${esc(l.name)}${badge}${resBadge}</div>${l.address?`<div class="loc-addr">${esc(l.address)}</div>`:''}${l.phone?`<div class="loc-phone">電話：<a href="tel:${esc(l.phone)}">${esc(l.phone)}</a></div>`:''}${l.notes?`<div class="loc-note">${esc(l.notes)}</div>`:''}<div class="brow"><span class="drag-grip" title="拖曳換順序">⠿</span><button class="btn arrow-btn" title="上移" onclick="mvLoc('${day.id}','${l.id}',-1)" ${i===0?'disabled':''}>↑</button><button class="btn arrow-btn" title="下移" onclick="mvLoc('${day.id}','${l.id}',1)" ${i===day.locations.length-1?'disabled':''}>↓</button>${l.address?`<a href="${mu(l.address)}" target="_blank" rel="noopener"><button class="btn bp">地圖</button></a><a href="${nu(l.address)}" target="_blank" rel="noopener"><button class="btn ba">導航</button></a>`:''}${l.phone?`<a href="tel:${esc(l.phone)}"><button class="btn">打電話</button></a>`:''}<button class="btn" onclick="oLoc('${l.id}')">編輯</button><button class="btn br" onclick="dLoc('${day.id}','${l.id}')">刪除</button></div></div></div></div></div>`;
+  }).join('');
+  const tpl=TMPL.map((t,i)=>`<button class="tmpl-btn" style="background:${CB[t.cat]||'#F1EFE8'};color:${CF[t.cat]||'#444'};" onclick="oLoc('',${i})">${CE[t.cat]||'📌'} ${esc(t.name)}</button>`).join('');
   return`<div class="day-tabs">${tabs}<button class="dtab dtab-add" onclick="FM={title:'第${nd}天',date:''};setU({modal:{t:'nd'}})">+ 新增</button></div><div class="section-head"><div class="section-title">${esc(day.title)}${day.date?` · ${day.date}`:''}</div><div class="brow"><button class="btn" onclick="FM={title:'${esc(day.title)}',date:'${esc(day.date||'')}'}; setU({modal:{t:'ed',dayId:'${day.id}'}})">編輯</button>${S.days.length>1?`<button class="btn br" onclick="dDay('${day.id}')">刪除</button>`:''}</div></div><div class="tool-row">${tpl}</div>${locs}<button class="add-btn" onclick="oLoc('')">+ 新增地點</button>`;
 }
 function exps(te){
@@ -332,11 +361,15 @@ function mTripGate(){
 <div class="tip">建議只用英文、數字和短橫線，例如：japan-2026、family-trip。</div>`;
 }
 function mLoc(){
+  const locCatOpts=[['','自動偵測'],...CATS.map(c=>[c,`${CE[c]} ${c}`])].map(([v,l])=>`<option value="${v}"${(FM.category||'')===v?' selected':''}>${l}</option>`).join('');
+  const resOpts=[['','—'],['booked','✅ 已訂位'],['pending','⏳ 待確認'],['no_need','—— 不需訂位']].map(([v,l])=>`<option value="${v}"${(FM.reservation||'')===v?' selected':''}>${l}</option>`).join('');
   return`<div class="mhd"><div class="mt">${S.modal.locId?'編輯地點':'新增地點'}</div><div class="mcl" onclick="setU({modal:null})">✕</div></div>
 <div class="fg"><label class="fl">地點名稱 *</label><input type="text" value="${esc(FM.name||'')}" placeholder="例：故宮博物院" oninput="FM.name=this.value"></div>
 <div class="fg"><label class="fl">地址（用於地圖 / 導航）</label><input type="text" value="${esc(FM.address||'')}" placeholder="例：台北市士林區至善路二段221號" oninput="FM.address=this.value"></div>
 <div class="fg"><label class="fl">電話（餐廳可用來預訂）</label><input type="tel" inputmode="tel" value="${esc(FM.phone||'')}" placeholder="例：02-2881-2021" oninput="FM.phone=this.value"></div>
-<div class="mobile-stack" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;"><div><label class="fl">時間</label><input type="time" value="${esc(FM.time||'')}" oninput="FM.time=this.value"></div><div><label class="fl">備註</label><input type="text" value="${esc(FM.notes||'')}" placeholder="例：需預訂" oninput="FM.notes=this.value"></div></div>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;"><div><label class="fl">分類</label><select onchange="FM.category=this.value">${locCatOpts}</select></div><div><label class="fl">時間</label><input type="time" value="${esc(FM.time||'')}" oninput="FM.time=this.value" style="min-height:44px;"></div></div>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;"><div><label class="fl">訂位狀態</label><select onchange="FM.reservation=this.value">${resOpts}</select></div><div><label class="fl">訂位確認碼</label><input type="text" value="${esc(FM.resCode||'')}" placeholder="選填" oninput="FM.resCode=this.value"></div></div>
+<div class="fg"><label class="fl">備註</label><input type="text" value="${esc(FM.notes||'')}" placeholder="例：需預訂、注意公休日" oninput="FM.notes=this.value"></div>
 <div class="ar"><button class="btn bp" style="flex:1;padding:10px;" onclick="sLoc()">儲存</button><button class="btn" style="flex:1;padding:10px;" onclick="setU({modal:null})">取消</button></div>`;
 }
 function mDay(){
@@ -408,8 +441,8 @@ function tgSplit(name){
 function oLoc(locId,tmplIdx){
   const si=Math.min(S.dayIdx,S.days.length-1),day=S.days[si];
   if(locId){const l=day.locations.find(x=>x.id===locId);FM={...l};}
-  else if(Number.isInteger(tmplIdx)){FM={...TMPL[tmplIdx].data};}
-  else FM={name:'',address:'',phone:'',time:'',notes:''};
+  else if(Number.isInteger(tmplIdx)){FM={...TMPL[tmplIdx].data,category:TMPL[tmplIdx].cat};}
+  else FM={name:'',address:'',phone:'',time:'',notes:'',category:''};
   setU({modal:{t:'loc',locId:locId||null}});
 }
 function oExp(expId){
@@ -491,6 +524,34 @@ async function switchTrip(copyCurrent){
   const params=new URLSearchParams(location.search);
   params.set('trip',tripId);
   location.href=`${location.pathname}?${params.toString()}${location.hash}`;
+}
+let dragState={dayId:null,locId:null};
+function dragStart(e,dayId,locId){
+  dragState={dayId,locId};
+  const wrap=e.currentTarget.closest('.loc-card-wrap');
+  if(wrap)setTimeout(()=>wrap.classList.add('dragging'),0);
+  e.dataTransfer.effectAllowed='move';
+  e.dataTransfer.setData('text/plain',locId);
+}
+function dragOver(e){e.preventDefault();e.dataTransfer.dropEffect='move';const wrap=e.currentTarget;wrap.classList.add('drag-over');}
+function dragLeave(e){e.currentTarget.classList.remove('drag-over');}
+function dragDrop(e,dayId,locId){
+  e.preventDefault();
+  document.querySelectorAll('.drag-over').forEach(el=>el.classList.remove('drag-over'));
+  if(!dragState.locId||dragState.locId===locId||dragState.dayId!==dayId)return;
+  const days=JSON.parse(JSON.stringify(S.days));
+  const day=days.find(d=>d.id===dayId);
+  if(!day)return;
+  const fi=day.locations.findIndex(l=>l.id===dragState.locId);
+  const ti=day.locations.findIndex(l=>l.id===locId);
+  if(fi<0||ti<0)return;
+  const [item]=day.locations.splice(fi,1);
+  day.locations.splice(ti,0,item);
+  setD({days});
+}
+function dragEnd(){
+  document.querySelectorAll('.dragging,.drag-over').forEach(el=>el.classList.remove('dragging','drag-over'));
+  dragState={dayId:null,locId:null};
 }
 function dLoc(dayId,locId){const days=JSON.parse(JSON.stringify(S.days));const day=days.find(d=>d.id===dayId);day.locations=day.locations.filter(l=>l.id!==locId);setD({days});}
 function mvLoc(dayId,locId,dir){
