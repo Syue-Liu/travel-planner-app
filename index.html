@@ -117,6 +117,14 @@ input:focus,select:focus,textarea:focus{border-color:#42a787;box-shadow:0 0 0 3p
 .drag-grip{display:inline-flex;align-items:center;justify-content:center;width:28px;min-height:30px;border-radius:8px;color:#aebcb7;font-size:16px;cursor:grab;border:1px solid var(--line);background:#fafcfb;letter-spacing:-.5px;user-select:none}
 .drag-grip:active{cursor:grabbing;color:#8ad5b6}
 .loc-cat-badge{display:inline-flex;align-items:center;gap:3px;padding:3px 8px;border-radius:999px;font-size:11px;font-weight:800;vertical-align:middle;white-space:nowrap}
+.loc-now-badge{display:inline-flex;align-items:center;gap:3px;padding:3px 8px;border-radius:999px;font-size:11px;font-weight:800;background:#fff0d8;color:#8b540c;border:1px solid #f4ce84;animation:now-pulse 2s ease-in-out infinite}
+@keyframes now-pulse{0%,100%{opacity:1}50%{opacity:.55}}
+.loc-card-wrap.loc-now>.card{background:#fffdf5;border-left-width:4px!important}
+.weather-bar{display:flex;align-items:center;gap:10px;padding:10px 14px;background:#f0f8ff;border-radius:12px;font-size:13px;font-weight:700;margin-bottom:12px;border:1px solid #cde4f5;flex-wrap:wrap;color:#1a3a5c}
+.weather-ic{font-size:22px;line-height:1;flex-shrink:0}
+.weather-val{font-size:17px;font-weight:900;color:#0f5e5e}
+.weather-sub{font-size:11px;color:var(--muted);font-weight:700}
+.weather-city{font-size:11px;color:var(--muted);margin-left:auto}
 .loc-card-wrap .card{border-left-width:3px;border-left-style:solid}
 .loc-card-wrap.dragging{opacity:.35;transform:scale(.98)}
 .loc-card-wrap.drag-over .card{border-color:#42a787!important;box-shadow:0 0 0 2px rgba(66,167,135,.25)!important}
@@ -271,7 +279,7 @@ async function initCloud(){
       cloud.applying=true;
       S={...S,...data,settleCurrency:data.settleCurrency||S.settleCurrency||'TWD',travelerIcons:data.travelerIcons||S.travelerIcons||{},budget:Number(data.budget||0),cover:data.cover||S.cover,view:S.view,dayIdx:S.dayIdx,modal:S.modal,editTN:S.editTN,tnDraft:S.tnDraft};
       cloud.status='已同步';
-      render();
+      if(!_autoJumped){_autoJumped=true;setTimeout(jumpToNow,150);}else render();
       cloud.applying=false;
     },()=>{cloud.status='同步失敗，暫存本機';render();});
     return true;
@@ -285,6 +293,7 @@ async function load(){
     if(raw){const sv=JSON.parse(raw);S={...S,...sv,settleCurrency:sv.settleCurrency||'TWD',travelerIcons:sv.travelerIcons||S.travelerIcons||{},budget:Number(sv.budget||0),cover:sv.cover||COVERS[0][1],view:'itinerary',dayIdx:0,modal:null,editTN:false};}
   }catch(e){}
   render();
+  if(!_autoJumped){_autoJumped=true;setTimeout(jumpToNow,80);}
 }
 async function psave(){
   if(cloud.applying)return;
@@ -320,6 +329,7 @@ function itin(day,si){
   if(!day)return'';
   const tabs=S.days.map((d,i)=>`<button class="dtab${i===si?' on':''}" onclick="setU({dayIdx:${i}})">${esc(d.title)}${d.date?` (${d.date})`:''}</button>`).join('');
   const nd=S.days.length+1;
+  const nowLocId=getNowLocId(day.locations);
   const locs=!day.locations.length?`<div class="empty"><div style="font-size:30px;margin-bottom:8px;">📍</div>尚無地點，開始規劃吧！</div>`:day.locations.map((l,i)=>{
     const cat=l.category||ac(`${l.name} ${l.notes||''} ${l.address||''}`);
     const hasCat=cat!=='其他';
@@ -329,10 +339,21 @@ function itin(day,si){
     const RES_COLOR={booked:'#e7f6f0',pending:'#fff8ec',no_need:'#f5f5f5'};
     const RES_TEXT={booked:'#085041',pending:'#8b540c',no_need:'#888'};
     const resBadge=l.reservation&&RES_LABEL[l.reservation]?`<span class="loc-cat-badge" style="background:${RES_COLOR[l.reservation]};color:${RES_TEXT[l.reservation]};">${RES_LABEL[l.reservation]}${l.resCode?` · ${esc(l.resCode)}`:''}</span>`:'';
-    return`<div class="loc-card-wrap" draggable="true" ondragstart="dragStart(event,'${day.id}','${l.id}')" ondragover="dragOver(event)" ondragleave="dragLeave(event)" ondrop="dragDrop(event,'${day.id}','${l.id}')" ondragend="dragEnd()"><div class="card" style="border-left-color:${borderColor};"><div class="loc-wrap"><div class="loc-time">${esc(l.time||'--:--')}</div><div class="loc-body"><div class="loc-name" style="display:flex;align-items:center;gap:7px;flex-wrap:wrap;">${esc(l.name)}${badge}${resBadge}</div>${l.address?`<div class="loc-addr">${esc(l.address)}</div>`:''}${l.phone?`<div class="loc-phone">電話：<a href="tel:${esc(l.phone)}">${esc(l.phone)}</a></div>`:''}${l.notes?`<div class="loc-note">${esc(l.notes)}</div>`:''}<div class="brow"><span class="drag-grip" title="拖曳換順序">⠿</span><button class="btn arrow-btn" title="上移" onclick="mvLoc('${day.id}','${l.id}',-1)" ${i===0?'disabled':''}>↑</button><button class="btn arrow-btn" title="下移" onclick="mvLoc('${day.id}','${l.id}',1)" ${i===day.locations.length-1?'disabled':''}>↓</button>${l.address?`<a href="${mu(l.address)}" target="_blank" rel="noopener"><button class="btn bp">地圖</button></a><a href="${nu(l.address)}" target="_blank" rel="noopener"><button class="btn ba">導航</button></a>`:''}${l.phone?`<a href="tel:${esc(l.phone)}"><button class="btn">打電話</button></a>`:''}<button class="btn" onclick="oLoc('${l.id}')">編輯</button><button class="btn br" onclick="dLoc('${day.id}','${l.id}')">刪除</button></div></div></div></div></div>`;
+    const isNow=l.id===nowLocId;
+    const nowBadge=isNow?`<span class="loc-now-badge">🕐 現在</span>`:'';
+    return`<div class="loc-card-wrap${isNow?' loc-now':''}" data-locid="${l.id}" draggable="true" ondragstart="dragStart(event,'${day.id}','${l.id}')" ondragover="dragOver(event)" ondragleave="dragLeave(event)" ondrop="dragDrop(event,'${day.id}','${l.id}')" ondragend="dragEnd()"><div class="card" style="border-left-color:${borderColor};"><div class="loc-wrap"><div class="loc-time">${esc(l.time||'--:--')}</div><div class="loc-body"><div class="loc-name" style="display:flex;align-items:center;gap:7px;flex-wrap:wrap;">${esc(l.name)}${badge}${resBadge}${nowBadge}</div>${l.address?`<div class="loc-addr">${esc(l.address)}</div>`:''}${l.phone?`<div class="loc-phone">電話：<a href="tel:${esc(l.phone)}">${esc(l.phone)}</a></div>`:''}${l.notes?`<div class="loc-note">${esc(l.notes)}</div>`:''}<div class="brow"><span class="drag-grip" title="拖曳換順序">⠿</span><button class="btn arrow-btn" title="上移" onclick="mvLoc('${day.id}','${l.id}',-1)" ${i===0?'disabled':''}>↑</button><button class="btn arrow-btn" title="下移" onclick="mvLoc('${day.id}','${l.id}',1)" ${i===day.locations.length-1?'disabled':''}>↓</button>${l.address?`<a href="${mu(l.address)}" target="_blank" rel="noopener"><button class="btn bp">地圖</button></a><a href="${nu(l.address)}" target="_blank" rel="noopener"><button class="btn ba">導航</button></a>`:''}${l.phone?`<a href="tel:${esc(l.phone)}"><button class="btn">打電話</button></a>`:''}<button class="btn" onclick="oLoc('${l.id}')">編輯</button><button class="btn br" onclick="dLoc('${day.id}','${l.id}')">刪除</button></div></div></div></div></div>`;
   }).join('');
   const tpl=TMPL.map((t,i)=>`<button class="tmpl-btn" style="background:${CB[t.cat]||'#F1EFE8'};color:${CF[t.cat]||'#444'};" onclick="oLoc('',${i})">${CE[t.cat]||'📌'} ${esc(t.name)}</button>`).join('');
-  return`<div class="day-tabs">${tabs}<button class="dtab dtab-add" onclick="FM={title:'第${nd}天',date:''};setU({modal:{t:'nd'}})">+ 新增</button></div><div class="section-head"><div class="section-title">${esc(day.title)}${day.date?` · ${day.date}`:''}</div><div class="brow"><button class="btn" onclick="FM={title:'${esc(day.title)}',date:'${esc(day.date||'')}'}; setU({modal:{t:'ed',dayId:'${day.id}'}})">編輯</button>${S.days.length>1?`<button class="btn br" onclick="dDay('${day.id}')">刪除</button>`:''}</div></div><div class="tool-row">${tpl}</div>${locs}<button class="add-btn" onclick="oLoc('')">+ 新增地點</button>`;
+  const wx=getWx(day.city);
+  let weatherBar='';
+  if(day.city){
+    if(!wx||wx.loading){weatherBar=`<div class="weather-loading">⏳ 載入 ${esc(day.city)} 天氣中...</div>`;}
+    else if(wx.data){
+      const wi=wxInfo(wx.data.code);
+      weatherBar=`<div class="weather-bar"><span class="weather-ic">${wi.e}</span><div><div class="weather-val">${wx.data.temp}°C <span style="font-size:13px;font-weight:700;color:#888;">體感 ${wx.data.feels}°C</span></div><div class="weather-sub">${wi.d}</div></div><div style="display:flex;flex-direction:column;gap:2px;"><div style="font-size:13px;font-weight:700;">💧 ${wx.data.humidity}%</div><div class="weather-sub">濕度</div></div><div class="weather-city">📍 ${esc(day.city)}</div></div>`;
+    }
+  }
+  return`<div class="day-tabs">${tabs}<button class="dtab dtab-add" onclick="FM={title:'第${nd}天',date:'',city:''};setU({modal:{t:'nd'}})">+ 新增</button></div>${weatherBar}<div class="section-head"><div class="section-title">${esc(day.title)}${day.date?` · ${day.date}`:''}</div><div class="brow"><button class="btn" title="跳到現在" onclick="jumpToNow()">🕐</button><button class="btn" onclick="FM={title:'${esc(day.title)}',date:'${esc(day.date||'')}',city:'${esc(day.city||'')}'}; setU({modal:{t:'ed',dayId:'${day.id}'}})">編輯</button>${S.days.length>1?`<button class="btn br" onclick="dDay('${day.id}')">刪除</button>`:''}</div></div><div class="tool-row">${tpl}</div>${locs}<button class="add-btn" onclick="oLoc('')">+ 新增地點</button>`;
 }
 function exps(te){
   const cs=CATS.map(c=>({c,t:S.expenses.filter(e=>e.category===c).reduce((s,e)=>s+expValue(e),0)})).filter(x=>x.t>0);
@@ -376,7 +397,7 @@ function mDay(){
   const isE=S.modal.t==='ed';
   return`<div class="mhd"><div class="mt">${isE?'編輯天數':'新增天數'}</div><div class="mcl" onclick="setU({modal:null})">✕</div></div>
 <div class="fg"><label class="fl">標題 *</label><input type="text" value="${esc(FM.title||'')}" placeholder="例：第一天" oninput="FM.title=this.value"></div>
-<div class="fg"><label class="fl">日期</label><input type="date" value="${esc(FM.date||'')}" oninput="FM.date=this.value"></div>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;"><div><label class="fl">日期</label><input type="date" value="${esc(FM.date||'')}" oninput="FM.date=this.value"></div><div><label class="fl">城市（查天氣用）</label><input type="text" value="${esc(FM.city||'')}" placeholder="例：Tokyo、大阪、台北" oninput="FM.city=this.value"></div></div>
 <div class="ar"><button class="btn bp" style="flex:1;padding:10px;" onclick="sDay()">儲存</button><button class="btn" style="flex:1;padding:10px;" onclick="setU({modal:null})">取消</button></div>`;
 }
 function mExp(){
@@ -460,8 +481,8 @@ function sLoc(){
 function sDay(){
   if(!FM.title?.trim()){alert('請輸入標題');return;}
   const days=JSON.parse(JSON.stringify(S.days));
-  if(S.modal.t==='ed'){const i=days.findIndex(d=>d.id===S.modal.dayId);days[i]={...days[i],title:FM.title,date:FM.date||''};}
-  else days.push({id:uid(),title:FM.title,date:FM.date||'',locations:[]});
+  if(S.modal.t==='ed'){const i=days.findIndex(d=>d.id===S.modal.dayId);days[i]={...days[i],title:FM.title,date:FM.date||'',city:FM.city||''};}
+  else days.push({id:uid(),title:FM.title,date:FM.date||'',city:FM.city||'',locations:[]});
   setD({days,modal:null});
 }
 function sExp(){
@@ -526,6 +547,66 @@ async function switchTrip(copyCurrent){
   location.href=`${location.pathname}?${params.toString()}${location.hash}`;
 }
 let dragState={dayId:null,locId:null};
+let _autoJumped=false;
+let _wxState={};
+function wxInfo(code){
+  code=Number(code);
+  if(code<=113)return{e:'☀️',d:'晴天'};
+  if(code<=116)return{e:'🌤️',d:'少雲'};
+  if(code<=119)return{e:'⛅',d:'部分多雲'};
+  if(code<=122)return{e:'☁️',d:'多雲'};
+  if(code<=143)return{e:'🌫️',d:'有霧'};
+  if(code<=176)return{e:'🌦️',d:'間歇雨'};
+  if(code<=200)return{e:'⛈️',d:'局部雷雨'};
+  if(code<=230)return{e:'❄️',d:'有雪'};
+  if(code<=260)return{e:'🌫️',d:'凍霧'};
+  if(code<=296)return{e:'🌧️',d:'下雨'};
+  if(code<=320)return{e:'🌨️',d:'雨夾雪'};
+  if(code<=338)return{e:'❄️',d:'下雪'};
+  if(code<=395)return{e:'⛈️',d:'雷雨'};
+  return{e:'🌈',d:''};
+}
+async function _fetchWx(city){
+  try{
+    const r=await fetch(`https://wttr.in/${encodeURIComponent(city.trim())}?format=j1`);
+    if(!r.ok)return null;
+    const j=await r.json();
+    const c=j.current_condition?.[0];
+    if(!c)return null;
+    return{temp:Number(c.temp_C),feels:Number(c.FeelsLikeC),humidity:Number(c.humidity),code:Number(c.weatherCode),desc:c.lang_zh?.[0]?.value||c.weatherDesc?.[0]?.value||''};
+  }catch{return null;}
+}
+function getWx(city){
+  if(!city?.trim())return null;
+  const k=city.trim().toLowerCase();
+  if(_wxState[k])return _wxState[k];
+  _wxState[k]={loading:true,data:null};
+  _fetchWx(city).then(data=>{_wxState[k]={loading:false,data};render();});
+  return _wxState[k];
+}
+function getNowLocId(locs){
+  if(!locs?.length)return null;
+  const now=new Date(),nowMins=now.getHours()*60+now.getMinutes();
+  let upId=null,upDiff=Infinity,paId=null,paDiff=Infinity;
+  for(const l of locs){
+    if(!l.time)continue;
+    const [h,m]=l.time.split(':').map(Number),lm=h*60+m,d=lm-nowMins;
+    if(d>=0&&d<upDiff){upDiff=d;upId=l.id;}
+    else if(d<0&&-d<paDiff){paDiff=-d;paId=l.id;}
+  }
+  return upId||paId;
+}
+function jumpToNow(){
+  const today=new Date().toISOString().slice(0,10);
+  const di=S.days.findIndex(d=>d.date===today);
+  if(di>=0)S.dayIdx=di;
+  S.view='itinerary';
+  render();
+  setTimeout(()=>{
+    const el=document.querySelector('.loc-card-wrap.loc-now');
+    if(el)el.scrollIntoView({behavior:'smooth',block:'center'});
+  },80);
+}
 function dragStart(e,dayId,locId){
   dragState={dayId,locId};
   const wrap=e.currentTarget.closest('.loc-card-wrap');
