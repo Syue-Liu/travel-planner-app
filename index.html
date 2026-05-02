@@ -332,7 +332,7 @@ function mTv(){
   const chips=S.travelers.map(t=>`<div class="chip">${esc(t)} <span class="chipx" onclick="rmTv('${esc(t)}')">✕</span></div>`).join('');
   return`<div class="mhd"><div class="mt">旅伴管理</div><div class="mcl" onclick="setU({modal:null})">✕</div></div>
 <div style="display:flex;flex-wrap:wrap;gap:7px;margin-bottom:14px;">${chips||'<div style="color:var(--muted);font-size:14px;">尚無旅伴</div>'}</div>
-<div class="fg"><label class="fl">新增旅伴</label><input type="text" id="new-tv" value="${esc(FM.newTraveler||'')}" placeholder="輸入旅伴名稱，確認後再按新增" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" enterkeyhint="done" oninput="FM.newTraveler=this.value" oncompositionstart="this.dataset.composing='1'" oncompositionend="this.dataset.composing='0';FM.newTraveler=this.value" onkeydown="if(event.key==='Enter'&&this.dataset.composing!=='1'){event.preventDefault();this.blur();}"></div>
+<div class="fg"><label class="fl">新增旅伴</label><input type="text" id="new-tv" placeholder="輸入旅伴名稱，確認後再按新增" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" enterkeyhint="done" oninput="fixTravelerTyping(this)" onkeydown="if(event.key==='Enter'&&!event.isComposing){event.preventDefault();this.blur();}"></div>
 <button class="btn bp" style="width:100%;padding:10px;" onclick="addTv()">新增旅伴</button>
 <div class="tip">按 Enter 只會收起鍵盤，不會直接新增，避免還在選字時誤送。</div>`;
 }
@@ -459,7 +459,16 @@ function cleanName(v){
   if(v.length%2===0&&v.slice(0,half)===v.slice(half))v=v.slice(0,half);
   return v;
 }
-function addTv(){const input=document.getElementById('new-tv');const v=cleanName(input?.value||FM.newTraveler);if(!v||S.travelers.includes(v))return;FM={newTraveler:''};setD({travelers:[...S.travelers,v],modal:{t:'tv'}});}
+function fixTravelerTyping(input){
+  setTimeout(()=>{
+    const fixed=cleanName(input.value);
+    if(fixed!==input.value){
+      input.value=fixed;
+      try{input.setSelectionRange(fixed.length,fixed.length);}catch{}
+    }
+  },0);
+}
+function addTv(){const input=document.getElementById('new-tv');const v=cleanName(input?.value);if(!v||S.travelers.includes(v))return;FM={};setD({travelers:[...S.travelers,v],modal:{t:'tv'}});}
 function rmTv(name){setD({travelers:S.travelers.filter(t=>t!==name),modal:{t:'tv'}});}
 function downloadFile(name,type,content){
   const a=document.createElement('a'),blob=new Blob([content],{type});
