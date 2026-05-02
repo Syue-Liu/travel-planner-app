@@ -34,8 +34,6 @@ a{text-decoration:none}
 .cover-menu button{width:100%;border:0;background:transparent;color:#1b2926;display:flex;align-items:center;gap:10px;padding:12px 11px;border-radius:12px;font-weight:900;cursor:pointer;text-align:left}
 .cover-menu button:active,.cover-menu button:hover{background:#eef7f3}
 .cover-menu .mi{width:24px;height:24px;border-radius:8px;background:#e4f3ed;display:flex;align-items:center;justify-content:center;color:#0f5e5e}
-.cover-camera{position:absolute;right:16px;bottom:18px;z-index:7;width:54px;height:54px;border:0;background:transparent;color:#fff;cursor:pointer;filter:drop-shadow(0 4px 12px rgba(0,0,0,.34));display:flex;align-items:center;justify-content:center}
-.cover-camera svg{width:42px;height:42px;stroke:currentColor;stroke-width:2.6;fill:none;stroke-linecap:round;stroke-linejoin:round}
 .title-edit{display:flex;gap:8px;align-items:center;width:100%;margin-top:auto}
 .tni{background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.35);color:#fff;border-radius:12px;padding:11px 12px;font-size:18px;font-family:var(--font-sans);flex:1;min-width:0}
 .tni::placeholder{color:rgba(255,255,255,.62)}
@@ -132,8 +130,7 @@ input:focus,select:focus,textarea:focus{border-color:#42a787;box-shadow:0 0 0 3p
   .hdr-title{font-size:22px;max-width:100%}
   .topbar{display:flex;align-items:flex-start}
   .cover-menu{position:fixed;right:12px;top:calc(env(safe-area-inset-top) + 72px);left:12px;z-index:200;min-width:0;max-height:calc(100vh - 110px);overflow:auto}
-  .cover-camera{right:14px;bottom:92px;width:42px;height:42px;border-radius:999px;background:rgba(255,255,255,.22);border:1px solid rgba(255,255,255,.48);backdrop-filter:blur(10px);filter:drop-shadow(0 6px 14px rgba(0,0,0,.22))}
-  .cover-camera svg{width:24px;height:24px;stroke-width:2.4}
+  .mobile-stack{grid-template-columns:1fr!important}
   .quick{grid-template-columns:repeat(3,1fr)}
   .quick-card{padding:9px 8px}
   .quick-n{font-size:16px}
@@ -262,8 +259,8 @@ function render(){
 function hdr(te){
   const count=S.days.reduce((sum,d)=>sum+(d.locations?.length||0),0);
   if(S.editTN)return`<header class="cover" style="--cover:url('${esc(S.cover)}')"><div class="title-edit"><input class="tni" id="tn-in" value="${esc(S.tnDraft)}" placeholder="行程名稱" oninput="S.tnDraft=this.value" onkeydown="if(event.key==='Enter')saveTN()" autofocus><button class="btn glass" onclick="saveTN()">完成</button></div></header>`;
-  const menu=S.menuOpen?`<div class="cover-menu"><button onclick="copyShareLink();setU({menuOpen:false})"><span class="mi">🔗</span>分享連結</button><button onclick="setU({modal:{t:'tools'},menuOpen:false})"><span class="mi">☰</span>旅程工具</button><button onclick="setU({modal:{t:'tv'},menuOpen:false})"><span class="mi">👥</span>旅伴管理</button></div>`:'';
-  return`<header class="cover" style="--cover:url('${esc(S.cover)}')"><div class="topbar"><div><div class="hdr-title" onclick="setU({editTN:true,tnDraft:'${esc(S.tripName)}'})">${esc(S.tripName)} <span style="font-size:15px;opacity:.75;">✏️</span></div><div class="hdr-sub">${esc(cloud.status)}${cloud.tripId?` · 分享代碼 ${esc(cloud.tripId)}`:' · 單機開啟時會儲存在目前裝置'}</div></div><div class="cover-menu-wrap"><button class="hamb" aria-label="開啟選單" onclick="setU({menuOpen:!S.menuOpen})"><span></span><span></span><span></span></button>${menu}</div></div><button class="cover-camera" aria-label="更換封面" onclick="setU({modal:{t:'cover'},menuOpen:false})"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8.5h3l1.6-2.3h6.8L17 8.5h3a2 2 0 0 1 2 2v7.2a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2v-7.2a2 2 0 0 1 2-2Z"></path><circle cx="12" cy="14" r="3.4"></circle></svg></button><div class="quick"><div class="quick-card"><div class="quick-n">${S.days.length}</div><div class="quick-l">天行程</div></div><div class="quick-card"><div class="quick-n">${count}</div><div class="quick-l">地點</div></div><div class="quick-card"><div class="quick-n">${ntd(te)}</div><div class="quick-l">總花費</div></div></div></header>`;
+  const menu=S.menuOpen?`<div class="cover-menu"><button onclick="copyShareLink();setU({menuOpen:false})"><span class="mi">🔗</span>分享連結</button><button onclick="setU({modal:{t:'tools'},menuOpen:false})"><span class="mi">☰</span>旅程工具</button><button onclick="setU({modal:{t:'cover'},menuOpen:false})"><span class="mi">📷</span>更換封面</button><button onclick="setU({modal:{t:'tv'},menuOpen:false})"><span class="mi">👥</span>旅伴管理</button></div>`:'';
+  return`<header class="cover" style="--cover:url('${esc(S.cover)}')"><div class="topbar"><div><div class="hdr-title" onclick="setU({editTN:true,tnDraft:'${esc(S.tripName)}'})">${esc(S.tripName)} <span style="font-size:15px;opacity:.75;">✏️</span></div><div class="hdr-sub">${esc(cloud.status)}${cloud.tripId?` · 分享代碼 ${esc(cloud.tripId)}`:' · 單機開啟時會儲存在目前裝置'}</div></div><div class="cover-menu-wrap"><button class="hamb" aria-label="開啟選單" onclick="setU({menuOpen:!S.menuOpen})"><span></span><span></span><span></span></button>${menu}</div></div><div class="quick"><div class="quick-card"><div class="quick-n">${S.days.length}</div><div class="quick-l">天行程</div></div><div class="quick-card"><div class="quick-n">${count}</div><div class="quick-l">地點</div></div><div class="quick-card"><div class="quick-n">${ntd(te)}</div><div class="quick-l">總花費</div></div></div></header>`;
 }
 function saveTN(){const v=document.getElementById('tn-in')?.value?.trim()||S.tnDraft.trim()||'未命名旅程';setD({tripName:v,editTN:false});}
 function gnav(){
@@ -309,7 +306,7 @@ function mLoc(){
 <div class="fg"><label class="fl">地點名稱 *</label><input type="text" value="${esc(FM.name||'')}" placeholder="例：故宮博物院" oninput="FM.name=this.value"></div>
 <div class="fg"><label class="fl">地址（用於地圖 / 導航）</label><input type="text" value="${esc(FM.address||'')}" placeholder="例：台北市士林區至善路二段221號" oninput="FM.address=this.value"></div>
 <div class="fg"><label class="fl">電話（餐廳可用來預訂）</label><input type="tel" inputmode="tel" value="${esc(FM.phone||'')}" placeholder="例：02-2881-2021" oninput="FM.phone=this.value"></div>
-<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;"><div><label class="fl">時間</label><input type="time" value="${esc(FM.time||'')}" oninput="FM.time=this.value"></div><div><label class="fl">備註</label><input type="text" value="${esc(FM.notes||'')}" placeholder="例：需預訂" oninput="FM.notes=this.value"></div></div>
+<div class="mobile-stack" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;"><div><label class="fl">時間</label><input type="time" value="${esc(FM.time||'')}" oninput="FM.time=this.value"></div><div><label class="fl">備註</label><input type="text" value="${esc(FM.notes||'')}" placeholder="例：需預訂" oninput="FM.notes=this.value"></div></div>
 <div class="ar"><button class="btn bp" style="flex:1;padding:10px;" onclick="sLoc()">儲存</button><button class="btn" style="flex:1;padding:10px;" onclick="setU({modal:null})">取消</button></div>`;
 }
 function mDay(){
