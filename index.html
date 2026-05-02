@@ -339,9 +339,9 @@ function mTv(){
   return`<div class="mhd"><div class="mt">旅伴管理</div><div class="mcl" onclick="setU({modal:null})">✕</div></div>
 <div style="display:flex;flex-wrap:wrap;gap:7px;margin-bottom:14px;">${chips||'<div style="color:var(--muted);font-size:14px;">尚無旅伴</div>'}</div>
 <label class="fl">代表圖案</label><div class="avatar-pick">${avatars}</div>
-<div class="fg"><label class="fl">新增旅伴</label><input type="text" id="traveler-name-input" placeholder="輸入旅伴名稱，確認後再按新增" oninput="FM.newTraveler=this.value" onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur();}"></div>
+<div class="fg"><label class="fl">新增旅伴</label><input type="text" id="traveler-name-input" placeholder="輸入旅伴名稱，確認後再按新增" oninput="FM.newTraveler=this.value"></div>
 <button class="btn bp" style="width:100%;padding:10px;" onclick="addTv()">新增旅伴</button>
-<div class="tip">按 Enter 只會收起鍵盤，不會直接新增，避免還在選字時誤送。</div>`;
+<div class="tip">選字完成後再按「新增旅伴」；Enter 不會用來新增旅伴。</div>`;
 }
 function mCover(){
   const choices=COVERS.map(([name,url])=>`<button class="cover-choice${S.cover===url?' on':''}" style="background-image:linear-gradient(180deg,rgba(0,0,0,.05),rgba(0,0,0,.45)),url('${url}')" onclick="setD({cover:'${url}',modal:null})"><span>${name}</span></button>`).join('');
