@@ -197,12 +197,13 @@ async function initCloud(){
     const app=window.firebase.apps?.length?window.firebase.app():window.firebase.initializeApp(window.TRAVEL_APP_FIREBASE);
     const db=window.firebase.firestore(app);
     const params=new URLSearchParams(location.search);
-    let tripId=params.get('trip')||localStorage.getItem('travel-trip-id')||uid();
-    localStorage.setItem('travel-trip-id',tripId);
-    if(!params.get('trip')){
-      params.set('trip',tripId);
-      history.replaceState(null,'',`${location.pathname}?${params.toString()}${location.hash}`);
+    let tripId=params.get('trip');
+    if(!tripId){
+      cloud={ready:true,doc:null,tripId:null,status:'請輸入同步代碼',applying:false};
+      S={...S,modal:{t:'tripGate'}};
+      return true;
     }
+    localStorage.setItem('travel-trip-id',tripId);
     cloud={ready:true,doc:db.collection('trips').doc(tripId),tripId,status:'雲端同步中',applying:false};
     cloud.doc.onSnapshot(snap=>{
       if(!snap.exists){psave();return;}
@@ -277,8 +278,15 @@ function splt(b,tx,te){
 }
 function buildModal(){
   const m=S.modal;let c='';
-  if(m.t==='loc')c=mLoc();else if(m.t==='nd'||m.t==='ed')c=mDay();else if(m.t==='exp')c=mExp();else if(m.t==='tv')c=mTv();else if(m.t==='cover')c=mCover();else if(m.t==='tools')c=mTools();
-  return`<div class="mol" onclick="if(event.target===this)setU({modal:null})"><div class="msh">${c}</div></div>`;
+  if(m.t==='tripGate')c=mTripGate();else if(m.t==='loc')c=mLoc();else if(m.t==='nd'||m.t==='ed')c=mDay();else if(m.t==='exp')c=mExp();else if(m.t==='tv')c=mTv();else if(m.t==='cover')c=mCover();else if(m.t==='tools')c=mTools();
+  const lock=m.t==='tripGate';
+  return`<div class="mol" onclick="${lock?'':'if(event.target===this)setU({modal:null})'}"><div class="msh">${c}</div></div>`;
+}
+function mTripGate(){
+  return`<div class="mhd"><div class="mt">輸入同步代碼</div></div>
+<div class="fg"><label class="fl">同步代碼</label><input type="text" id="trip-code" placeholder="例：tokyo2026" autocomplete="off" autocapitalize="none" onkeydown="if(event.key==='Enter')switchTrip(false)" autofocus><div class="tip">同一個同步代碼會打開同一份旅程。第一次使用可以自己取一個，之後把完整連結分享給旅伴。</div></div>
+<button class="btn bp" style="width:100%;padding:11px;" onclick="switchTrip(false)">進入旅程</button>
+<div class="tip">建議只用英文、數字和短橫線，例如：japan-2026、family-trip。</div>`;
 }
 function mLoc(){
   return`<div class="mhd"><div class="mt">${S.modal.locId?'編輯地點':'新增地點'}</div><div class="mcl" onclick="setU({modal:null})">✕</div></div>
