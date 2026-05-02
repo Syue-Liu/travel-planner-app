@@ -87,6 +87,9 @@ a{text-decoration:none}
 .empty{text-align:center;padding:34px 12px;color:var(--muted);font-size:14px}
 .chip{display:inline-flex;align-items:center;gap:7px;padding:7px 11px;border-radius:999px;font-size:13px;background:#e7f6f0;color:#085041;border:1px solid #b7dfcf;font-weight:700}
 .chipx{cursor:pointer;font-size:14px;line-height:1}
+.avatar-pick{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:13px}
+.avatar-btn{width:42px;height:42px;border-radius:14px;border:1px solid var(--line);background:#fff;display:flex;align-items:center;justify-content:center;font-size:22px;cursor:pointer}
+.avatar-btn.on{border-color:#0f5e5e;background:#e7f6f0;box-shadow:0 0 0 3px rgba(15,94,94,.12)}
 .bar-lb{display:flex;justify-content:space-between;font-size:13px;margin-bottom:4px;gap:10px}
 .bar-tr{height:7px;background:#edf2f0;border-radius:999px;margin-bottom:9px;overflow:hidden}
 .mol{position:fixed;inset:0;background:rgba(10,18,17,.5);z-index:50;display:flex;align-items:flex-end;padding-top:40px}
@@ -164,6 +167,7 @@ const TMPL=[
   {name:'機場交通',data:{name:'機場交通',address:'',phone:'',time:'',notes:'預留通關與交通時間'}},
   {name:'景點門票',data:{name:'景點',address:'',phone:'',time:'10:00',notes:'確認營業時間與門票'}}
 ];
+const AVATARS=['🙂','😎','🌸','🧳','🍜','☕','📷','🗺️','⭐','🍀','🐵','🦊'];
 const CE={交通:'🚗',餐飲:'🍜',住宿:'🏨',景點:'🎫',購物:'🛍️',其他:'📌'};
 const CB={交通:'#E6F1FB',餐飲:'#FAEEDA',住宿:'#EEEDFE',景點:'#E1F5EE',購物:'#FBEAF0',其他:'#F1EFE8'};
 const CF={交通:'#0C447C',餐飲:'#633806',住宿:'#3C3489',景點:'#085041',購物:'#4B1528',其他:'#444441'};
@@ -188,7 +192,7 @@ function settle(exps,tvls){
   while(cr.length&&de.length){const c=cr[0],d=de[0],am=Math.min(c.v,d.v);if(am>0.01)tx.push({from:d.n,to:c.n,amount:Math.round(am)});c.v-=am;d.v-=am;if(c.v<0.01)cr.shift();if(d.v<0.01)de.shift();}
   return{b,tx};
 }
-let S={tripName:'2026 旅遊計畫',cover:COVERS[0][1],budget:0,days:[{id:'d1',title:'第一天',date:'',locations:[]}],travelers:['旅伴A','旅伴B'],expenses:[],view:'itinerary',dayIdx:0,modal:null,editTN:false,tnDraft:''};
+let S={tripName:'2026 旅遊計畫',cover:COVERS[0][1],budget:0,days:[{id:'d1',title:'第一天',date:'',locations:[]}],travelers:['旅伴A','旅伴B'],travelerIcons:{旅伴A:'🙂',旅伴B:'😎'},expenses:[],view:'itinerary',dayIdx:0,modal:null,editTN:false,tnDraft:''};
 let FM={};
 let cloud={ready:false,doc:null,tripId:null,applying:false,status:'單機儲存'};
 function loadScript(src){
@@ -219,7 +223,7 @@ async function initCloud(){
       if(!snap.exists){psave();return;}
       const data=snap.data()||{};
       cloud.applying=true;
-      S={...S,...data,budget:Number(data.budget||0),cover:data.cover||S.cover,view:S.view,dayIdx:S.dayIdx,modal:S.modal,editTN:S.editTN,tnDraft:S.tnDraft};
+      S={...S,...data,travelerIcons:data.travelerIcons||S.travelerIcons||{},budget:Number(data.budget||0),cover:data.cover||S.cover,view:S.view,dayIdx:S.dayIdx,modal:S.modal,editTN:S.editTN,tnDraft:S.tnDraft};
       cloud.status='已同步';
       render();
       cloud.applying=false;
@@ -232,13 +236,13 @@ async function load(){
     const hasCloud=await initCloud();
     if(hasCloud){render();return;}
     const raw=await getSaved(SK)||await getSaved(OLD_SK2)||await getSaved(OLD_SK);
-    if(raw){const sv=JSON.parse(raw);S={...S,...sv,budget:Number(sv.budget||0),cover:sv.cover||COVERS[0][1],view:'itinerary',dayIdx:0,modal:null,editTN:false};}
+    if(raw){const sv=JSON.parse(raw);S={...S,...sv,travelerIcons:sv.travelerIcons||S.travelerIcons||{},budget:Number(sv.budget||0),cover:sv.cover||COVERS[0][1],view:'itinerary',dayIdx:0,modal:null,editTN:false};}
   }catch(e){}
   render();
 }
 async function psave(){
   if(cloud.applying)return;
-  const t={tripName:S.tripName,cover:S.cover,budget:Number(S.budget||0),days:S.days,travelers:S.travelers,expenses:S.expenses,updatedAt:new Date().toISOString()};
+  const t={tripName:S.tripName,cover:S.cover,budget:Number(S.budget||0),days:S.days,travelers:S.travelers,travelerIcons:S.travelerIcons||{},expenses:S.expenses,updatedAt:new Date().toISOString()};
   try{
     if(cloud.ready&&cloud.doc){cloud.status='同步中';await cloud.doc.set(t,{merge:true});cloud.status='已同步';}
     else await setSaved(SK,JSON.stringify(t));
@@ -329,10 +333,13 @@ function mExp(){
 <div class="ar"><button class="btn bp" style="flex:1;padding:10px;" onclick="sExp()">儲存</button><button class="btn" style="flex:1;padding:10px;" onclick="setU({modal:null})">取消</button></div>`;
 }
 function mTv(){
-  const chips=S.travelers.map(t=>`<div class="chip">${esc(t)} <span class="chipx" onclick="rmTv('${esc(t)}')">✕</span></div>`).join('');
+  const chips=S.travelers.map(t=>`<div class="chip">${esc(S.travelerIcons?.[t]||'🙂')} ${esc(t)} <span class="chipx" onclick="rmTv('${esc(t)}')">✕</span></div>`).join('');
+  const icon=FM.tvIcon||'🙂';
+  const avatars=AVATARS.map(a=>`<button class="avatar-btn${icon===a?' on':''}" onclick="pickAvatar('${a}',this)">${a}</button>`).join('');
   return`<div class="mhd"><div class="mt">旅伴管理</div><div class="mcl" onclick="setU({modal:null})">✕</div></div>
 <div style="display:flex;flex-wrap:wrap;gap:7px;margin-bottom:14px;">${chips||'<div style="color:var(--muted);font-size:14px;">尚無旅伴</div>'}</div>
-<div class="fg"><label class="fl">新增旅伴</label><input type="text" id="new-tv" placeholder="輸入旅伴名稱，確認後再按新增" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" enterkeyhint="done" oninput="fixTravelerTyping(this)" onkeydown="if(event.key==='Enter'&&!event.isComposing){event.preventDefault();this.blur();}"></div>
+<label class="fl">代表圖案</label><div class="avatar-pick">${avatars}</div>
+<div class="fg"><label class="fl">新增旅伴</label><input type="text" id="traveler-name-input" placeholder="輸入旅伴名稱，確認後再按新增" oninput="FM.newTraveler=this.value" onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur();}"></div>
 <button class="btn bp" style="width:100%;padding:10px;" onclick="addTv()">新增旅伴</button>
 <div class="tip">按 Enter 只會收起鍵盤，不會直接新增，避免還在選字時誤送。</div>`;
 }
@@ -435,7 +442,7 @@ async function switchTrip(copyCurrent){
   const tripId=(raw||uid()).replace(/[^a-zA-Z0-9_-]/g,'-').slice(0,60);
   if(!tripId){alert('請輸入同步代碼');return;}
   if(copyCurrent&&cloud.ready&&cloud.doc){
-    const data={tripName:S.tripName,cover:S.cover,budget:Number(S.budget||0),days:S.days,travelers:S.travelers,expenses:S.expenses,updatedAt:new Date().toISOString()};
+    const data={tripName:S.tripName,cover:S.cover,budget:Number(S.budget||0),days:S.days,travelers:S.travelers,travelerIcons:S.travelerIcons||{},expenses:S.expenses,updatedAt:new Date().toISOString()};
     try{await cloud.doc.firestore.collection('trips').doc(tripId).set(data,{merge:true});}
     catch{alert('複製失敗，請確認 Firestore 規則已發布。');return;}
   }
@@ -459,17 +466,24 @@ function cleanName(v){
   if(v.length%2===0&&v.slice(0,half)===v.slice(half))v=v.slice(0,half);
   return v;
 }
-function fixTravelerTyping(input){
-  setTimeout(()=>{
-    const fixed=cleanName(input.value);
-    if(fixed!==input.value){
-      input.value=fixed;
-      try{input.setSelectionRange(fixed.length,fixed.length);}catch{}
-    }
-  },0);
+function pickAvatar(icon,btn){
+  FM.tvIcon=icon;
+  document.querySelectorAll('.avatar-btn').forEach(b=>b.classList.remove('on'));
+  btn?.classList.add('on');
 }
-function addTv(){const input=document.getElementById('new-tv');const v=cleanName(input?.value);if(!v||S.travelers.includes(v))return;FM={};setD({travelers:[...S.travelers,v],modal:{t:'tv'}});}
-function rmTv(name){setD({travelers:S.travelers.filter(t=>t!==name),modal:{t:'tv'}});}
+function addTv(){
+  const input=document.getElementById('traveler-name-input');
+  const v=cleanName(input?.value||FM.newTraveler);
+  if(!v||S.travelers.includes(v))return;
+  const travelerIcons={...(S.travelerIcons||{}),[v]:FM.tvIcon||'🙂'};
+  FM={tvIcon:FM.tvIcon||'🙂',newTraveler:''};
+  setD({travelers:[...S.travelers,v],travelerIcons,modal:{t:'tv'}});
+}
+function rmTv(name){
+  const travelerIcons={...(S.travelerIcons||{})};
+  delete travelerIcons[name];
+  setD({travelers:S.travelers.filter(t=>t!==name),travelerIcons,modal:{t:'tv'}});
+}
 function downloadFile(name,type,content){
   const a=document.createElement('a'),blob=new Blob([content],{type});
   a.href=URL.createObjectURL(blob);a.download=name;document.body.appendChild(a);a.click();
