@@ -117,10 +117,10 @@ input:focus,select:focus,textarea:focus{border-color:#42a787;box-shadow:0 0 0 3p
 .drag-grip{display:inline-flex;align-items:center;justify-content:center;width:28px;min-height:30px;border-radius:8px;color:#aebcb7;font-size:16px;cursor:grab;border:1px solid var(--line);background:#fafcfb;letter-spacing:-.5px;user-select:none}
 .drag-grip:active{cursor:grabbing;color:#8ad5b6}
 .loc-cat-badge{display:inline-flex;align-items:center;gap:3px;padding:3px 8px;border-radius:999px;font-size:11px;font-weight:800;vertical-align:middle;white-space:nowrap}
-.loc-now-badge{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:999px;font-size:11px;font-weight:900;background:#FF6B35;color:#fff;border:none;animation:now-pulse 1.8s ease-in-out infinite;letter-spacing:.02em}
-@keyframes now-pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.75;transform:scale(.97)}}
-.loc-card-wrap.loc-now>.card{border-left-color:#FF6B35!important;border-left-width:5px!important;background:linear-gradient(135deg,#fff9f6 0%,#fff 60%)!important}
-.loc-now-bar{display:flex;align-items:center;gap:7px;padding:5px 12px;background:#FF6B35;color:#fff;font-size:11px;font-weight:900;letter-spacing:.04em}
+.loc-now-badge{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:999px;font-size:11px;font-weight:900;border:none;animation:now-pulse 1.8s ease-in-out infinite;letter-spacing:.02em}
+@keyframes now-pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.78;transform:scale(.97)}}
+.loc-card-wrap.loc-now>.card{background:linear-gradient(160deg,var(--now-bg,#f4fcf8) 0%,#fff 55%)!important}
+.loc-now-bar{display:flex;align-items:center;gap:8px;padding:6px 12px;font-size:12px;font-weight:900;letter-spacing:.04em}
 .weather-bar{display:flex;align-items:center;gap:10px;padding:10px 14px;background:#f0f8ff;border-radius:12px;font-size:13px;font-weight:700;margin-bottom:12px;border:1px solid #cde4f5;flex-wrap:wrap;color:#1a3a5c}
 .weather-ic{font-size:22px;line-height:1;flex-shrink:0}
 .weather-val{font-size:17px;font-weight:900;color:#0f5e5e}
@@ -350,9 +350,12 @@ function itin(day,si){
     const RES_TEXT={booked:'#085041',pending:'#8b540c',no_need:'#888'};
     const resBadge=l.reservation&&RES_LABEL[l.reservation]?`<span class="loc-cat-badge" style="background:${RES_COLOR[l.reservation]};color:${RES_TEXT[l.reservation]};">${RES_LABEL[l.reservation]}${l.resCode?` · ${esc(l.resCode)}`:''}</span>`:'';
     const isNow=l.id===nowLocId;
-    const nowBadge=isNow?`<span class="loc-now-badge">🕐 現在</span>`:'';
-    const nowBar=isNow?`<div class="loc-now-bar">🕐 目前最近的行程</div>`:'';
-    return`<div class="loc-card-wrap${isNow?' loc-now':''}" data-locid="${l.id}" draggable="true" ondragstart="dragStart(event,'${day.id}','${l.id}')" ondragover="dragOver(event)" ondragleave="dragLeave(event)" ondrop="dragDrop(event,'${day.id}','${l.id}')" ondragend="dragEnd()"><div class="card" style="border-left-color:${isNow?'#FF6B35':borderColor};">${nowBar}<div class="loc-wrap"><div class="loc-time" style="${isNow?'color:#FF6B35;font-weight:900;':''}">${esc(l.time||'--:--')}</div><div class="loc-body"><div class="loc-name" style="display:flex;align-items:center;gap:7px;flex-wrap:wrap;">${esc(l.name)}${badge}${resBadge}${nowBadge}</div>${l.address?`<div class="loc-addr">${esc(l.address)}</div>`:''}${l.phone?`<div class="loc-phone">電話：<a href="tel:${esc(l.phone)}">${esc(l.phone)}</a></div>`:''}${l.notes?`<div class="loc-note">${esc(l.notes)}</div>`:''}<div class="brow"><span class="drag-grip" title="拖曳換順序">⠿</span><button class="btn arrow-btn" title="上移" onclick="mvLoc('${day.id}','${l.id}',-1)" ${i===0?'disabled':''}>↑</button><button class="btn arrow-btn" title="下移" onclick="mvLoc('${day.id}','${l.id}',1)" ${i===day.locations.length-1?'disabled':''}>↓</button>${l.address?`<a href="${mu(l.address)}" target="_blank" rel="noopener"><button class="btn bp">地圖</button></a><a href="${nu(l.address)}" target="_blank" rel="noopener"><button class="btn ba">導航</button></a>`:''}${l.phone?`<a href="tel:${esc(l.phone)}"><button class="btn">打電話</button></a>`:''}<button class="btn" onclick="oLoc('${l.id}')">編輯</button><button class="btn br" onclick="dLoc('${day.id}','${l.id}')">刪除</button></div></div></div></div></div>`;
+    const catBg=CBr[cat]||'#1D9E75';
+    const catLight=CB[cat]||'#E1F5EE';
+    const catDark=CF[cat]||'#085041';
+    const nowBadge=isNow?`<span class="loc-now-badge" style="background:${catBg};color:#fff;">🕐 現在</span>`:'';
+    const nowBar=isNow?`<div class="loc-now-bar" style="background:${catBg};color:#fff;">🕐 目前最近的行程 <span style="opacity:.85;font-size:11px;">${CE[cat]||''} ${cat}</span></div>`:'';
+    return`<div class="loc-card-wrap${isNow?' loc-now':''}" data-locid="${l.id}" draggable="true" ondragstart="dragStart(event,'${day.id}','${l.id}')" ondragover="dragOver(event)" ondragleave="dragLeave(event)" ondrop="dragDrop(event,'${day.id}','${l.id}')" ondragend="dragEnd()"><div class="card" style="border-left-color:${isNow?catBg:borderColor};border-left-width:${isNow?'5':'3'}px;${isNow?`--now-bg:${catLight};`:''}">${nowBar}<div class="loc-wrap"><div class="loc-time" style="${isNow?`color:${catDark};font-weight:900;`:''}">${esc(l.time||'--:--')}</div><div class="loc-body"><div class="loc-name" style="display:flex;align-items:center;gap:7px;flex-wrap:wrap;">${esc(l.name)}${badge}${resBadge}${nowBadge}</div>${l.address?`<div class="loc-addr">${esc(l.address)}</div>`:''}${l.phone?`<div class="loc-phone">電話：<a href="tel:${esc(l.phone)}">${esc(l.phone)}</a></div>`:''}${l.notes?`<div class="loc-note">${esc(l.notes)}</div>`:''}<div class="brow"><span class="drag-grip" title="拖曳換順序">⠿</span><button class="btn arrow-btn" title="上移" onclick="mvLoc('${day.id}','${l.id}',-1)" ${i===0?'disabled':''}>↑</button><button class="btn arrow-btn" title="下移" onclick="mvLoc('${day.id}','${l.id}',1)" ${i===day.locations.length-1?'disabled':''}>↓</button>${l.address?`<a href="${mu(l.address)}" target="_blank" rel="noopener"><button class="btn bp">地圖</button></a><a href="${nu(l.address)}" target="_blank" rel="noopener"><button class="btn ba">導航</button></a>`:''}${l.phone?`<a href="tel:${esc(l.phone)}"><button class="btn">打電話</button></a>`:''}<button class="btn" onclick="oLoc('${l.id}')">編輯</button><button class="btn br" onclick="dLoc('${day.id}','${l.id}')">刪除</button></div></div></div></div></div>`;
   }).join('');
   const tpl=TMPL.map((t,i)=>`<button class="tmpl-btn" style="background:${CB[t.cat]||'#F1EFE8'};color:${CF[t.cat]||'#444'};" onclick="oLoc('',${i})">${CE[t.cat]||'📌'} ${esc(t.name)}</button>`).join('');
   const wx=getWx(day.city);
@@ -752,11 +755,12 @@ HH:MM 地點名稱 | 完整地址 | 電話（查不到則留空） | 備註 | �
 15:00 晴空塔 | 東京都墨田区押上1-1-2 | 0570-55-0634 | 建議提前網路購票 | 景點
 18:30 思い出横丁 | 東京都新宿区西新宿1-2-1 |  | 居酒屋一條街 | 餐飲
 22:00 新宿王子飯店 | 東京都新宿区歌舞伎町1-30-1 | 03-3205-1111 | 確認 check-in 時間 | 住宿`;
+  window._geminiPrompt=PROMPT;
   return`<div class="mhd"><div class="mt">✨ AI 行程匯入</div><div class="mcl" onclick="setU({modal:null})">✕</div></div>
 <div style="background:#f0f8f4;border:1px solid #b6e0cc;border-radius:var(--r);padding:12px;margin-bottom:14px;">
   <div style="font-size:12px;font-weight:900;color:#085041;margin-bottom:8px;">步驟一：複製提示詞給 Gemini</div>
   <pre style="font-size:11px;line-height:1.7;color:#2d4a3e;background:#e4f4ed;border-radius:8px;padding:10px;overflow-x:auto;white-space:pre-wrap;word-break:break-all;max-height:160px;overflow-y:auto;margin-bottom:10px;">${esc(PROMPT)}</pre>
-  <button class="btn bp" style="width:100%;padding:9px;font-size:13px;" id="copy-prompt-btn" onclick="copyPrompt(${JSON.stringify(PROMPT).replace(/</g,'\\u003c')})">📋 複製提示詞</button>
+  <button class="btn bp" style="width:100%;padding:9px;font-size:13px;" id="copy-prompt-btn" onclick="copyPrompt()">📋 複製提示詞</button>
 </div>
 <div style="font-size:12px;font-weight:900;color:#085041;margin-bottom:6px;">步驟二：貼入 Gemini 的回覆</div>
 <textarea class="import-area" id="ai-import-box" placeholder="貼入 Gemini 輸出的行程文字，例如：
@@ -768,18 +772,26 @@ HH:MM 地點名稱 | 完整地址 | 電話（查不到則留空） | 備註 | �
 <div id="import-preview"></div>
 <div class="ar" style="margin-top:12px;"><button class="btn bp" style="flex:1;padding:10px;" onclick="confirmImport()">匯入行程</button><button class="btn" style="flex:1;padding:10px;" onclick="setU({modal:null})">取消</button></div>`;
 }
-function copyPrompt(text){
-  navigator.clipboard.writeText(text).then(()=>{
+function copyPrompt(){
+  const text=window._geminiPrompt||'';
+  if(!text)return;
+  const doFallback=()=>{
+    const ta=document.createElement('textarea');ta.value=text;ta.style.cssText='position:fixed;opacity:0;top:0;left:0;';
+    document.body.appendChild(ta);ta.focus();ta.select();
+    try{document.execCommand('copy');}catch{}
+    document.body.removeChild(ta);
+    const btn=document.getElementById('copy-prompt-btn');
+    if(btn){btn.textContent='✅ 已複製！';setTimeout(()=>{if(btn)btn.textContent='📋 複製提示詞';},2000);}
+  };
+  const markDone=()=>{
     const btn=document.getElementById('copy-prompt-btn');
     if(!btn)return;
     btn.textContent='✅ 已複製！';btn.style.background='#0F6E56';
     setTimeout(()=>{if(btn){btn.textContent='📋 複製提示詞';btn.style.background='';}},2000);
-  }).catch(()=>{
-    const ta=document.createElement('textarea');ta.value=text;ta.style.position='fixed';ta.style.opacity='0';
-    document.body.appendChild(ta);ta.select();document.execCommand('copy');document.body.removeChild(ta);
-    const btn=document.getElementById('copy-prompt-btn');
-    if(btn){btn.textContent='✅ 已複製！';setTimeout(()=>{if(btn)btn.textContent='📋 複製提示詞';},2000);}
-  });
+  };
+  if(navigator.clipboard?.writeText){
+    navigator.clipboard.writeText(text).then(markDone).catch(doFallback);
+  } else {doFallback();}
 }
 function dragStart(e,dayId,locId){
   dragState={dayId,locId};
