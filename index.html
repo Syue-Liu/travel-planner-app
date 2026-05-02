@@ -117,9 +117,10 @@ input:focus,select:focus,textarea:focus{border-color:#42a787;box-shadow:0 0 0 3p
 .drag-grip{display:inline-flex;align-items:center;justify-content:center;width:28px;min-height:30px;border-radius:8px;color:#aebcb7;font-size:16px;cursor:grab;border:1px solid var(--line);background:#fafcfb;letter-spacing:-.5px;user-select:none}
 .drag-grip:active{cursor:grabbing;color:#8ad5b6}
 .loc-cat-badge{display:inline-flex;align-items:center;gap:3px;padding:3px 8px;border-radius:999px;font-size:11px;font-weight:800;vertical-align:middle;white-space:nowrap}
-.loc-now-badge{display:inline-flex;align-items:center;gap:3px;padding:3px 8px;border-radius:999px;font-size:11px;font-weight:800;background:#fff0d8;color:#8b540c;border:1px solid #f4ce84;animation:now-pulse 2s ease-in-out infinite}
-@keyframes now-pulse{0%,100%{opacity:1}50%{opacity:.55}}
-.loc-card-wrap.loc-now>.card{background:#fffdf5;border-left-width:4px!important}
+.loc-now-badge{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:999px;font-size:11px;font-weight:900;background:#FF6B35;color:#fff;border:none;animation:now-pulse 1.8s ease-in-out infinite;letter-spacing:.02em}
+@keyframes now-pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.75;transform:scale(.97)}}
+.loc-card-wrap.loc-now>.card{border-left-color:#FF6B35!important;border-left-width:5px!important;background:linear-gradient(135deg,#fff9f6 0%,#fff 60%)!important}
+.loc-now-bar{display:flex;align-items:center;gap:7px;padding:5px 12px;background:#FF6B35;color:#fff;font-size:11px;font-weight:900;letter-spacing:.04em}
 .weather-bar{display:flex;align-items:center;gap:10px;padding:10px 14px;background:#f0f8ff;border-radius:12px;font-size:13px;font-weight:700;margin-bottom:12px;border:1px solid #cde4f5;flex-wrap:wrap;color:#1a3a5c}
 .weather-ic{font-size:22px;line-height:1;flex-shrink:0}
 .weather-val{font-size:17px;font-weight:900;color:#0f5e5e}
@@ -288,7 +289,7 @@ async function initCloud(){
       cloud.applying=true;
       S={...S,...data,settleCurrency:data.settleCurrency||S.settleCurrency||'TWD',travelerIcons:data.travelerIcons||S.travelerIcons||{},budget:Number(data.budget||0),cover:data.cover||S.cover,view:S.view,dayIdx:S.dayIdx,modal:S.modal,editTN:S.editTN,tnDraft:S.tnDraft};
       cloud.status='已同步';
-      if(!_autoJumped){_autoJumped=true;setTimeout(jumpToNow,150);}else render();
+      render();
       cloud.applying=false;
     },()=>{cloud.status='同步失敗，暫存本機';render();});
     return true;
@@ -301,8 +302,8 @@ async function load(){
     const raw=await getSaved(SK)||await getSaved(OLD_SK2)||await getSaved(OLD_SK);
     if(raw){const sv=JSON.parse(raw);S={...S,...sv,settleCurrency:sv.settleCurrency||'TWD',travelerIcons:sv.travelerIcons||S.travelerIcons||{},budget:Number(sv.budget||0),cover:sv.cover||COVERS[0][1],view:'itinerary',dayIdx:0,modal:null,editTN:false};}
   }catch(e){}
-  render();
-  if(!_autoJumped){_autoJumped=true;setTimeout(jumpToNow,80);}
+  setTimeout(jumpToNow,80);
+  startNowTimer();
 }
 async function psave(){
   if(cloud.applying)return;
@@ -338,8 +339,7 @@ function itin(day,si){
   if(!day)return'';
   const tabs=S.days.map((d,i)=>`<button class="dtab${i===si?' on':''}" onclick="setU({dayIdx:${i}})">${esc(d.title)}${d.date?` (${d.date})`:''}</button>`).join('');
   const nd=S.days.length+1;
-  const nowInfo=getNowLocInfo(day.locations,si);
-  const nowLocId=nowInfo?.id||null;
+  const nowLocId=getNowLocId(day.locations);
   const locs=!day.locations.length?`<div class="empty"><div style="font-size:30px;margin-bottom:8px;">📍</div>尚無地點，開始規劃吧！</div>`:day.locations.map((l,i)=>{
     const cat=l.category||ac(`${l.name} ${l.notes||''} ${l.address||''}`);
     const hasCat=cat!=='其他';
@@ -350,8 +350,9 @@ function itin(day,si){
     const RES_TEXT={booked:'#085041',pending:'#8b540c',no_need:'#888'};
     const resBadge=l.reservation&&RES_LABEL[l.reservation]?`<span class="loc-cat-badge" style="background:${RES_COLOR[l.reservation]};color:${RES_TEXT[l.reservation]};">${RES_LABEL[l.reservation]}${l.resCode?` · ${esc(l.resCode)}`:''}</span>`:'';
     const isNow=l.id===nowLocId;
-    const nowBadge=isNow?`<span class="loc-now-badge">🕐 ${nowInfo.diff<=90?'現在附近':'最接近現在'}</span>`:'';
-    return`<div class="loc-card-wrap${isNow?' loc-now':''}" data-locid="${l.id}" draggable="true" ondragstart="dragStart(event,'${day.id}','${l.id}')" ondragover="dragOver(event)" ondragleave="dragLeave(event)" ondrop="dragDrop(event,'${day.id}','${l.id}')" ondragend="dragEnd()"><div class="card" style="border-left-color:${borderColor};"><div class="loc-wrap"><div class="loc-time">${esc(l.time||'--:--')}</div><div class="loc-body"><div class="loc-name" style="display:flex;align-items:center;gap:7px;flex-wrap:wrap;">${esc(l.name)}${badge}${resBadge}${nowBadge}</div>${l.address?`<div class="loc-addr">${esc(l.address)}</div>`:''}${l.phone?`<div class="loc-phone">電話：<a href="tel:${esc(l.phone)}">${esc(l.phone)}</a></div>`:''}${l.notes?`<div class="loc-note">${esc(l.notes)}</div>`:''}<div class="brow"><span class="drag-grip" title="拖曳換順序">⠿</span><button class="btn arrow-btn" title="上移" onclick="mvLoc('${day.id}','${l.id}',-1)" ${i===0?'disabled':''}>↑</button><button class="btn arrow-btn" title="下移" onclick="mvLoc('${day.id}','${l.id}',1)" ${i===day.locations.length-1?'disabled':''}>↓</button>${l.address?`<a href="${mu(l.address)}" target="_blank" rel="noopener"><button class="btn bp">地圖</button></a><a href="${nu(l.address)}" target="_blank" rel="noopener"><button class="btn ba">導航</button></a>`:''}${l.phone?`<a href="tel:${esc(l.phone)}"><button class="btn">打電話</button></a>`:''}<button class="btn" onclick="oLoc('${l.id}')">編輯</button><button class="btn br" onclick="dLoc('${day.id}','${l.id}')">刪除</button></div></div></div></div></div>`;
+    const nowBadge=isNow?`<span class="loc-now-badge">🕐 現在</span>`:'';
+    const nowBar=isNow?`<div class="loc-now-bar">🕐 目前最近的行程</div>`:'';
+    return`<div class="loc-card-wrap${isNow?' loc-now':''}" data-locid="${l.id}" draggable="true" ondragstart="dragStart(event,'${day.id}','${l.id}')" ondragover="dragOver(event)" ondragleave="dragLeave(event)" ondrop="dragDrop(event,'${day.id}','${l.id}')" ondragend="dragEnd()"><div class="card" style="border-left-color:${isNow?'#FF6B35':borderColor};">${nowBar}<div class="loc-wrap"><div class="loc-time" style="${isNow?'color:#FF6B35;font-weight:900;':''}">${esc(l.time||'--:--')}</div><div class="loc-body"><div class="loc-name" style="display:flex;align-items:center;gap:7px;flex-wrap:wrap;">${esc(l.name)}${badge}${resBadge}${nowBadge}</div>${l.address?`<div class="loc-addr">${esc(l.address)}</div>`:''}${l.phone?`<div class="loc-phone">電話：<a href="tel:${esc(l.phone)}">${esc(l.phone)}</a></div>`:''}${l.notes?`<div class="loc-note">${esc(l.notes)}</div>`:''}<div class="brow"><span class="drag-grip" title="拖曳換順序">⠿</span><button class="btn arrow-btn" title="上移" onclick="mvLoc('${day.id}','${l.id}',-1)" ${i===0?'disabled':''}>↑</button><button class="btn arrow-btn" title="下移" onclick="mvLoc('${day.id}','${l.id}',1)" ${i===day.locations.length-1?'disabled':''}>↓</button>${l.address?`<a href="${mu(l.address)}" target="_blank" rel="noopener"><button class="btn bp">地圖</button></a><a href="${nu(l.address)}" target="_blank" rel="noopener"><button class="btn ba">導航</button></a>`:''}${l.phone?`<a href="tel:${esc(l.phone)}"><button class="btn">打電話</button></a>`:''}<button class="btn" onclick="oLoc('${l.id}')">編輯</button><button class="btn br" onclick="dLoc('${day.id}','${l.id}')">刪除</button></div></div></div></div></div>`;
   }).join('');
   const tpl=TMPL.map((t,i)=>`<button class="tmpl-btn" style="background:${CB[t.cat]||'#F1EFE8'};color:${CF[t.cat]||'#444'};" onclick="oLoc('',${i})">${CE[t.cat]||'📌'} ${esc(t.name)}</button>`).join('');
   const wx=getWx(day.city);
@@ -557,7 +558,6 @@ async function switchTrip(copyCurrent){
   location.href=`${location.pathname}?${params.toString()}${location.hash}`;
 }
 let dragState={dayId:null,locId:null};
-let _autoJumped=false;
 let _wxState={};
 function wxInfo(code){
   code=Number(code);
@@ -594,42 +594,61 @@ function getWx(city){
   _fetchWx(city).then(data=>{_wxState[k]={loading:false,data};render();});
   return _wxState[k];
 }
-function timeToMins(time){
-  const m=String(time||'').match(/^([0-1]?\d|2[0-3]):([0-5]\d)$/);
-  if(!m)return null;
-  return Number(m[1])*60+Number(m[2]);
-}
-function getTodayDayIdx(){
-  const today=localDate();
-  return S.days.findIndex(d=>d.date===today);
-}
-function getNowLocInfo(locs,dayIdx=S.dayIdx){
+function getNowLocId(locs){
   if(!locs?.length)return null;
-  const hasToday=S.days.some(d=>d.date===localDate());
-  if(hasToday&&dayIdx!==getTodayDayIdx())return null;
   const now=new Date(),nowMins=now.getHours()*60+now.getMinutes();
-  let best=null;
-  for(const l of locs){
-    const lm=timeToMins(l.time);
-    if(lm===null)continue;
-    const diff=Math.abs(lm-nowMins);
-    if(!best||diff<best.diff)best={id:l.id,diff};
+  const withTime=locs.filter(l=>l.time);
+  // No times at all → highlight first location
+  if(!withTime.length)return locs[0].id;
+  let upId=null,upDiff=Infinity,paId=null,paDiff=Infinity;
+  for(const l of withTime){
+    const[h,m]=l.time.split(':').map(Number),lm=h*60+m,d=lm-nowMins;
+    if(d>=0&&d<upDiff){upDiff=d;upId=l.id;}
+    else if(d<0&&-d<paDiff){paDiff=-d;paId=l.id;}
   }
-  return best;
+  // Prefer upcoming; if all past use last passed; if nothing matched use first with time
+  return upId||paId||withTime[0].id;
 }
 function localDate(d=new Date()){
-  const y=d.getFullYear(),m=String(d.getMonth()+1).padStart(2,'0'),dd=String(d.getDate()).padStart(2,'0');
-  return`${y}-${m}-${dd}`;
+  const y=d.getFullYear(),mo=String(d.getMonth()+1).padStart(2,'0'),dd=String(d.getDate()).padStart(2,'0');
+  return`${y}-${mo}-${dd}`;
 }
+function findTodayIdx(){
+  const today=localDate(),todayMs=new Date(today).getTime();
+  // 1. Exact date match
+  let di=S.days.findIndex(d=>d.date===today);
+  if(di>=0)return di;
+  // 2. Find nearest dated day (within 14 days)
+  let best=Infinity,bestIdx=-1;
+  S.days.forEach((d,i)=>{
+    if(!d.date)return;
+    const diff=Math.abs(new Date(d.date).getTime()-todayMs);
+    if(diff<best){best=diff;bestIdx=i;}
+  });
+  if(bestIdx>=0&&best<=14*864e5)return bestIdx;
+  // 3. No dates at all — use current dayIdx (don't force day 0)
+  return S.dayIdx;
+}
+let _nowTimer=null;
 function jumpToNow(){
-  const di=getTodayDayIdx();
-  if(di>=0)S.dayIdx=di;
+  const di=findTodayIdx();
+  S.dayIdx=di;
   S.view='itinerary';
   render();
   setTimeout(()=>{
     const el=document.querySelector('.loc-card-wrap.loc-now');
     if(el)el.scrollIntoView({behavior:'smooth',block:'center'});
-  },80);
+    // Also scroll active tab into view
+    const tab=document.querySelector('.day-tabs .dtab.on');
+    if(tab)tab.scrollIntoView({inline:'nearest',block:'nearest',behavior:'smooth'});
+  },100);
+}
+function startNowTimer(){
+  if(_nowTimer)return;
+  // Re-render every minute so the "now" badge follows real time
+  _nowTimer=setInterval(()=>{
+    if(S.view==='itinerary'&&!S.modal)render();
+  },60000);
 }
 function parseAI(text){
   const lines=text.split('\n').map(l=>l.trim()).filter(Boolean);
@@ -658,13 +677,16 @@ function parseAI(text){
     const tm=l.match(timeRe);
     let time='';
     if(tm){time=tm[0].padStart(5,'0');l=l.slice(tm[0].length).replace(/^[\s:：\-–—]+/,'').trim();}
-    // Pipe format: name | address | notes
-    let name=l,notes='',address='';
+    // Pipe format: name | address | phone | notes | category  (3–5 fields)
+    let name=l,notes='',address='',phone='',category='';
     if(l.includes('|')){
       const parts=l.split('|').map(s=>s.trim());
       name=parts[0]||'';
       address=parts[1]||'';
-      notes=parts[2]||'';
+      phone=parts[2]||'';
+      notes=parts[3]||'';
+      const rawCat=(parts[4]||'').trim();
+      if(CATS.includes(rawCat))category=rawCat;
     } else {
       // Fallback: name - notes
       const sepRe=/\s+[-–—]\s+/;
@@ -676,8 +698,8 @@ function parseAI(text){
     }
     name=name.replace(/^\d+\.\s*/,'').replace(/^[📍🗺️🎫🍜🏨🚗🛍️📌]\s*/,'').trim();
     if(name.length<1||name.length>80)continue;
-    const cat=ac(`${name} ${notes} ${address}`);
-    cur.locations.push({id:uid(),name,time,address,phone:'',notes,category:cat,reservation:''});
+    const cat=category||ac(`${name} ${notes} ${address}`);
+    cur.locations.push({id:uid(),name,time,address,phone,notes,category:cat,reservation:''});
   }
   return days.filter(d=>d.locations.length>0||days.length===1);
 }
@@ -696,7 +718,7 @@ function onImportInput(){
     const withAddr=days.reduce((s,d)=>s+d.locations.filter(l=>l.address).length,0);
     prev.innerHTML=`<div style="font-weight:900;font-size:13px;color:#085041;margin-bottom:8px;">✅ 解析成功：${days.length} 天 · ${total} 個地點 · ${withAddr} 個含地址</div>`
       +days.map(d=>`<div class="import-day-hd">📅 ${esc(d.title)}${d.city?` <span style="font-size:10px;background:#e1f5ee;color:#085041;padding:1px 6px;border-radius:999px;">🌤 ${esc(d.city)}</span>`:''}</div>`
-        +d.locations.map(l=>`<div class="import-loc-row"><span class="import-loc-time">${l.time||'--:--'}</span><div style="flex:1;min-width:0;"><div style="display:flex;align-items:center;gap:5px;flex-wrap:wrap;"><span class="import-loc-name">${esc(l.name)}</span><span class="import-loc-cat" style="background:${CB[l.category]};color:${CF[l.category]};">${CE[l.category]} ${l.category}</span></div>${l.address?`<div style="font-size:10px;color:#0c447c;margin-top:2px;">📍 ${esc(l.address)}</div>`:''}</div></div>`).join('')
+        +d.locations.map(l=>`<div class="import-loc-row"><span class="import-loc-time">${l.time||'--:--'}</span><div style="flex:1;min-width:0;"><div style="display:flex;align-items:center;gap:5px;flex-wrap:wrap;"><span class="import-loc-name">${esc(l.name)}</span><span class="import-loc-cat" style="background:${CB[l.category]};color:${CF[l.category]};">${CE[l.category]} ${l.category}</span></div>${l.address?`<div style="font-size:10px;color:#0c447c;margin-top:2px;">📍 ${esc(l.address)}</div>`:''}${l.phone?`<div style="font-size:10px;color:#444;margin-top:1px;">📞 ${esc(l.phone)}</div>`:''}</div></div>`).join('')
       ).join('');
   }catch(e){prev.innerHTML=`<div class="import-err">解析發生錯誤：${esc(String(e))}</div>`;}
 }
@@ -710,33 +732,38 @@ function mImport(){
   const PROMPT=`請幫我安排 [X] 天 [目的地] 旅遊行程，請嚴格按照以下格式輸出，不要加任何 Markdown、粗體、標題符號：
 
 第1天（城市名）
-HH:MM 地點名稱 | 完整地址（可用於 Google Maps 搜尋） | 簡短備註
+HH:MM 地點名稱 | 完整地址 | 電話（查不到則留空） | 備註 | 分類
+
+分類只能從以下選一個，完全照填：
+交通、餐飲、住宿、景點、購物、其他
 
 格式說明：
 - 每天用「第X天（城市）」開頭，城市填當天所在城市
-- 每行固定用「|」分成三段：時間 地點名 | 地址 | 備註
-- 地址請用該地點的完整地址，讓 Google Maps 可以準確導航
-- 餐廳請寫「XXX餐廳」「XXX料理」，飯店寫「XXX飯店」，神社/寺廟/博物館等景點如實填寫
+- 每行固定用「|」分成五段：時間 地點名 | 地址 | 電話 | 備註 | 分類
+- 地址請用完整地址讓 Google Maps 可準確導航
+- 電話：餐廳、飯店請認真查詢當地電話；景點、交通若無電話則留空
+- 分類必須從上方清單選一個，不可自創
 - 不要加粗體 ** 不要加 # 不要加項目符號 - 不要加編號
 
 範例輸出：
 第1天（東京）
-09:00 淺草寺 | 東京都台東区浅草2丁目3-1 | 東京最古老寺廟，推薦早去人少
-12:00 壽司大 | 東京都中央区築地4-13-9 | 場外市場必吃迴轉壽司
-15:00 晴空塔 | 東京都墨田区押上1-1-2 | 建議提前網路購票
-18:30 思い出横丁居酒屋 | 東京都新宿区西新宿1-2-1 | 體驗下班族居酒屋文化`;
+09:00 淺草寺 | 東京都台東区浅草2丁目3-1 |  | 東京最古老寺廟，推薦早去人少 | 景點
+12:00 壽司大 | 東京都中央区築地4-13-9 | 03-3547-6797 | 場外市場必吃迴轉壽司 | 餐飲
+15:00 晴空塔 | 東京都墨田区押上1-1-2 | 0570-55-0634 | 建議提前網路購票 | 景點
+18:30 思い出横丁 | 東京都新宿区西新宿1-2-1 |  | 居酒屋一條街 | 餐飲
+22:00 新宿王子飯店 | 東京都新宿区歌舞伎町1-30-1 | 03-3205-1111 | 確認 check-in 時間 | 住宿`;
   return`<div class="mhd"><div class="mt">✨ AI 行程匯入</div><div class="mcl" onclick="setU({modal:null})">✕</div></div>
 <div style="background:#f0f8f4;border:1px solid #b6e0cc;border-radius:var(--r);padding:12px;margin-bottom:14px;">
   <div style="font-size:12px;font-weight:900;color:#085041;margin-bottom:8px;">步驟一：複製提示詞給 Gemini</div>
-  <pre style="font-size:11px;line-height:1.7;color:#2d4a3e;background:#e4f4ed;border-radius:8px;padding:10px;overflow-x:auto;white-space:pre-wrap;word-break:break-all;max-height:140px;overflow-y:auto;margin-bottom:10px;">${esc(PROMPT)}</pre>
+  <pre style="font-size:11px;line-height:1.7;color:#2d4a3e;background:#e4f4ed;border-radius:8px;padding:10px;overflow-x:auto;white-space:pre-wrap;word-break:break-all;max-height:160px;overflow-y:auto;margin-bottom:10px;">${esc(PROMPT)}</pre>
   <button class="btn bp" style="width:100%;padding:9px;font-size:13px;" id="copy-prompt-btn" onclick="copyPrompt(${JSON.stringify(PROMPT).replace(/</g,'\\u003c')})">📋 複製提示詞</button>
 </div>
 <div style="font-size:12px;font-weight:900;color:#085041;margin-bottom:6px;">步驟二：貼入 Gemini 的回覆</div>
 <textarea class="import-area" id="ai-import-box" placeholder="貼入 Gemini 輸出的行程文字，例如：
 
 第1天（東京）
-09:00 淺草寺 | 東京都台東区浅草2丁目3-1 | 東京最古老寺廟
-12:00 壽司大 | 東京都中央区築地4-13-9 | 場外市場必吃
+09:00 淺草寺 | 東京都台東区浅草2丁目3-1 |  | 東京最古老寺廟 | 景點
+12:00 壽司大 | 東京都中央区築地4-13-9 | 03-3547-6797 | 場外市場必吃 | 餐飲
 ..." oninput="onImportInput()"></textarea>
 <div id="import-preview"></div>
 <div class="ar" style="margin-top:12px;"><button class="btn bp" style="flex:1;padding:10px;" onclick="confirmImport()">匯入行程</button><button class="btn" style="flex:1;padding:10px;" onclick="setU({modal:null})">取消</button></div>`;
