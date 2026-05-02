@@ -338,7 +338,8 @@ function itin(day,si){
   if(!day)return'';
   const tabs=S.days.map((d,i)=>`<button class="dtab${i===si?' on':''}" onclick="setU({dayIdx:${i}})">${esc(d.title)}${d.date?` (${d.date})`:''}</button>`).join('');
   const nd=S.days.length+1;
-  const nowLocId=getNowLocId(day.locations);
+  const nowInfo=getNowLocInfo(day.locations,si);
+  const nowLocId=nowInfo?.id||null;
   const locs=!day.locations.length?`<div class="empty"><div style="font-size:30px;margin-bottom:8px;">📍</div>尚無地點，開始規劃吧！</div>`:day.locations.map((l,i)=>{
     const cat=l.category||ac(`${l.name} ${l.notes||''} ${l.address||''}`);
     const hasCat=cat!=='其他';
@@ -349,7 +350,7 @@ function itin(day,si){
     const RES_TEXT={booked:'#085041',pending:'#8b540c',no_need:'#888'};
     const resBadge=l.reservation&&RES_LABEL[l.reservation]?`<span class="loc-cat-badge" style="background:${RES_COLOR[l.reservation]};color:${RES_TEXT[l.reservation]};">${RES_LABEL[l.reservation]}${l.resCode?` · ${esc(l.resCode)}`:''}</span>`:'';
     const isNow=l.id===nowLocId;
-    const nowBadge=isNow?`<span class="loc-now-badge">🕐 現在</span>`:'';
+    const nowBadge=isNow?`<span class="loc-now-badge">🕐 ${nowInfo.diff<=90?'現在附近':'最接近現在'}</span>`:'';
     return`<div class="loc-card-wrap${isNow?' loc-now':''}" data-locid="${l.id}" draggable="true" ondragstart="dragStart(event,'${day.id}','${l.id}')" ondragover="dragOver(event)" ondragleave="dragLeave(event)" ondrop="dragDrop(event,'${day.id}','${l.id}')" ondragend="dragEnd()"><div class="card" style="border-left-color:${borderColor};"><div class="loc-wrap"><div class="loc-time">${esc(l.time||'--:--')}</div><div class="loc-body"><div class="loc-name" style="display:flex;align-items:center;gap:7px;flex-wrap:wrap;">${esc(l.name)}${badge}${resBadge}${nowBadge}</div>${l.address?`<div class="loc-addr">${esc(l.address)}</div>`:''}${l.phone?`<div class="loc-phone">電話：<a href="tel:${esc(l.phone)}">${esc(l.phone)}</a></div>`:''}${l.notes?`<div class="loc-note">${esc(l.notes)}</div>`:''}<div class="brow"><span class="drag-grip" title="拖曳換順序">⠿</span><button class="btn arrow-btn" title="上移" onclick="mvLoc('${day.id}','${l.id}',-1)" ${i===0?'disabled':''}>↑</button><button class="btn arrow-btn" title="下移" onclick="mvLoc('${day.id}','${l.id}',1)" ${i===day.locations.length-1?'disabled':''}>↓</button>${l.address?`<a href="${mu(l.address)}" target="_blank" rel="noopener"><button class="btn bp">地圖</button></a><a href="${nu(l.address)}" target="_blank" rel="noopener"><button class="btn ba">導航</button></a>`:''}${l.phone?`<a href="tel:${esc(l.phone)}"><button class="btn">打電話</button></a>`:''}<button class="btn" onclick="oLoc('${l.id}')">編輯</button><button class="btn br" onclick="dLoc('${day.id}','${l.id}')">刪除</button></div></div></div></div></div>`;
   }).join('');
   const tpl=TMPL.map((t,i)=>`<button class="tmpl-btn" style="background:${CB[t.cat]||'#F1EFE8'};color:${CF[t.cat]||'#444'};" onclick="oLoc('',${i})">${CE[t.cat]||'📌'} ${esc(t.name)}</button>`).join('');
@@ -593,25 +594,35 @@ function getWx(city){
   _fetchWx(city).then(data=>{_wxState[k]={loading:false,data};render();});
   return _wxState[k];
 }
-function getNowLocId(locs){
+function timeToMins(time){
+  const m=String(time||'').match(/^([0-1]?\d|2[0-3]):([0-5]\d)$/);
+  if(!m)return null;
+  return Number(m[1])*60+Number(m[2]);
+}
+function getTodayDayIdx(){
+  const today=localDate();
+  return S.days.findIndex(d=>d.date===today);
+}
+function getNowLocInfo(locs,dayIdx=S.dayIdx){
   if(!locs?.length)return null;
+  const hasToday=S.days.some(d=>d.date===localDate());
+  if(hasToday&&dayIdx!==getTodayDayIdx())return null;
   const now=new Date(),nowMins=now.getHours()*60+now.getMinutes();
-  let upId=null,upDiff=Infinity,paId=null,paDiff=Infinity;
+  let best=null;
   for(const l of locs){
-    if(!l.time)continue;
-    const [h,m]=l.time.split(':').map(Number),lm=h*60+m,d=lm-nowMins;
-    if(d>=0&&d<upDiff){upDiff=d;upId=l.id;}
-    else if(d<0&&-d<paDiff){paDiff=-d;paId=l.id;}
+    const lm=timeToMins(l.time);
+    if(lm===null)continue;
+    const diff=Math.abs(lm-nowMins);
+    if(!best||diff<best.diff)best={id:l.id,diff};
   }
-  return upId||paId;
+  return best;
 }
 function localDate(d=new Date()){
   const y=d.getFullYear(),m=String(d.getMonth()+1).padStart(2,'0'),dd=String(d.getDate()).padStart(2,'0');
   return`${y}-${m}-${dd}`;
 }
 function jumpToNow(){
-  const today=localDate();
-  const di=S.days.findIndex(d=>d.date===today);
+  const di=getTodayDayIdx();
   if(di>=0)S.dayIdx=di;
   S.view='itinerary';
   render();
