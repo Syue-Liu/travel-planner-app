@@ -99,6 +99,13 @@ input:focus,select:focus,textarea:focus{border-color:#42a787;box-shadow:0 0 0 3p
 .cover-choice{height:78px;border-radius:14px;border:2px solid transparent;background-size:cover;background-position:center;cursor:pointer;position:relative;overflow:hidden}
 .cover-choice.on{border-color:#0f5e5e}
 .cover-choice span{position:absolute;left:8px;bottom:7px;color:#fff;font-size:12px;font-weight:900;text-shadow:0 1px 6px rgba(0,0,0,.45)}
+.tool-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+.budget-card{padding:14px;background:#fff;border:1px solid var(--line);border-radius:var(--r);margin-bottom:12px;box-shadow:0 8px 24px rgba(31,59,53,.05)}
+.budget-line{height:9px;border-radius:999px;background:#edf2f0;overflow:hidden;margin-top:8px}
+.budget-fill{height:100%;border-radius:999px;background:#1d9e75}
+.budget-fill.warn{background:#ef9f27}.budget-fill.over{background:#d4535f}
+.receipt-box{border:1px dashed #aebcb7;border-radius:14px;padding:12px;background:#f7faf8;margin-bottom:13px}
+.mini{font-size:12px;color:var(--muted);font-weight:700}
 @media (min-width:720px){
   .app{margin:18px auto;border-radius:24px;overflow:hidden;min-height:calc(100vh - 36px)}
   .cover{min-height:270px;padding:26px}
@@ -138,8 +145,15 @@ const COVERS=[
   ['山景','https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=1600&q=80'],
   ['夜色','https://images.unsplash.com/photo-1477959858617-67f85cf4f1df?auto=format&fit=crop&w=1600&q=80']
 ];
-const CR=[[/車票|機票|捷運|巴士|高鐵|火車|計程車|uber|渡輪|停車|加油|交通|船|飛機/i,'交通'],[/餐廳|早餐|午餐|晚餐|咖啡|飲料|小吃|甜點|吃飯|用餐|食物/i,'餐飲'],[/飯店|旅館|民宿|住宿|hotel|hostel/i,'住宿'],[/門票|入場|博物館|景區|景點|遊樂|展覽/i,'景點'],[/購物|紀念品|超市|便利店|藥妝|伴手禮/i,'購物']];
+const CR=[[/車票|機票|捷運|巴士|高鐵|火車|計程車|uber|渡輪|停車|加油|交通|船|飛機/i,'交通'],[/餐廳|早餐|午餐|晚餐|咖啡|飲料|小吃|甜點|吃飯|用餐|食物|拉麵|壽司|便當|酒吧|居酒屋/i,'餐飲'],[/飯店|旅館|民宿|住宿|hotel|hostel/i,'住宿'],[/門票|入場|博物館|景區|景點|遊樂|展覽/i,'景點'],[/購物|紀念品|超市|便利店|藥妝|伴手禮/i,'購物']];
 const CATS=['交通','餐飲','住宿','景點','購物','其他'];
+const CUR={TWD:1,JPY:.22,USD:32,EUR:35,KRW:.024,HKD:4.1,THB:.9};
+const TMPL=[
+  {name:'餐廳訂位',data:{name:'餐廳',address:'',phone:'',time:'18:30',notes:'訂位 / 確認低消'}},
+  {name:'飯店入住',data:{name:'飯店',address:'',phone:'',time:'15:00',notes:'確認入住時間與行李寄放'}},
+  {name:'機場交通',data:{name:'機場交通',address:'',phone:'',time:'',notes:'預留通關與交通時間'}},
+  {name:'景點門票',data:{name:'景點',address:'',phone:'',time:'10:00',notes:'確認營業時間與門票'}}
+];
 const CE={交通:'🚗',餐飲:'🍜',住宿:'🏨',景點:'🎫',購物:'🛍️',其他:'📌'};
 const CB={交通:'#E6F1FB',餐飲:'#FAEEDA',住宿:'#EEEDFE',景點:'#E1F5EE',購物:'#FBEAF0',其他:'#F1EFE8'};
 const CF={交通:'#0C447C',餐飲:'#633806',住宿:'#3C3489',景點:'#085041',購物:'#4B1528',其他:'#444441'};
@@ -149,20 +163,22 @@ function uid(){return Math.random().toString(36).slice(2,9);}
 function mu(a){return'https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(a);}
 function nu(a){return'https://www.google.com/maps/dir/?api=1&destination='+encodeURIComponent(a);}
 function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
-function ntd(n){return'NT$'+(Math.round(n)||0).toLocaleString();}
+function money(n){return'NT$'+(Math.round(n)||0).toLocaleString();}
+function ntd(n){return money(n);}
+function expBase(e){return Number(e.amountBase ?? e.amount ?? 0);}
 function canSharedStorage(){return !!(window.storage&&window.storage.get&&window.storage.set);}
 async function getSaved(key){if(canSharedStorage()){const r=await window.storage.get(key,true);return r?.value||null;}return localStorage.getItem(key);}
 async function setSaved(key,value){if(canSharedStorage())await window.storage.set(key,value,true);else localStorage.setItem(key,value);}
 function settle(exps,tvls){
   const b=Object.fromEntries(tvls.map(t=>[t,0]));
-  for(const e of exps){if(!e.splitWith?.length)continue;const sh=e.amount/e.splitWith.length;for(const p of e.splitWith){if(p===e.paidBy)continue;if(p in b)b[p]-=sh;if(e.paidBy in b)b[e.paidBy]+=sh;}}
+  for(const e of exps){if(!e.splitWith?.length)continue;const sh=expBase(e)/e.splitWith.length;for(const p of e.splitWith){if(p===e.paidBy)continue;if(p in b)b[p]-=sh;if(e.paidBy in b)b[e.paidBy]+=sh;}}
   let cr=Object.entries(b).filter(([,v])=>v>0.01).map(([n,v])=>({n,v})).sort((a,x)=>x.v-a.v);
   let de=Object.entries(b).filter(([,v])=>v<-0.01).map(([n,v])=>({n,v:-v})).sort((a,x)=>x.v-a.v);
   const tx=[];
   while(cr.length&&de.length){const c=cr[0],d=de[0],am=Math.min(c.v,d.v);if(am>0.01)tx.push({from:d.n,to:c.n,amount:Math.round(am)});c.v-=am;d.v-=am;if(c.v<0.01)cr.shift();if(d.v<0.01)de.shift();}
   return{b,tx};
 }
-let S={tripName:'2026 旅遊計畫',cover:COVERS[0][1],days:[{id:'d1',title:'第一天',date:'',locations:[]}],travelers:['旅伴A','旅伴B'],expenses:[],view:'itinerary',dayIdx:0,modal:null,editTN:false,tnDraft:''};
+let S={tripName:'2026 旅遊計畫',cover:COVERS[0][1],budget:0,days:[{id:'d1',title:'第一天',date:'',locations:[]}],travelers:['旅伴A','旅伴B'],expenses:[],view:'itinerary',dayIdx:0,modal:null,editTN:false,tnDraft:''};
 let FM={};
 let cloud={ready:false,doc:null,tripId:null,applying:false,status:'單機儲存'};
 function loadScript(src){
@@ -192,7 +208,7 @@ async function initCloud(){
       if(!snap.exists){psave();return;}
       const data=snap.data()||{};
       cloud.applying=true;
-      S={...S,...data,cover:data.cover||S.cover,view:S.view,dayIdx:S.dayIdx,modal:S.modal,editTN:S.editTN,tnDraft:S.tnDraft};
+      S={...S,...data,budget:Number(data.budget||0),cover:data.cover||S.cover,view:S.view,dayIdx:S.dayIdx,modal:S.modal,editTN:S.editTN,tnDraft:S.tnDraft};
       cloud.status='已同步';
       render();
       cloud.applying=false;
@@ -205,13 +221,13 @@ async function load(){
     const hasCloud=await initCloud();
     if(hasCloud){render();return;}
     const raw=await getSaved(SK)||await getSaved(OLD_SK2)||await getSaved(OLD_SK);
-    if(raw){const sv=JSON.parse(raw);S={...S,...sv,cover:sv.cover||COVERS[0][1],view:'itinerary',dayIdx:0,modal:null,editTN:false};}
+    if(raw){const sv=JSON.parse(raw);S={...S,...sv,budget:Number(sv.budget||0),cover:sv.cover||COVERS[0][1],view:'itinerary',dayIdx:0,modal:null,editTN:false};}
   }catch(e){}
   render();
 }
 async function psave(){
   if(cloud.applying)return;
-  const t={tripName:S.tripName,cover:S.cover,days:S.days,travelers:S.travelers,expenses:S.expenses,updatedAt:new Date().toISOString()};
+  const t={tripName:S.tripName,cover:S.cover,budget:Number(S.budget||0),days:S.days,travelers:S.travelers,expenses:S.expenses,updatedAt:new Date().toISOString()};
   try{
     if(cloud.ready&&cloud.doc){cloud.status='同步中';await cloud.doc.set(t,{merge:true});cloud.status='已同步';}
     else await setSaved(SK,JSON.stringify(t));
@@ -223,14 +239,14 @@ function render(){
   const root=document.getElementById('root');if(!root)return;
   const si=Math.min(S.dayIdx,S.days.length-1);
   const ad=S.days[si];
-  const te=S.expenses.reduce((s,e)=>s+e.amount,0);
+  const te=S.expenses.reduce((s,e)=>s+expBase(e),0);
   const {b,tx}=settle(S.expenses,S.travelers);
   root.innerHTML=`<div class="app">${hdr(te)}${gnav()}<main class="body">${S.view==='itinerary'?itin(ad,si):''}${S.view==='expenses'?exps(te):''}${S.view==='split'?splt(b,tx,te):''}</main></div>${S.modal?buildModal():''}`;
 }
 function hdr(te){
   const count=S.days.reduce((sum,d)=>sum+(d.locations?.length||0),0);
   if(S.editTN)return`<header class="cover" style="--cover:url('${esc(S.cover)}')"><div class="title-edit"><input class="tni" id="tn-in" value="${esc(S.tnDraft)}" placeholder="行程名稱" oninput="S.tnDraft=this.value" onkeydown="if(event.key==='Enter')saveTN()" autofocus><button class="btn glass" onclick="saveTN()">完成</button></div></header>`;
-  return`<header class="cover" style="--cover:url('${esc(S.cover)}')"><div class="topbar"><div><div class="hdr-title" onclick="setU({editTN:true,tnDraft:'${esc(S.tripName)}'})">${esc(S.tripName)} <span style="font-size:15px;opacity:.75;">✏️</span></div><div class="hdr-sub">${esc(cloud.status)}${cloud.tripId?` · 分享代碼 ${esc(cloud.tripId)}`:' · 單機開啟時會儲存在目前裝置'}</div></div><div class="cover-actions"><button class="btn glass" onclick="copyShareLink()">分享連結</button><button class="btn glass" onclick="setU({modal:{t:'cover'}})">換封面</button><button class="btn glass" onclick="setU({modal:{t:'tv'}})">旅伴</button></div></div><div class="quick"><div class="quick-card"><div class="quick-n">${S.days.length}</div><div class="quick-l">天行程</div></div><div class="quick-card"><div class="quick-n">${count}</div><div class="quick-l">地點</div></div><div class="quick-card"><div class="quick-n">${ntd(te)}</div><div class="quick-l">總花費</div></div></div></header>`;
+  return`<header class="cover" style="--cover:url('${esc(S.cover)}')"><div class="topbar"><div><div class="hdr-title" onclick="setU({editTN:true,tnDraft:'${esc(S.tripName)}'})">${esc(S.tripName)} <span style="font-size:15px;opacity:.75;">✏️</span></div><div class="hdr-sub">${esc(cloud.status)}${cloud.tripId?` · 分享代碼 ${esc(cloud.tripId)}`:' · 單機開啟時會儲存在目前裝置'}</div></div><div class="cover-actions"><button class="btn glass" onclick="copyShareLink()">分享連結</button><button class="btn glass" onclick="setU({modal:{t:'tools'}})">工具</button><button class="btn glass" onclick="setU({modal:{t:'cover'}})">換封面</button><button class="btn glass" onclick="setU({modal:{t:'tv'}})">旅伴</button></div></div><div class="quick"><div class="quick-card"><div class="quick-n">${S.days.length}</div><div class="quick-l">天行程</div></div><div class="quick-card"><div class="quick-n">${count}</div><div class="quick-l">地點</div></div><div class="quick-card"><div class="quick-n">${ntd(te)}</div><div class="quick-l">總花費</div></div></div></header>`;
 }
 function saveTN(){const v=document.getElementById('tn-in')?.value?.trim()||S.tnDraft.trim()||'未命名旅程';setD({tripName:v,editTN:false});}
 function gnav(){
@@ -241,24 +257,27 @@ function itin(day,si){
   if(!day)return'';
   const tabs=S.days.map((d,i)=>`<button class="dtab${i===si?' on':''}" onclick="setU({dayIdx:${i}})">${esc(d.title)}${d.date?` (${d.date})`:''}</button>`).join('');
   const nd=S.days.length+1;
-  const locs=!day.locations.length?`<div class="empty"><div style="font-size:30px;margin-bottom:8px;">📍</div>尚無地點，開始規劃吧！</div>`:day.locations.map(l=>`<div class="card"><div class="loc-wrap"><div class="loc-time">${esc(l.time||'--:--')}</div><div class="loc-body"><div class="loc-name">📍 ${esc(l.name)}</div>${l.address?`<div class="loc-addr">${esc(l.address)}</div>`:''}${l.phone?`<div class="loc-phone">電話：<a href="tel:${esc(l.phone)}">${esc(l.phone)}</a></div>`:''}${l.notes?`<div class="loc-note">${esc(l.notes)}</div>`:''}<div class="brow">${l.address?`<a href="${mu(l.address)}" target="_blank" rel="noopener"><button class="btn bp">地圖</button></a><a href="${nu(l.address)}" target="_blank" rel="noopener"><button class="btn ba">導航</button></a>`:''}${l.phone?`<a href="tel:${esc(l.phone)}"><button class="btn">打電話</button></a>`:''}<button class="btn" onclick="oLoc('${l.id}')">編輯</button><button class="btn br" onclick="dLoc('${day.id}','${l.id}')">刪除</button></div></div></div></div>`).join('');
-  return`<div class="day-tabs">${tabs}<button class="dtab dtab-add" onclick="FM={title:'第${nd}天',date:''};setU({modal:{t:'nd'}})">+ 新增</button></div><div class="section-head"><div class="section-title">${esc(day.title)}${day.date?` · ${day.date}`:''}</div><div class="brow"><button class="btn" onclick="FM={title:'${esc(day.title)}',date:'${esc(day.date||'')}'}; setU({modal:{t:'ed',dayId:'${day.id}'}})">編輯</button>${S.days.length>1?`<button class="btn br" onclick="dDay('${day.id}')">刪除</button>`:''}</div></div>${locs}<button class="add-btn" onclick="oLoc('')">+ 新增地點</button>`;
+  const locs=!day.locations.length?`<div class="empty"><div style="font-size:30px;margin-bottom:8px;">📍</div>尚無地點，開始規劃吧！</div>`:day.locations.map((l,i)=>`<div class="card"><div class="loc-wrap"><div class="loc-time">${esc(l.time||'--:--')}</div><div class="loc-body"><div class="loc-name">📍 ${esc(l.name)}</div>${l.address?`<div class="loc-addr">${esc(l.address)}</div>`:''}${l.phone?`<div class="loc-phone">電話：<a href="tel:${esc(l.phone)}">${esc(l.phone)}</a></div>`:''}${l.notes?`<div class="loc-note">${esc(l.notes)}</div>`:''}<div class="brow"><button class="btn" onclick="mvLoc('${day.id}','${l.id}',-1)" ${i===0?'disabled':''}>上移</button><button class="btn" onclick="mvLoc('${day.id}','${l.id}',1)" ${i===day.locations.length-1?'disabled':''}>下移</button>${l.address?`<a href="${mu(l.address)}" target="_blank" rel="noopener"><button class="btn bp">地圖</button></a><a href="${nu(l.address)}" target="_blank" rel="noopener"><button class="btn ba">導航</button></a>`:''}${l.phone?`<a href="tel:${esc(l.phone)}"><button class="btn">打電話</button></a>`:''}<button class="btn" onclick="oLoc('${l.id}')">編輯</button><button class="btn br" onclick="dLoc('${day.id}','${l.id}')">刪除</button></div></div></div></div>`).join('');
+  const tpl=TMPL.map((t,i)=>`<button class="btn" onclick="oLoc('',${i})">${esc(t.name)}</button>`).join('');
+  return`<div class="day-tabs">${tabs}<button class="dtab dtab-add" onclick="FM={title:'第${nd}天',date:''};setU({modal:{t:'nd'}})">+ 新增</button></div><div class="section-head"><div class="section-title">${esc(day.title)}${day.date?` · ${day.date}`:''}</div><div class="brow"><button class="btn" onclick="FM={title:'${esc(day.title)}',date:'${esc(day.date||'')}'}; setU({modal:{t:'ed',dayId:'${day.id}'}})">編輯</button>${S.days.length>1?`<button class="btn br" onclick="dDay('${day.id}')">刪除</button>`:''}</div></div><div class="tool-row">${tpl}</div>${locs}<button class="add-btn" onclick="oLoc('')">+ 新增地點</button>`;
 }
 function exps(te){
-  const cs=CATS.map(c=>({c,t:S.expenses.filter(e=>e.category===c).reduce((s,e)=>s+e.amount,0)})).filter(x=>x.t>0);
+  const cs=CATS.map(c=>({c,t:S.expenses.filter(e=>e.category===c).reduce((s,e)=>s+expBase(e),0)})).filter(x=>x.t>0);
+  const budget=Number(S.budget||0), pct=budget?Math.min(100,Math.round(te/budget*100)):0, cls=pct>=100?'over':pct>=80?'warn':'';
+  const bud=`<div class="budget-card"><div class="bar-lb"><span>旅行預算</span><span>${budget?`${ntd(te)} / ${ntd(budget)}`:`${ntd(te)} · 尚未設定預算`}</span></div><div class="budget-line"><div class="budget-fill ${cls}" style="width:${budget?pct:0}%;"></div></div></div>`;
   const bars=cs.length?`<div class="card" style="padding:14px;margin-bottom:10px;"><div style="font-size:13px;color:var(--muted);margin-bottom:10px;font-weight:900;">消費分類</div>${cs.map(({c,t})=>`<div class="bar-lb"><span>${CE[c]} ${c}</span><span style="font-weight:800;">${ntd(t)}</span></div><div class="bar-tr"><div style="height:100%;border-radius:999px;background:${CBr[c]};width:${te?Math.round(t/te*100):0}%;"></div></div>`).join('')}</div>`:'';
-  const list=S.expenses.length?S.expenses.map(e=>`<div class="card"><div class="exp-row"><div class="cat-ic" style="background:${CB[e.category]||'#F1EFE8'}">${CE[e.category]||'📌'}</div><div class="exp-inf"><div class="exp-nm">${esc(e.item)}</div><div class="exp-mt">${esc(e.paidBy)} · ${e.splitWith?.length||0}人分 · <span style="color:${CF[e.category]||'#444'};">${e.category||'其他'}</span></div></div><div class="exp-rt"><div class="exp-am">${ntd(e.amount)}</div><div class="brow" style="margin-top:7px;justify-content:flex-end;"><button class="btn" style="min-height:30px;padding:4px 8px;" onclick="oExp('${e.id}')">編輯</button><button class="btn br" style="min-height:30px;padding:4px 8px;" onclick="dExp('${e.id}')">刪</button></div></div></div></div>`).join(''):`<div class="empty"><div style="font-size:30px;margin-bottom:8px;">💰</div>尚無帳目記錄</div>`;
-  return`<div class="stats"><div class="stat"><div class="stat-n">${ntd(te)}</div><div class="stat-l">總花費</div></div><div class="stat"><div class="stat-n">${S.travelers.length?ntd(te/S.travelers.length):'-'}</div><div class="stat-l">人均</div></div></div>${bars}${list}<button class="add-btn" onclick="oExp('')">+ 新增帳目</button>`;
+  const list=S.expenses.length?S.expenses.map(e=>`<div class="card"><div class="exp-row"><div class="cat-ic" style="background:${CB[e.category]||'#F1EFE8'}">${CE[e.category]||'📌'}</div><div class="exp-inf"><div class="exp-nm">${esc(e.item)}</div><div class="exp-mt">${esc(e.paidBy)} · ${e.splitWith?.length||0}人分 · <span style="color:${CF[e.category]||'#444'};">${e.category||'其他'}</span>${e.currency&&e.currency!=='TWD'?` · ${esc(e.currency)} ${Number(e.amount||0).toLocaleString()}`:''}</div></div><div class="exp-rt"><div class="exp-am">${ntd(expBase(e))}</div><div class="brow" style="margin-top:7px;justify-content:flex-end;"><button class="btn" style="min-height:30px;padding:4px 8px;" onclick="oExp('${e.id}')">編輯</button><button class="btn br" style="min-height:30px;padding:4px 8px;" onclick="dExp('${e.id}')">刪</button></div></div></div></div>`).join(''):`<div class="empty"><div style="font-size:30px;margin-bottom:8px;">💰</div>尚無帳目記錄</div>`;
+  return`<div class="tool-row"><button class="btn bp" onclick="oExp('')">新增帳目</button><button class="btn" onclick="setU({modal:{t:'tools'}})">預算 / 匯出</button></div><div class="stats"><div class="stat"><div class="stat-n">${ntd(te)}</div><div class="stat-l">總花費</div></div><div class="stat"><div class="stat-n">${S.travelers.length?ntd(te/S.travelers.length):'-'}</div><div class="stat-l">人均</div></div></div>${bud}${bars}${list}<button class="add-btn" onclick="oExp('')">+ 新增帳目</button>`;
 }
 function splt(b,tx,te){
-  const br=S.travelers.map(t=>{const v=b[t]||0,paid=S.expenses.filter(e=>e.paidBy===t).reduce((s,e)=>s+e.amount,0),pos=v>=0;return`<div class="brow2"><div><div style="font-weight:900;font-size:15px;">${esc(t)}</div><div style="font-size:12px;color:var(--muted);">已付 ${ntd(paid)}</div></div><div style="font-weight:900;font-size:14px;color:${pos?'#0F6E56':'#A32D2D'};text-align:right;">${pos?`+ ${ntd(Math.abs(v))} 應收`:`${ntd(Math.abs(v))} 應付`}</div></div>`;}).join('');
+  const br=S.travelers.map(t=>{const v=b[t]||0,paid=S.expenses.filter(e=>e.paidBy===t).reduce((s,e)=>s+expBase(e),0),pos=v>=0;return`<div class="brow2"><div><div style="font-weight:900;font-size:15px;">${esc(t)}</div><div style="font-size:12px;color:var(--muted);">已付 ${ntd(paid)}</div></div><div style="font-weight:900;font-size:14px;color:${pos?'#0F6E56':'#A32D2D'};text-align:right;">${pos?`+ ${ntd(Math.abs(v))} 應收`:`${ntd(Math.abs(v))} 應付`}</div></div>`;}).join('');
   const tc=tx.length?tx.map(t=>`<div class="txn"><div style="font-weight:900;font-size:15px;">${esc(t.from)}</div><div><div style="font-size:12px;color:#854F0B;">轉帳給</div><div style="font-size:16px;font-weight:900;color:#633806;">${ntd(t.amount)}</div></div><div style="font-weight:900;text-align:right;font-size:15px;">→ ${esc(t.to)}</div></div>`).join(''):`<div style="text-align:center;padding:16px;color:var(--muted);font-size:14px;background:#fff;border-radius:var(--r);border:1px solid var(--line);">${S.expenses.length?'✅ 帳目已平衡！':'尚無帳目記錄'}</div>`;
-  const det=S.expenses.length?`<div class="sh">帳目明細</div>${S.expenses.map(e=>`<div class="card" style="padding:12px 14px;margin-bottom:8px;"><div style="display:flex;justify-content:space-between;gap:8px;margin-bottom:4px;"><div style="font-weight:900;">${CE[e.category]||'📌'} ${esc(e.item)}</div><div style="font-weight:900;">${ntd(e.amount)}</div></div><div style="font-size:12px;color:var(--muted);margin-bottom:8px;">${esc(e.paidBy)} 先付款 · 每人 ${ntd(e.amount/(e.splitWith?.length||1))}</div><div style="display:flex;flex-wrap:wrap;gap:5px;">${(e.splitWith||[]).map(p=>`<span style="font-size:12px;padding:3px 9px;background:${p===e.paidBy?'#E1F5EE':'#f2f5f3'};color:${p===e.paidBy?'#085041':'#66736f'};border-radius:999px;border:1px solid ${p===e.paidBy?'#9FE1CB':'transparent'};">${esc(p)}${p===e.paidBy?' (付)':''}</span>`).join('')}</div></div>`).join('')}`:'';
+  const det=S.expenses.length?`<div class="sh">帳目明細</div>${S.expenses.map(e=>`<div class="card" style="padding:12px 14px;margin-bottom:8px;"><div style="display:flex;justify-content:space-between;gap:8px;margin-bottom:4px;"><div style="font-weight:900;">${CE[e.category]||'📌'} ${esc(e.item)}</div><div style="font-weight:900;">${ntd(expBase(e))}</div></div><div style="font-size:12px;color:var(--muted);margin-bottom:8px;">${esc(e.paidBy)} 先付款 · 每人 ${ntd(expBase(e)/(e.splitWith?.length||1))}</div><div style="display:flex;flex-wrap:wrap;gap:5px;">${(e.splitWith||[]).map(p=>`<span style="font-size:12px;padding:3px 9px;background:${p===e.paidBy?'#E1F5EE':'#f2f5f3'};color:${p===e.paidBy?'#085041':'#66736f'};border-radius:999px;border:1px solid ${p===e.paidBy?'#9FE1CB':'transparent'};">${esc(p)}${p===e.paidBy?' (付)':''}</span>`).join('')}</div></div>`).join('')}`:'';
   return`<div class="sh">各人結算</div><div class="card">${br}</div><div class="sh">付款方式</div>${tc}${det}`;
 }
 function buildModal(){
   const m=S.modal;let c='';
-  if(m.t==='loc')c=mLoc();else if(m.t==='nd'||m.t==='ed')c=mDay();else if(m.t==='exp')c=mExp();else if(m.t==='tv')c=mTv();else if(m.t==='cover')c=mCover();
+  if(m.t==='loc')c=mLoc();else if(m.t==='nd'||m.t==='ed')c=mDay();else if(m.t==='exp')c=mExp();else if(m.t==='tv')c=mTv();else if(m.t==='cover')c=mCover();else if(m.t==='tools')c=mTools();
   return`<div class="mol" onclick="if(event.target===this)setU({modal:null})"><div class="msh">${c}</div></div>`;
 }
 function mLoc(){
@@ -279,12 +298,14 @@ function mDay(){
 function mExp(){
   const tOpts=S.travelers.map(t=>`<option value="${esc(t)}"${FM.paidBy===t?' selected':''}>${esc(t)}</option>`).join('');
   const cOpts=CATS.map(c=>`<option value="${c}"${FM.category===c?' selected':''}>${CE[c]} ${c}</option>`).join('');
+  const curOpts=Object.keys(CUR).map(c=>`<option value="${c}"${(FM.currency||'TWD')===c?' selected':''}>${c}</option>`).join('');
   const scs=S.travelers.map(t=>`<span class="sc${(FM.splitWith||[]).includes(t)?' on':''}" data-name="${esc(t)}" onclick="tgSplit('${esc(t)}')">${esc(t)}</span>`).join('');
   const ah=FM.item?`<div class="ah">自動偵測：${CE[ac(FM.item)]} ${ac(FM.item)}</div>`:'';
   return`<div class="mhd"><div class="mt">${S.modal.expId?'編輯帳目':'新增帳目'}</div><div class="mcl" onclick="setU({modal:null})">✕</div></div>
+<div class="receipt-box"><label class="fl">AI 辨識收據</label><input type="file" accept="image/*" onchange="readReceipt(this.files?.[0])"><div id="ocr-status" class="mini">可上傳收據照片，會嘗試辨識品項、金額並自動分類。</div></div>
 <div class="fg"><label class="fl">品項 *</label><input id="exp-item" type="text" value="${esc(FM.item||'')}" placeholder="例：車票、晚餐、飯店..." oninput="FM.item=this.value;updAH()">${ah}</div>
-<div class="fg"><label class="fl">金額（NT$）*</label><input type="number" inputmode="decimal" value="${FM.amount||''}" placeholder="0" oninput="FM.amount=this.value"></div>
-<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;"><div><label class="fl">分類</label><select onchange="FM.category=this.value"><option value="">自動偵測</option>${cOpts}</select></div><div><label class="fl">誰付款</label><select onchange="FM.paidBy=this.value">${tOpts}</select></div></div>
+<div style="display:grid;grid-template-columns:2fr 1fr;gap:8px;margin-bottom:12px;"><div><label class="fl">金額 *</label><input type="number" inputmode="decimal" value="${FM.amount||''}" placeholder="0" oninput="FM.amount=this.value"></div><div><label class="fl">幣別</label><select onchange="FM.currency=this.value">${curOpts}</select></div></div>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;"><div><label class="fl">分類</label><select id="exp-cat" onchange="FM.category=this.value"><option value="">自動偵測</option>${cOpts}</select></div><div><label class="fl">誰付款</label><select onchange="FM.paidBy=this.value">${tOpts}</select></div></div>
 <div class="fg"><label class="fl">分帳對象（點選切換）</label><div class="scs">${scs}</div></div>
 <div class="ar"><button class="btn bp" style="flex:1;padding:10px;" onclick="sExp()">儲存</button><button class="btn" style="flex:1;padding:10px;" onclick="setU({modal:null})">取消</button></div>`;
 }
@@ -304,6 +325,15 @@ function mCover(){
 <div class="fg"><label class="fl">或貼上圖片網址</label><input type="url" id="cover-url" placeholder="https://..." value="${S.cover&&!COVERS.some(c=>c[1]===S.cover)&&!S.cover.startsWith('data:')?esc(S.cover):''}"></div>
 <div class="ar"><button class="btn bp" style="flex:1;padding:10px;" onclick="saveCoverUrl()">套用圖片網址</button><button class="btn" style="flex:1;padding:10px;" onclick="setU({modal:null})">取消</button></div>`;
 }
+function mTools(){
+  return`<div class="mhd"><div class="mt">旅程工具</div><div class="mcl" onclick="setU({modal:null})">✕</div></div>
+<div class="fg"><label class="fl">旅行總預算（NT$）</label><input type="number" inputmode="numeric" value="${S.budget||''}" placeholder="例：50000" oninput="S.budget=this.value"></div>
+<div class="ar"><button class="btn bp" style="flex:1;padding:10px;" onclick="setD({budget:Number(S.budget||0),modal:null})">儲存預算</button><button class="btn" style="flex:1;padding:10px;" onclick="exportTrip()">封存旅程</button></div>
+<div class="ar"><button class="btn" style="flex:1;padding:10px;" onclick="exportCSV()">匯出帳目 CSV</button><button class="btn" style="flex:1;padding:10px;" onclick="document.getElementById('import-trip').click()">匯入旅程檔</button></div>
+<input id="import-trip" type="file" accept="application/json" style="display:none" onchange="importTrip(this.files?.[0])">
+<div class="tip">「封存旅程」會下載一份完整 JSON 檔，旅遊結束後可保存；日後也可以用「匯入旅程檔」還原。</div>
+<div class="tip">多幣別換算目前使用內建概略匯率，可先記帳與分帳；正式結算前建議再確認匯率。</div>`;
+}
 function updAH(){
   let el=document.querySelector('.ah');
   if(FM.item){const txt=`自動偵測：${CE[ac(FM.item)]} ${ac(FM.item)}`;if(el)el.textContent=txt;else{const w=document.getElementById('exp-item')?.parentElement;if(w){const d=document.createElement('div');d.className='ah';d.textContent=txt;w.appendChild(d);}}}
@@ -314,14 +344,16 @@ function tgSplit(name){
   FM.splitWith=FM.splitWith.includes(name)?FM.splitWith.filter(x=>x!==name):[...FM.splitWith,name];
   document.querySelectorAll('[data-name]').forEach(el=>el.classList.toggle('on',FM.splitWith.includes(el.dataset.name)));
 }
-function oLoc(locId){
+function oLoc(locId,tmplIdx){
   const si=Math.min(S.dayIdx,S.days.length-1),day=S.days[si];
-  if(locId){const l=day.locations.find(x=>x.id===locId);FM={...l};}else FM={name:'',address:'',phone:'',time:'',notes:''};
+  if(locId){const l=day.locations.find(x=>x.id===locId);FM={...l};}
+  else if(Number.isInteger(tmplIdx)){FM={...TMPL[tmplIdx].data};}
+  else FM={name:'',address:'',phone:'',time:'',notes:''};
   setU({modal:{t:'loc',locId:locId||null}});
 }
 function oExp(expId){
-  if(expId){const e=S.expenses.find(x=>x.id===expId);FM={...e,amount:String(e.amount),splitWith:[...(e.splitWith||[])]};}
-  else FM={item:'',amount:'',category:'',paidBy:S.travelers[0]||'',splitWith:[...S.travelers]};
+  if(expId){const e=S.expenses.find(x=>x.id===expId);FM={...e,amount:String(e.amount),currency:e.currency||'TWD',splitWith:[...(e.splitWith||[])]};}
+  else FM={item:'',amount:'',currency:'TWD',category:'',paidBy:S.travelers[0]||'',splitWith:[...S.travelers]};
   setU({modal:{t:'exp',expId:expId||null}});
 }
 function sLoc(){
@@ -341,7 +373,8 @@ function sDay(){
 function sExp(){
   if(!FM.item?.trim()||!FM.amount){alert('請輸入品項和金額');return;}
   const exps=JSON.parse(JSON.stringify(S.expenses));
-  const exp={id:S.modal.expId||uid(),item:FM.item,amount:parseFloat(FM.amount)||0,category:FM.category||ac(FM.item),paidBy:FM.paidBy||S.travelers[0],splitWith:FM.splitWith?.length?FM.splitWith:[...S.travelers],date:new Date().toLocaleDateString('zh-TW')};
+  const cur=FM.currency||'TWD', amount=parseFloat(FM.amount)||0;
+  const exp={id:S.modal.expId||uid(),item:FM.item,amount,currency:cur,amountBase:Math.round(amount*(CUR[cur]||1)),category:FM.category||ac(FM.item),paidBy:FM.paidBy||S.travelers[0],splitWith:FM.splitWith?.length?FM.splitWith:[...S.travelers],date:new Date().toLocaleDateString('zh-TW')};
   if(S.modal.expId){const i=exps.findIndex(e=>e.id===S.modal.expId);exps[i]=exp;}else exps.push(exp);
   setD({expenses:exps,modal:null});
 }
@@ -377,10 +410,61 @@ async function copyShareLink(){
   catch{prompt('複製這個分享連結',url);}
 }
 function dLoc(dayId,locId){const days=JSON.parse(JSON.stringify(S.days));const day=days.find(d=>d.id===dayId);day.locations=day.locations.filter(l=>l.id!==locId);setD({days});}
+function mvLoc(dayId,locId,dir){
+  const days=JSON.parse(JSON.stringify(S.days)),day=days.find(d=>d.id===dayId),i=day.locations.findIndex(l=>l.id===locId),j=i+dir;
+  if(i<0||j<0||j>=day.locations.length)return;
+  [day.locations[i],day.locations[j]]=[day.locations[j],day.locations[i]];
+  setD({days});
+}
 function dDay(dayId){if(S.days.length<=1)return;setD({days:S.days.filter(d=>d.id!==dayId),dayIdx:Math.max(0,S.dayIdx-1)});}
 function dExp(id){setD({expenses:S.expenses.filter(e=>e.id!==id)});}
 function addTv(){const input=document.getElementById('new-tv');const v=input?.value?.trim();if(!v||S.travelers.includes(v))return;FM={};setD({travelers:[...S.travelers,v],modal:{t:'tv'}});}
 function rmTv(name){setD({travelers:S.travelers.filter(t=>t!==name),modal:{t:'tv'}});}
+function downloadFile(name,type,content){
+  const a=document.createElement('a'),blob=new Blob([content],{type});
+  a.href=URL.createObjectURL(blob);a.download=name;document.body.appendChild(a);a.click();
+  setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},0);
+}
+function exportTrip(){
+  const stamp=new Date().toISOString().slice(0,10);
+  downloadFile(`${S.tripName||'travel'}-${stamp}.json`,'application/json;charset=utf-8',JSON.stringify({version:1,exportedAt:new Date().toISOString(),trip:S},null,2));
+}
+function exportCSV(){
+  const rows=[['日期','品項','分類','付款人','原幣別','原金額','折合NTD','分帳對象']];
+  S.expenses.forEach(e=>rows.push([e.date||'',e.item||'',e.category||'',e.paidBy||'',e.currency||'TWD',e.amount||0,expBase(e),(e.splitWith||[]).join('、')]));
+  const csv=rows.map(r=>r.map(v=>`"${String(v).replace(/"/g,'""')}"`).join(',')).join('\n');
+  downloadFile(`${S.tripName||'travel'}-expenses.csv`,'text/csv;charset=utf-8','\ufeff'+csv);
+}
+function importTrip(file){
+  if(!file)return;
+  const reader=new FileReader();
+  reader.onload=()=>{try{const data=JSON.parse(reader.result),trip=data.trip||data;setD({...trip,modal:null,view:'itinerary',dayIdx:0,editTN:false});}catch{alert('匯入失敗，請確認是旅程封存檔。');}};
+  reader.readAsText(file);
+}
+function parseReceiptText(text){
+  const lines=text.split(/\n+/).map(s=>s.trim()).filter(Boolean);
+  const nums=[...text.matchAll(/(?:NT\\$|TWD|TOTAL|總計|合計|金額)?\\s*([0-9]{2,6}(?:[.,][0-9]{1,2})?)/gi)].map(m=>Number(m[1].replace(',','.'))).filter(n=>n>0);
+  const amount=Math.max(...nums,0);
+  const item=lines.find(l=>/[\\p{Script=Han}A-Za-z]{2,}/u.test(l)&&!/發票|統一|總計|合計|小計|金額/.test(l))||'收據';
+  return{item,amount,category:ac(text+' '+item)};
+}
+async function readReceipt(file){
+  if(!file)return;
+  const st=document.getElementById('ocr-status');
+  if(st)st.textContent='正在讀取圖片...';
+  const ok=await loadScript('https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js');
+  if(!ok||!window.Tesseract){if(st)st.textContent='辨識套件載入失敗，請手動輸入。';return;}
+  try{
+    st.textContent='正在 AI 辨識收據，可能需要幾秒...';
+    const res=await Tesseract.recognize(file,'eng+chi_tra');
+    const p=parseReceiptText(res.data.text||'');
+    if(p.item)FM.item=p.item;
+    if(p.amount)FM.amount=String(Math.round(p.amount));
+    FM.category=p.category||ac(FM.item);
+    render();
+    setTimeout(()=>{const s=document.getElementById('ocr-status');if(s)s.textContent=`已帶入：${FM.item||'收據'} / ${FM.amount||'未抓到金額'} / ${FM.category}`;},0);
+  }catch{if(st)st.textContent='辨識失敗，請換一張更清楚的照片或手動輸入。';}
+}
 load();
 </script>
 </body>
