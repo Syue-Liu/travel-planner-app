@@ -125,6 +125,15 @@ input:focus,select:focus,textarea:focus{border-color:#42a787;box-shadow:0 0 0 3p
 .weather-val{font-size:17px;font-weight:900;color:#0f5e5e}
 .weather-sub{font-size:11px;color:var(--muted);font-weight:700}
 .weather-city{font-size:11px;color:var(--muted);margin-left:auto}
+.import-area{width:100%;min-height:160px;border:1px solid var(--line);border-radius:var(--r);padding:10px 12px;font-size:13px;font-family:var(--font,sans-serif);resize:vertical;background:var(--color-background-secondary,#f8fafa);line-height:1.6}
+.import-preview{background:#f0f8f4;border:1px solid #b6e0cc;border-radius:var(--r);padding:12px;margin-top:10px;font-size:12px;max-height:220px;overflow-y:auto}
+.import-day-hd{font-weight:900;font-size:13px;color:#085041;margin-bottom:4px;margin-top:10px}
+.import-day-hd:first-child{margin-top:0}
+.import-loc-row{display:flex;gap:6px;align-items:baseline;padding:3px 0;border-bottom:1px solid rgba(0,0,0,.04)}
+.import-loc-time{font-size:11px;color:var(--muted);min-width:38px;flex-shrink:0}
+.import-loc-name{font-size:13px;font-weight:700}
+.import-loc-cat{font-size:10px;padding:1px 6px;border-radius:999px}
+.import-err{color:#a32d2d;font-size:13px;padding:10px;background:#fff5f5;border-radius:var(--r);border:1px solid #f2baba;margin-top:8px}
 .loc-card-wrap .card{border-left-width:3px;border-left-style:solid}
 .loc-card-wrap.dragging{opacity:.35;transform:scale(.98)}
 .loc-card-wrap.drag-over .card{border-color:#42a787!important;box-shadow:0 0 0 2px rgba(66,167,135,.25)!important}
@@ -353,7 +362,7 @@ function itin(day,si){
       weatherBar=`<div class="weather-bar"><span class="weather-ic">${wi.e}</span><div><div class="weather-val">${wx.data.temp}°C <span style="font-size:13px;font-weight:700;color:#888;">體感 ${wx.data.feels}°C</span></div><div class="weather-sub">${wi.d}</div></div><div style="display:flex;flex-direction:column;gap:2px;"><div style="font-size:13px;font-weight:700;">💧 ${wx.data.humidity}%</div><div class="weather-sub">濕度</div></div><div class="weather-city">📍 ${esc(day.city)}</div></div>`;
     }
   }
-  return`<div class="day-tabs">${tabs}<button class="dtab dtab-add" onclick="FM={title:'第${nd}天',date:'',city:''};setU({modal:{t:'nd'}})">+ 新增</button></div>${weatherBar}<div class="section-head"><div class="section-title">${esc(day.title)}${day.date?` · ${day.date}`:''}</div><div class="brow"><button class="btn" title="跳到現在" onclick="jumpToNow()">🕐</button><button class="btn" onclick="FM={title:'${esc(day.title)}',date:'${esc(day.date||'')}',city:'${esc(day.city||'')}'}; setU({modal:{t:'ed',dayId:'${day.id}'}})">編輯</button>${S.days.length>1?`<button class="btn br" onclick="dDay('${day.id}')">刪除</button>`:''}</div></div><div class="tool-row">${tpl}</div>${locs}<button class="add-btn" onclick="oLoc('')">+ 新增地點</button>`;
+  return`<div class="day-tabs">${tabs}<button class="dtab dtab-add" onclick="FM={title:'第${nd}天',date:'',city:''};setU({modal:{t:'nd'}})">+ 新增</button></div>${weatherBar}<div class="section-head"><div class="section-title">${esc(day.title)}${day.date?` · ${day.date}`:''}</div><div class="brow"><button class="btn" title="跳到現在" onclick="jumpToNow()">🕐</button><button class="btn" onclick="FM={title:'${esc(day.title)}',date:'${esc(day.date||'')}',city:'${esc(day.city||'')}'}; setU({modal:{t:'ed',dayId:'${day.id}'}})">編輯</button>${S.days.length>1?`<button class="btn br" onclick="dDay('${day.id}')">刪除</button>`:''}</div></div><div class="tool-row">${tpl}<button class="tmpl-btn" style="background:#EDE9FE;color:#3C3489;margin-left:auto;" onclick="setU({modal:{t:'import'}})">✨ AI 匯入</button></div>${locs}<button class="add-btn" onclick="oLoc('')">+ 新增地點</button>`;
 }
 function exps(te){
   const cs=CATS.map(c=>({c,t:S.expenses.filter(e=>e.category===c).reduce((s,e)=>s+expValue(e),0)})).filter(x=>x.t>0);
@@ -371,7 +380,7 @@ function splt(b,tx,te){
 }
 function buildModal(){
   const m=S.modal;let c='';
-  if(m.t==='tripGate')c=mTripGate();else if(m.t==='loc')c=mLoc();else if(m.t==='nd'||m.t==='ed')c=mDay();else if(m.t==='exp')c=mExp();else if(m.t==='tv')c=mTv();else if(m.t==='cover')c=mCover();else if(m.t==='tools')c=mTools();
+  if(m.t==='tripGate')c=mTripGate();else if(m.t==='loc')c=mLoc();else if(m.t==='nd'||m.t==='ed')c=mDay();else if(m.t==='exp')c=mExp();else if(m.t==='tv')c=mTv();else if(m.t==='cover')c=mCover();else if(m.t==='tools')c=mTools();else if(m.t==='import')c=mImport();
   const lock=m.t==='tripGate';
   return`<div class="mol" onclick="${lock?'':'if(event.target===this)setU({modal:null})'}"><div class="msh">${c}</div></div>`;
 }
@@ -596,8 +605,12 @@ function getNowLocId(locs){
   }
   return upId||paId;
 }
+function localDate(d=new Date()){
+  const y=d.getFullYear(),m=String(d.getMonth()+1).padStart(2,'0'),dd=String(d.getDate()).padStart(2,'0');
+  return`${y}-${m}-${dd}`;
+}
 function jumpToNow(){
-  const today=new Date().toISOString().slice(0,10);
+  const today=localDate();
   const di=S.days.findIndex(d=>d.date===today);
   if(di>=0)S.dayIdx=di;
   S.view='itinerary';
@@ -606,6 +619,129 @@ function jumpToNow(){
     const el=document.querySelector('.loc-card-wrap.loc-now');
     if(el)el.scrollIntoView({behavior:'smooth',block:'center'});
   },80);
+}
+function parseAI(text){
+  const lines=text.split('\n').map(l=>l.trim()).filter(Boolean);
+  const days=[];
+  let cur=null;
+  const timeRe=/^([0-1]?\d|2[0-3]):([0-5]\d)/;
+  const dayRe=/^(?:day\s*[-–]?\s*(\d+)|第\s*(\d+)\s*天|Day\s*(\d+)|\*{0,3}第?\s*(\d+)\s*天\*{0,3})/i;
+  const cityRe=/[（(]([^）)]+)[）)]/;
+  const bulletRe=/^[-•◆▶️*]+\s+/;
+  const numRe=/^[\d\uff10-\uff19]+[.\uff0e\s、]/;
+  for(let line of lines){
+    line=line.replace(/^\*+|\*+$/g,'').replace(/^#+\s*/,'').trim();
+    if(!line)continue;
+    const dm=line.match(dayRe);
+    if(dm){
+      const n=Number(dm[1]||dm[2]||dm[3]||dm[4]);
+      const cityM=line.match(cityRe);
+      const city=cityM?cityM[1].trim():'';
+      const rest=line.replace(dayRe,'').replace(cityRe,'').replace(/^[\s:：\-–—]+/,'').trim();
+      cur={title:`第${n}天${rest?` ${rest}`:''}`,date:'',city,locations:[]};
+      days.push(cur);continue;
+    }
+    if(!cur){cur={title:'行程',date:'',city:'',locations:[]};days.push(cur);}
+    let l=line.replace(bulletRe,'').replace(numRe,str=>str.replace(/\S+\s*/,'')).trim();
+    // Extract time
+    const tm=l.match(timeRe);
+    let time='';
+    if(tm){time=tm[0].padStart(5,'0');l=l.slice(tm[0].length).replace(/^[\s:：\-–—]+/,'').trim();}
+    // Pipe format: name | address | notes
+    let name=l,notes='',address='';
+    if(l.includes('|')){
+      const parts=l.split('|').map(s=>s.trim());
+      name=parts[0]||'';
+      address=parts[1]||'';
+      notes=parts[2]||'';
+    } else {
+      // Fallback: name - notes
+      const sepRe=/\s+[-–—]\s+/;
+      const si=l.search(sepRe);
+      if(si>0&&si<40){name=l.slice(0,si).trim();notes=l.slice(si).replace(/^\s*[-–—]\s*/,'').trim();}
+      // Inline 地址：
+      const addrM=notes.match(/地址[：:]\s*(.+)/);
+      if(addrM){address=addrM[1].trim();notes=notes.replace(addrM[0],'').trim();}
+    }
+    name=name.replace(/^\d+\.\s*/,'').replace(/^[📍🗺️🎫🍜🏨🚗🛍️📌]\s*/,'').trim();
+    if(name.length<1||name.length>80)continue;
+    const cat=ac(`${name} ${notes} ${address}`);
+    cur.locations.push({id:uid(),name,time,address,phone:'',notes,category:cat,reservation:''});
+  }
+  return days.filter(d=>d.locations.length>0||days.length===1);
+}
+let _importDays=null;
+function onImportInput(){
+  const v=document.getElementById('ai-import-box')?.value||'';
+  _importDays=null;
+  const prev=document.getElementById('import-preview');
+  if(!prev)return;
+  if(!v.trim()){prev.innerHTML='';return;}
+  try{
+    const days=parseAI(v);
+    _importDays=days;
+    if(!days.length){prev.innerHTML=`<div class="import-err">未能辨識任何行程，請確認格式中有天數標題（如「第一天」、「Day 1」）和地點名稱。</div>`;return;}
+    const total=days.reduce((s,d)=>s+d.locations.length,0);
+    const withAddr=days.reduce((s,d)=>s+d.locations.filter(l=>l.address).length,0);
+    prev.innerHTML=`<div style="font-weight:900;font-size:13px;color:#085041;margin-bottom:8px;">✅ 解析成功：${days.length} 天 · ${total} 個地點 · ${withAddr} 個含地址</div>`
+      +days.map(d=>`<div class="import-day-hd">📅 ${esc(d.title)}${d.city?` <span style="font-size:10px;background:#e1f5ee;color:#085041;padding:1px 6px;border-radius:999px;">🌤 ${esc(d.city)}</span>`:''}</div>`
+        +d.locations.map(l=>`<div class="import-loc-row"><span class="import-loc-time">${l.time||'--:--'}</span><div style="flex:1;min-width:0;"><div style="display:flex;align-items:center;gap:5px;flex-wrap:wrap;"><span class="import-loc-name">${esc(l.name)}</span><span class="import-loc-cat" style="background:${CB[l.category]};color:${CF[l.category]};">${CE[l.category]} ${l.category}</span></div>${l.address?`<div style="font-size:10px;color:#0c447c;margin-top:2px;">📍 ${esc(l.address)}</div>`:''}</div></div>`).join('')
+      ).join('');
+  }catch(e){prev.innerHTML=`<div class="import-err">解析發生錯誤：${esc(String(e))}</div>`;}
+}
+function confirmImport(){
+  if(!_importDays?.length)return;
+  const existing=S.days.filter(d=>d.locations.length>0);
+  const newDays=[...existing,..._importDays.map(d=>({...d,id:uid()}))];
+  setD({days:newDays,dayIdx:0,modal:null});
+}
+function mImport(){
+  const PROMPT=`請幫我安排 [X] 天 [目的地] 旅遊行程，請嚴格按照以下格式輸出，不要加任何 Markdown、粗體、標題符號：
+
+第1天（城市名）
+HH:MM 地點名稱 | 完整地址（可用於 Google Maps 搜尋） | 簡短備註
+
+格式說明：
+- 每天用「第X天（城市）」開頭，城市填當天所在城市
+- 每行固定用「|」分成三段：時間 地點名 | 地址 | 備註
+- 地址請用該地點的完整地址，讓 Google Maps 可以準確導航
+- 餐廳請寫「XXX餐廳」「XXX料理」，飯店寫「XXX飯店」，神社/寺廟/博物館等景點如實填寫
+- 不要加粗體 ** 不要加 # 不要加項目符號 - 不要加編號
+
+範例輸出：
+第1天（東京）
+09:00 淺草寺 | 東京都台東区浅草2丁目3-1 | 東京最古老寺廟，推薦早去人少
+12:00 壽司大 | 東京都中央区築地4-13-9 | 場外市場必吃迴轉壽司
+15:00 晴空塔 | 東京都墨田区押上1-1-2 | 建議提前網路購票
+18:30 思い出横丁居酒屋 | 東京都新宿区西新宿1-2-1 | 體驗下班族居酒屋文化`;
+  return`<div class="mhd"><div class="mt">✨ AI 行程匯入</div><div class="mcl" onclick="setU({modal:null})">✕</div></div>
+<div style="background:#f0f8f4;border:1px solid #b6e0cc;border-radius:var(--r);padding:12px;margin-bottom:14px;">
+  <div style="font-size:12px;font-weight:900;color:#085041;margin-bottom:8px;">步驟一：複製提示詞給 Gemini</div>
+  <pre style="font-size:11px;line-height:1.7;color:#2d4a3e;background:#e4f4ed;border-radius:8px;padding:10px;overflow-x:auto;white-space:pre-wrap;word-break:break-all;max-height:140px;overflow-y:auto;margin-bottom:10px;">${esc(PROMPT)}</pre>
+  <button class="btn bp" style="width:100%;padding:9px;font-size:13px;" id="copy-prompt-btn" onclick="copyPrompt(${JSON.stringify(PROMPT).replace(/</g,'\\u003c')})">📋 複製提示詞</button>
+</div>
+<div style="font-size:12px;font-weight:900;color:#085041;margin-bottom:6px;">步驟二：貼入 Gemini 的回覆</div>
+<textarea class="import-area" id="ai-import-box" placeholder="貼入 Gemini 輸出的行程文字，例如：
+
+第1天（東京）
+09:00 淺草寺 | 東京都台東区浅草2丁目3-1 | 東京最古老寺廟
+12:00 壽司大 | 東京都中央区築地4-13-9 | 場外市場必吃
+..." oninput="onImportInput()"></textarea>
+<div id="import-preview"></div>
+<div class="ar" style="margin-top:12px;"><button class="btn bp" style="flex:1;padding:10px;" onclick="confirmImport()">匯入行程</button><button class="btn" style="flex:1;padding:10px;" onclick="setU({modal:null})">取消</button></div>`;
+}
+function copyPrompt(text){
+  navigator.clipboard.writeText(text).then(()=>{
+    const btn=document.getElementById('copy-prompt-btn');
+    if(!btn)return;
+    btn.textContent='✅ 已複製！';btn.style.background='#0F6E56';
+    setTimeout(()=>{if(btn){btn.textContent='📋 複製提示詞';btn.style.background='';}},2000);
+  }).catch(()=>{
+    const ta=document.createElement('textarea');ta.value=text;ta.style.position='fixed';ta.style.opacity='0';
+    document.body.appendChild(ta);ta.select();document.execCommand('copy');document.body.removeChild(ta);
+    const btn=document.getElementById('copy-prompt-btn');
+    if(btn){btn.textContent='✅ 已複製！';setTimeout(()=>{if(btn)btn.textContent='📋 複製提示詞';},2000);}
+  });
 }
 function dragStart(e,dayId,locId){
   dragState={dayId,locId};
