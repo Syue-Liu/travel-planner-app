@@ -57,11 +57,14 @@ a{text-decoration:none}
 .dtab{padding:8px 14px;border-radius:999px;font-size:13px;font-weight:700;white-space:nowrap;cursor:pointer;border:1px solid var(--line);background:#fff;color:var(--muted);box-shadow:0 4px 14px rgba(29,58,50,.05)}
 .dtab.on{background:#183b40;color:#fff;border-color:#183b40}
 .dtab-add{border-style:dashed;background:#fff8ec;color:#8b540c}
-.section-head{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:10px}
-.section-title{font-weight:800;font-size:17px}
+.section-head{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;margin-bottom:10px}
+.section-title{font-weight:800;font-size:17px;line-height:1.25;min-width:0;word-break:keep-all}
+.section-actions{display:flex;align-items:center;justify-content:flex-end;gap:8px;flex-wrap:wrap;position:relative;flex-shrink:0}
+.action-group{display:flex;align-items:center;gap:7px;position:relative;flex-wrap:nowrap}
+.quick-holder{position:relative}
 .card{background:var(--paper);border-radius:var(--r);border:1px solid rgba(217,226,223,.9);margin-bottom:10px;overflow:hidden;box-shadow:0 8px 24px rgba(31,59,53,.06)}
-.loc-wrap{display:grid;grid-template-columns:50px minmax(0,1fr);gap:10px;padding:14px}
-.loc-time{font-size:12px;font-weight:800;color:#0f6e56;padding-top:2px}
+.loc-wrap{display:grid;grid-template-columns:56px minmax(0,1fr);gap:10px;padding:14px;padding-right:114px}
+.loc-time{font-size:12px;font-weight:800;color:#0f6e56;padding-top:2px;width:56px;min-width:56px;white-space:nowrap;font-variant-numeric:tabular-nums}
 .loc-name{font-weight:800;font-size:15px;margin-bottom:3px;word-break:break-word}
 .loc-addr,.loc-phone{font-size:13px;color:var(--muted);margin-bottom:6px;word-break:break-word}
 .loc-phone{display:flex;align-items:center;gap:6px}
@@ -172,7 +175,7 @@ input:focus,select:focus,textarea:focus{border-color:#42a787;box-shadow:0 0 0 3p
 .import-loc-name{font-size:13px;font-weight:700}
 .import-loc-cat{font-size:10px;padding:1px 6px;border-radius:999px}
 .import-err{color:#a32d2d;font-size:13px;padding:10px;background:#fff5f5;border-radius:var(--r);border:1px solid #f2baba;margin-top:8px}
-.loc-card-wrap .card{border-left-width:3px;border-left-style:solid}
+.loc-card-wrap .card{border-left-width:3px;border-left-style:solid;position:relative}
 .loc-card-wrap.dragging{opacity:.35;transform:scale(.98)}
 .loc-card-wrap.drag-over .card{border-color:#42a787!important;box-shadow:0 0 0 2px rgba(66,167,135,.25)!important}
 .budget-card{padding:14px;background:#fff;border:1px solid var(--line);border-radius:var(--r);margin-bottom:12px;box-shadow:0 8px 24px rgba(31,59,53,.05)}
@@ -198,7 +201,19 @@ input:focus,select:focus,textarea:focus{border-color:#42a787;box-shadow:0 0 0 3p
   .mobile-stack{grid-template-columns:1fr!important}
   .mobile-stack > div{min-width:0}
   .mobile-stack input[type=time]{-webkit-appearance:none;appearance:none;text-align:left;min-height:54px}
-  .loc-wrap{grid-template-columns:46px minmax(0,1fr);gap:9px;padding:13px 12px}
+  .section-head{display:grid;grid-template-columns:minmax(0,1fr);gap:10px;align-items:start}
+  .section-title{font-size:19px;max-width:100%;word-break:keep-all;overflow-wrap:normal}
+  .section-actions{justify-content:space-between;width:100%;gap:8px}
+  .action-group{gap:7px}
+  .action-group.primary{flex:1;justify-content:flex-start}
+  .action-group.manage{justify-content:flex-end}
+  .section-actions .btn{min-height:42px;padding:8px 12px}
+  .quick-menu{left:auto;right:0;min-width:min(78vw,260px)}
+  .loc-wrap{grid-template-columns:58px minmax(0,1fr);gap:9px;padding:13px 12px;padding-right:12px}
+  .loc-time{width:58px;min-width:58px;font-size:15px;line-height:1.2;text-align:left}
+  .loc-name{padding-right:108px}
+  .loc-sort-ctrl{top:10px;right:10px}
+  .act-row{padding-right:0}
   .stats{grid-template-columns:1fr}
   .txn{grid-template-columns:1fr;gap:4px;text-align:center}
   .txn div{text-align:center!important}
@@ -400,9 +415,8 @@ function itin(day,si){
     // Map uses name + address for better Google Maps accuracy
     const mapQuery=l.address?`${l.name} ${l.address}`:l.name;
     const mapBtns=l.address||l.name?`<a href="${mu(mapQuery)}" target="_blank" rel="noopener"><button class="btn bp" style="font-size:12px;min-height:30px;padding:5px 10px;">地圖</button></a><a href="${nu(l.address||l.name)}" target="_blank" rel="noopener"><button class="btn ba" style="font-size:12px;min-height:30px;padding:5px 10px;">導航</button></a>`:'';
-    // Sort buttons inline in act-row
-    const sortBtns=`<span style="width:1px;height:20px;background:var(--line);flex-shrink:0;margin:0 1px;"></span><button class="sort-btn sort-grip" title="拖曳" onpointerdown="startTouchDrag(event,'${day.id}','${l.id}')">⠿</button><button class="sort-btn" title="上移" onclick="mvLoc('${day.id}','${l.id}',-1)" ${i===0?'disabled':''}>↑</button><button class="sort-btn" title="下移" onclick="mvLoc('${day.id}','${l.id}',1)" ${i===day.locations.length-1?'disabled':''}>↓</button>`;
-    return`<div class="loc-card-wrap${isNow?' loc-now':''}" data-locid="${l.id}" data-dayid="${day.id}" ondragover="dragOver(event)" ondragleave="dragLeave(event)" ondrop="dragDrop(event,'${day.id}','${l.id}')" ondragend="dragEnd()"><div class="card" style="border-left-color:${isNow?catBg:borderColor};border-left-width:${isNow?'5':'3'}px;${isNow?`--now-bg:${catLight};`:''}">${nowBar}<div class="loc-wrap"><div class="loc-time" style="${isNow?`color:${catDark};font-weight:900;`:''}">${esc(l.time||'--:--')}</div><div class="loc-body"><div class="loc-name">${esc(l.name)} ${badge}${resBadge}${nowBadge}</div>${l.address?`<div class="loc-addr">${esc(l.address)}</div>`:''}${phoneEl}${notesEl}<div class="act-row">${mapBtns}<button class="btn-ic" title="編輯" onclick="oLoc('${l.id}')">✏️</button><button class="btn-ic br" title="刪除" onclick="dLoc('${day.id}','${l.id}')">🗑️</button>${sortBtns}</div></div></div></div></div>`;
+    const sortBtns=`<div class="loc-sort-ctrl"><button class="sort-btn sort-grip" title="拖曳" onpointerdown="startTouchDrag(event,'${day.id}','${l.id}')">⠿</button><button class="sort-btn" title="上移" onclick="mvLoc('${day.id}','${l.id}',-1)" ${i===0?'disabled':''}>↑</button><button class="sort-btn" title="下移" onclick="mvLoc('${day.id}','${l.id}',1)" ${i===day.locations.length-1?'disabled':''}>↓</button></div>`;
+    return`<div class="loc-card-wrap${isNow?' loc-now':''}" data-locid="${l.id}" data-dayid="${day.id}" ondragover="dragOver(event)" ondragleave="dragLeave(event)" ondrop="dragDrop(event,'${day.id}','${l.id}')" ondragend="dragEnd()"><div class="card" style="border-left-color:${isNow?catBg:borderColor};border-left-width:${isNow?'5':'3'}px;${isNow?`--now-bg:${catLight};`:''}">${sortBtns}${nowBar}<div class="loc-wrap"><div class="loc-time" style="${isNow?`color:${catDark};font-weight:900;`:''}">${esc(l.time||'--:--')}</div><div class="loc-body"><div class="loc-name">${esc(l.name)} ${badge}${resBadge}${nowBadge}</div>${l.address?`<div class="loc-addr">${esc(l.address)}</div>`:''}${phoneEl}${notesEl}<div class="act-row">${mapBtns}<button class="btn-ic" title="編輯" onclick="oLoc('${l.id}')">✏️</button><button class="btn-ic br" title="刪除" onclick="dLoc('${day.id}','${l.id}')">🗑️</button></div></div></div></div></div>`;
   }).join('');
   const quickItems=[...TMPL.map((t,i)=>`<button class="quick-item" onclick="setU({quickOpen:false});oLoc('',${i})"><span style="background:${CB[t.cat]};color:${CF[t.cat]};border-radius:8px;padding:2px 7px;font-size:12px;font-weight:800;">${CE[t.cat]} ${t.cat}</span> ${esc(t.name)}</button>`),`<hr style="border:none;border-top:1px solid var(--line);margin:3px 0;"><button class="quick-item" style="color:#5b3fc4;font-weight:900;" onclick="setU({quickOpen:false,modal:{t:'import'}})">✨ AI 匯入行程</button>`].join('');
   const quickMenu=S.quickOpen?`<div class="quick-menu" style="right:0;left:auto;min-width:220px;">${quickItems}</div>`:'';
@@ -415,7 +429,7 @@ function itin(day,si){
       weatherBar=`<div class="weather-bar"><span class="weather-ic">${wi.e}</span><div><div class="weather-val">${wx.data.temp}°C <span style="font-size:13px;font-weight:700;color:#888;">體感 ${wx.data.feels}°C</span></div><div class="weather-sub">${wi.d}</div></div><div style="display:flex;flex-direction:column;gap:2px;"><div style="font-size:13px;font-weight:700;">💧 ${wx.data.humidity}%</div><div class="weather-sub">濕度</div></div><div class="weather-city">📍 ${esc(day.city)}</div></div>`;
     }
   }
-  return`<div class="day-tabs">${tabs}<button class="dtab dtab-add" onclick="FM={title:'第${nd}天',date:'',city:''};setU({modal:{t:'nd'}})">+ 新增</button></div>${weatherBar}<div class="section-head"><div class="section-title">${esc(day.title)}${day.date?` · ${day.date}`:''}</div><div class="brow" style="position:relative;"><button class="btn" title="跳到現在" onclick="jumpToNow()">🕐</button><div style="position:relative;"><button class="btn" style="background:#f0faf5;border-color:#9fe1cb;color:#085041;font-weight:800;" onclick="setU({quickOpen:!S.quickOpen})">快速新增 ${S.quickOpen?'▲':'▾'}</button>${quickMenu}</div><button class="btn" onclick="FM={title:'${esc(day.title)}',date:'${esc(day.date||'')}',city:'${esc(day.city||'')}'}; setU({modal:{t:'ed',dayId:'${day.id}'}})">編輯</button>${S.days.length>1?`<button class="btn br" onclick="dDay('${day.id}')">刪除</button>`:''}</div></div>${locs}<button class="add-btn" onclick="oLoc('')">＋ 新增地點</button>`;
+  return`<div class="day-tabs">${tabs}<button class="dtab dtab-add" onclick="FM={title:'第${nd}天',date:'',city:''};setU({modal:{t:'nd'}})">+ 新增</button></div>${weatherBar}<div class="section-head"><div class="section-title">${esc(day.title)}${day.date?` · ${day.date}`:''}</div><div class="section-actions"><div class="action-group primary"><button class="btn" title="跳到現在" onclick="jumpToNow()">🕐</button><div class="quick-holder"><button class="btn" style="background:#f0faf5;border-color:#9fe1cb;color:#085041;font-weight:800;" onclick="setU({quickOpen:!S.quickOpen})">快速新增 ${S.quickOpen?'▲':'▾'}</button>${quickMenu}</div></div><div class="action-group manage"><button class="btn" onclick="FM={title:'${esc(day.title)}',date:'${esc(day.date||'')}',city:'${esc(day.city||'')}'}; setU({modal:{t:'ed',dayId:'${day.id}'}})">編輯</button>${S.days.length>1?`<button class="btn br" onclick="dDay('${day.id}')">刪除</button>`:''}</div></div></div>${locs}<button class="add-btn" onclick="oLoc('')">＋ 新增地點</button>`;
 }
 function exps(te){
   const cs=CATS.map(c=>({c,t:S.expenses.filter(e=>e.category===c).reduce((s,e)=>s+expValue(e),0)})).filter(x=>x.t>0);
