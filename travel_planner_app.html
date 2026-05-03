@@ -1137,11 +1137,36 @@ function mapView(){
 async function _geocode(query){
   if(query in _geoCache)return _geoCache[query];
   try{
-    const r=await fetch('https://nominatim.openstreetmap.org/search?q='+encodeURIComponent(query)+'&format=json&limit=1&accept-language=zh-TW,zh,en',{headers:{'User-Agent':'TravelPlannerApp/1.0'}});
+    const r=await fetch('https://nominatim.openstreetmap.org/search?q='+encodeURIComponent(query)+'&format=json&limit=1&accept-language=zh-TW,zh,en');
     const d=await r.json();
     if(d&&d[0]){const c={lat:parseFloat(d[0].lat),lng:parseFloat(d[0].lon)};_geoCache[query]=c;return c;}
   }catch(e){}
+  try{
+    const r=await fetch('https://photon.komoot.io/api/?q='+encodeURIComponent(query)+'&limit=1');
+    const d=await r.json();
+    const p=d?.features?.[0]?.geometry?.coordinates;
+    if(p){const c={lat:parseFloat(p[1]),lng:parseFloat(p[0])};_geoCache[query]=c;return c;}
+  }catch(e){}
   _geoCache[query]=null;return null;
+}
+
+async function _geocodeLocation(loc,day){
+  if(loc.lat&&loc.lng)return{lat:Number(loc.lat),lng:Number(loc.lng)};
+  const city=day.city||'';
+  const parts=[
+    loc.address&&`${loc.address}`,
+    loc.address&&`${loc.name} ${loc.address}`,
+    city&&loc.address&&`${loc.address} ${city}`,
+    city&&`${loc.name} ${city}`,
+    loc.name
+  ].filter(Boolean);
+  const queries=[...new Set(parts.map(s=>String(s).replace(/\s+/g,' ').trim()).filter(Boolean))];
+  for(const q of queries){
+    const c=await _geocode(q);
+    if(c)return c;
+    await _sleep(350);
+  }
+  return null;
 }
 
 function _sleep(ms){return new Promise(r=>setTimeout(r,ms));}
@@ -1183,17 +1208,16 @@ async function initMap(){
   });
 
   if(!allLocs.length){if(statusEl)statusEl.textContent='目前選取的天數沒有任何地點。';return;}
-  if(statusEl)statusEl.textContent=`正在定位 ${allLocs.length} 個地點（使用 OpenStreetMap Nominatim）...`;
+  const withAddress=allLocs.filter(x=>x.loc.address||x.loc.lat&&x.loc.lng).length;
+  if(statusEl)statusEl.textContent=`已讀到 ${allLocs.length} 個行程地點，${withAddress} 個有地址，正在轉換地圖座標...`;
 
   const bounds=[];let geocodedCount=0,failCount=0;
   // Number label for sequential ordering
   let seq=0;
   for(const{loc,day,dayIdx,locIdx}of allLocs){
     seq++;
-    const query=(loc.address?loc.name+' '+loc.address:loc.name).trim();
-    if(!query)continue;
-    const coord=await _geocode(query);
-    await _sleep(1100); // Nominatim rate limit: 1 req/sec
+    const coord=await _geocodeLocation(loc,day);
+    await _sleep(850);
     if(!coord){failCount++;continue;}
     geocodedCount++;
     bounds.push([coord.lat,coord.lng]);
