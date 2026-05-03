@@ -60,7 +60,7 @@ a{text-decoration:none}
 .section-head{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:10px}
 .section-title{font-weight:800;font-size:17px}
 .card{background:var(--paper);border-radius:var(--r);border:1px solid rgba(217,226,223,.9);margin-bottom:10px;overflow:hidden;box-shadow:0 8px 24px rgba(31,59,53,.06)}
-.loc-wrap{display:grid;grid-template-columns:50px minmax(0,1fr) 36px;gap:10px;padding:14px}
+.loc-wrap{display:grid;grid-template-columns:50px minmax(0,1fr);gap:10px;padding:14px}
 .loc-time{font-size:12px;font-weight:800;color:#0f6e56;padding-top:2px}
 .loc-name{font-weight:800;font-size:15px;margin-bottom:3px;word-break:break-word}
 .loc-addr,.loc-phone{font-size:13px;color:var(--muted);margin-bottom:6px;word-break:break-word}
@@ -69,11 +69,14 @@ a{text-decoration:none}
 .loc-note-pill{font-size:12px;color:#56635f;background:#f3f7f5;padding:5px 10px;border-left:3px solid #8ad5b6;margin-bottom:8px;cursor:pointer;border-radius:0 6px 6px 0;display:flex;align-items:center;gap:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .loc-note-pill:hover{background:#e8f4f0}
 .loc-note-pill-hint{font-size:10px;color:#42a787;font-weight:900;flex-shrink:0}
-.loc-sort-col{display:flex;flex-direction:column;gap:3px;align-items:center;padding-top:2px}
-.sort-btn{width:28px;height:28px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:13px;cursor:pointer;border:1px solid var(--line);background:var(--card);color:var(--ink);padding:0;user-select:none;-webkit-user-select:none;flex-shrink:0}
+.loc-sort-col{display:contents}
+.sort-btn{width:30px;height:30px;border-radius:8px;display:inline-flex;align-items:center;justify-content:center;font-size:13px;cursor:pointer;border:1px solid var(--line);background:var(--card);color:var(--ink);padding:0;user-select:none;-webkit-user-select:none;flex-shrink:0}
 .sort-btn:disabled{opacity:.2;cursor:not-allowed}
-.sort-grip{cursor:grab;color:#b0bdb9;touch-action:none;font-size:17px}
+.sort-grip{cursor:grab;color:#b0bdb9;touch-action:none}
 .sort-grip:active{cursor:grabbing;color:#42a787}
+.quick-menu{position:absolute;left:0;right:0;top:calc(100% + 4px);background:#fff;border:1px solid var(--line);border-radius:var(--r);box-shadow:0 8px 28px rgba(0,0,0,.18);z-index:30;padding:5px;display:flex;flex-direction:column;gap:1px}
+.quick-item{width:100%;text-align:left;background:none;border:none;padding:11px 12px;font-size:14px;font-weight:700;color:var(--ink);cursor:pointer;border-radius:8px;display:flex;align-items:center;gap:9px}
+.quick-item:hover,.quick-item:active{background:#f0faf5}
 .brow{display:flex;gap:7px;flex-wrap:wrap}
 .btn{min-height:34px;padding:7px 12px;font-size:13px;font-weight:700;border-radius:10px;cursor:pointer;border:1px solid var(--line);background:#fff;color:var(--ink);display:inline-flex;align-items:center;justify-content:center;gap:4px}
 .btn:active{transform:scale(.98)}
@@ -361,7 +364,7 @@ function hdr(te){
   if(S.editTN)return`<header class="cover" style="--cover:url('${esc(S.cover)}')"><div class="topbar"></div><div class="cover-bottom"><div class="title-edit"><input class="tni" id="tn-in" value="${esc(S.tnDraft)}" placeholder="行程名稱" oninput="S.tnDraft=this.value" onkeydown="if(event.key==='Enter')saveTN()" autofocus><button class="btn glass" onclick="saveTN()">完成</button></div></div></header>${statsStrip}`;
   const coverStyle=`--cover:url('${esc(S.cover)}');--cover-pos:${S.coverPos||'30%'}`;
   if(S.editTN)return`<header class="cover" style="${coverStyle}"><div class="topbar"></div><div class="cover-bottom"><div class="title-edit"><input class="tni" id="tn-in" value="${esc(S.tnDraft)}" placeholder="行程名稱" oninput="S.tnDraft=this.value" onkeydown="if(event.key==='Enter')saveTN()" autofocus><button class="btn glass" onclick="saveTN()">完成</button></div></div></header>${statsStrip}`;
-  const menu=S.menuOpen?`<div class="cover-menu"><button onclick="copyShareLink();setU({menuOpen:false})"><span class="mi">🔗</span>分享連結</button><button onclick="setU({modal:{t:'tools'},menuOpen:false})"><span class="mi">☰</span>旅程工具</button><button onclick="setU({modal:{t:'cover'},menuOpen:false})"><span class="mi">📷</span>更換封面</button><button onclick="setU({modal:{t:'tv'},menuOpen:false})"><span class="mi">👥</span>旅伴管理</button></div>`:'';
+  const menu=S.menuOpen?`<div class="cover-menu"><button onclick="copyShareLink();setU({menuOpen:false})"><span class="mi">🔗</span>分享連結</button><button onclick="setU({modal:{t:'tools'},menuOpen:false})"><span class="mi">☰</span>旅程工具</button><button onclick="setU({modal:{t:'cover'},menuOpen:false})"><span class="mi">📷</span>更換封面</button><button onclick="setU({modal:{t:'tv'},menuOpen:false})"><span class="mi">👥</span>旅伴管理</button><button onclick="setU({modal:{t:'help'},menuOpen:false})"><span class="mi">📖</span>使用說明</button></div>`:'';
   const syncChip=cloud.tripId?`<span class="hdr-sub-chip">🔗 ${esc(cloud.tripId)}</span>`:'';
   return`<header class="cover" style="${coverStyle}"><div class="topbar"><div></div><div class="cover-menu-wrap"><button class="hamb" aria-label="開啟選單" onclick="setU({menuOpen:!S.menuOpen})"><span></span><span></span><span></span></button>${menu}</div></div><div class="cover-bottom"><div class="hdr-title" onclick="setU({editTN:true,tnDraft:'${esc(S.tripName)}'})"><span>${esc(S.tripName)}</span><span class="hdr-title-edit-icon">✏️</span></div><div class="hdr-sub"><span>${esc(cloud.status||'本機儲存')}</span>${syncChip}</div></div></header>${statsStrip}`;
 }
@@ -397,11 +400,12 @@ function itin(day,si){
     // Map uses name + address for better Google Maps accuracy
     const mapQuery=l.address?`${l.name} ${l.address}`:l.name;
     const mapBtns=l.address||l.name?`<a href="${mu(mapQuery)}" target="_blank" rel="noopener"><button class="btn bp" style="font-size:12px;min-height:30px;padding:5px 10px;">地圖</button></a><a href="${nu(l.address||l.name)}" target="_blank" rel="noopener"><button class="btn ba" style="font-size:12px;min-height:30px;padding:5px 10px;">導航</button></a>`:'';
-    // Sort col (right column of 3-col grid)
-    const sortCol=`<div class="loc-sort-col"><button class="sort-btn sort-grip" title="拖曳排序" onpointerdown="startTouchDrag(event,'${day.id}','${l.id}')">⠿</button><button class="sort-btn" title="上移" onclick="mvLoc('${day.id}','${l.id}',-1)" ${i===0?'disabled':''}>↑</button><button class="sort-btn" title="下移" onclick="mvLoc('${day.id}','${l.id}',1)" ${i===day.locations.length-1?'disabled':''}>↓</button></div>`;
-    return`<div class="loc-card-wrap${isNow?' loc-now':''}" data-locid="${l.id}" data-dayid="${day.id}" ondragover="dragOver(event)" ondragleave="dragLeave(event)" ondrop="dragDrop(event,'${day.id}','${l.id}')" ondragend="dragEnd()"><div class="card" style="border-left-color:${isNow?catBg:borderColor};border-left-width:${isNow?'5':'3'}px;${isNow?`--now-bg:${catLight};`:''}">${nowBar}<div class="loc-wrap"><div class="loc-time" style="${isNow?`color:${catDark};font-weight:900;`:''}">${esc(l.time||'--:--')}</div><div class="loc-body"><div class="loc-name">${esc(l.name)} ${badge}${resBadge}${nowBadge}</div>${l.address?`<div class="loc-addr">${esc(l.address)}</div>`:''}${phoneEl}${notesEl}<div class="act-row">${mapBtns}<button class="btn-ic" title="編輯" onclick="oLoc('${l.id}')">✏️</button><button class="btn-ic br" title="刪除" onclick="dLoc('${day.id}','${l.id}')">🗑️</button></div></div>${sortCol}</div></div></div>`;
+    // Sort buttons inline in act-row
+    const sortBtns=`<span style="width:1px;height:20px;background:var(--line);flex-shrink:0;margin:0 1px;"></span><button class="sort-btn sort-grip" title="拖曳" onpointerdown="startTouchDrag(event,'${day.id}','${l.id}')">⠿</button><button class="sort-btn" title="上移" onclick="mvLoc('${day.id}','${l.id}',-1)" ${i===0?'disabled':''}>↑</button><button class="sort-btn" title="下移" onclick="mvLoc('${day.id}','${l.id}',1)" ${i===day.locations.length-1?'disabled':''}>↓</button>`;
+    return`<div class="loc-card-wrap${isNow?' loc-now':''}" data-locid="${l.id}" data-dayid="${day.id}" ondragover="dragOver(event)" ondragleave="dragLeave(event)" ondrop="dragDrop(event,'${day.id}','${l.id}')" ondragend="dragEnd()"><div class="card" style="border-left-color:${isNow?catBg:borderColor};border-left-width:${isNow?'5':'3'}px;${isNow?`--now-bg:${catLight};`:''}">${nowBar}<div class="loc-wrap"><div class="loc-time" style="${isNow?`color:${catDark};font-weight:900;`:''}">${esc(l.time||'--:--')}</div><div class="loc-body"><div class="loc-name">${esc(l.name)} ${badge}${resBadge}${nowBadge}</div>${l.address?`<div class="loc-addr">${esc(l.address)}</div>`:''}${phoneEl}${notesEl}<div class="act-row">${mapBtns}<button class="btn-ic" title="編輯" onclick="oLoc('${l.id}')">✏️</button><button class="btn-ic br" title="刪除" onclick="dLoc('${day.id}','${l.id}')">🗑️</button>${sortBtns}</div></div></div></div></div>`;
   }).join('');
-  const tpl=TMPL.map((t,i)=>`<button class="tmpl-btn" style="background:${CB[t.cat]||'#F1EFE8'};color:${CF[t.cat]||'#444'};" onclick="oLoc('',${i})">${CE[t.cat]||'📌'} ${esc(t.name)}</button>`).join('');
+  const quickItems=[...TMPL.map((t,i)=>`<button class="quick-item" onclick="setU({quickOpen:false});oLoc('',${i})"><span style="background:${CB[t.cat]};color:${CF[t.cat]};border-radius:8px;padding:2px 7px;font-size:12px;font-weight:800;">${CE[t.cat]} ${t.cat}</span> ${esc(t.name)}</button>`),`<hr style="border:none;border-top:1px solid var(--line);margin:3px 0;"><button class="quick-item" style="color:#5b3fc4;font-weight:900;" onclick="setU({quickOpen:false,modal:{t:'import'}})">✨ AI 匯入行程</button>`].join('');
+  const quickMenu=S.quickOpen?`<div class="quick-menu" style="right:0;left:auto;min-width:220px;">${quickItems}</div>`:'';
   const wx=getWx(day.city);
   let weatherBar='';
   if(day.city){
@@ -411,7 +415,7 @@ function itin(day,si){
       weatherBar=`<div class="weather-bar"><span class="weather-ic">${wi.e}</span><div><div class="weather-val">${wx.data.temp}°C <span style="font-size:13px;font-weight:700;color:#888;">體感 ${wx.data.feels}°C</span></div><div class="weather-sub">${wi.d}</div></div><div style="display:flex;flex-direction:column;gap:2px;"><div style="font-size:13px;font-weight:700;">💧 ${wx.data.humidity}%</div><div class="weather-sub">濕度</div></div><div class="weather-city">📍 ${esc(day.city)}</div></div>`;
     }
   }
-  return`<div class="day-tabs">${tabs}<button class="dtab dtab-add" onclick="FM={title:'第${nd}天',date:'',city:''};setU({modal:{t:'nd'}})">+ 新增</button></div>${weatherBar}<div class="section-head"><div class="section-title">${esc(day.title)}${day.date?` · ${day.date}`:''}</div><div class="brow"><button class="btn" title="跳到現在" onclick="jumpToNow()">🕐</button><button class="tmpl-btn" style="background:#ede9fe;color:#5b3fc4;border-color:#c4b5fd;padding:5px 12px;font-size:12px;" onclick="setU({modal:{t:'import'}})">✨ AI</button><button class="btn" onclick="FM={title:'${esc(day.title)}',date:'${esc(day.date||'')}',city:'${esc(day.city||'')}'}; setU({modal:{t:'ed',dayId:'${day.id}'}})">編輯</button>${S.days.length>1?`<button class="btn br" onclick="dDay('${day.id}')">刪除</button>`:''}</div></div><div class="tool-row" style="flex-wrap:wrap;">${tpl}</div>${locs}<button class="add-btn" onclick="oLoc('')">+ 新增地點</button>`;
+  return`<div class="day-tabs">${tabs}<button class="dtab dtab-add" onclick="FM={title:'第${nd}天',date:'',city:''};setU({modal:{t:'nd'}})">+ 新增</button></div>${weatherBar}<div class="section-head"><div class="section-title">${esc(day.title)}${day.date?` · ${day.date}`:''}</div><div class="brow" style="position:relative;"><button class="btn" title="跳到現在" onclick="jumpToNow()">🕐</button><div style="position:relative;"><button class="btn" style="background:#f0faf5;border-color:#9fe1cb;color:#085041;font-weight:800;" onclick="setU({quickOpen:!S.quickOpen})">快速新增 ${S.quickOpen?'▲':'▾'}</button>${quickMenu}</div><button class="btn" onclick="FM={title:'${esc(day.title)}',date:'${esc(day.date||'')}',city:'${esc(day.city||'')}'}; setU({modal:{t:'ed',dayId:'${day.id}'}})">編輯</button>${S.days.length>1?`<button class="btn br" onclick="dDay('${day.id}')">刪除</button>`:''}</div></div>${locs}<button class="add-btn" onclick="oLoc('')">＋ 新增地點</button>`;
 }
 function exps(te){
   const cs=CATS.map(c=>({c,t:S.expenses.filter(e=>e.category===c).reduce((s,e)=>s+expValue(e),0)})).filter(x=>x.t>0);
@@ -930,7 +934,7 @@ function showNote(locId){
 }
 function buildModal(){
   const m=S.modal;let c='';
-  if(m.t==='tripGate')c=mTripGate();else if(m.t==='loc')c=mLoc();else if(m.t==='nd'||m.t==='ed')c=mDay();else if(m.t==='exp')c=mExp();else if(m.t==='tv')c=mTv();else if(m.t==='cover')c=mCover();else if(m.t==='tools')c=mTools();else if(m.t==='import')c=mImport();else if(m.t==='note')c=mNote();
+  if(m.t==='tripGate')c=mTripGate();else if(m.t==='loc')c=mLoc();else if(m.t==='nd'||m.t==='ed')c=mDay();else if(m.t==='exp')c=mExp();else if(m.t==='tv')c=mTv();else if(m.t==='cover')c=mCover();else if(m.t==='tools')c=mTools();else if(m.t==='import')c=mImport();else if(m.t==='note')c=mNote();else if(m.t==='help')c=mHelp();
   const lock=m.t==='tripGate';
   return`<div class="mol" onclick="${lock?'':'if(event.target===this)setU({modal:null})'}"><div class="msh">${c}</div></div>`;
 }
@@ -954,6 +958,55 @@ function memoView(){
   const progress=items.length?`<div style="margin-bottom:14px;"><div style="display:flex;justify-content:space-between;font-size:12px;font-weight:700;color:var(--muted);margin-bottom:5px;"><span>行前清單進度</span><span>${done} / ${items.length} 完成</span></div><div class="budget-line"><div class="budget-fill" style="width:${items.length?Math.round(done/items.length*100):0}%;"></div></div></div>`:'';
   const catSel=MEMO_CATS.map(c=>`<option value="${c}">${MEMO_IC[c]} ${c}</option>`).join('');
   return`${progress}${groups||'<div class="empty"><div style="font-size:30px;margin-bottom:8px;">📝</div>還沒有備忘項目<br><span style="font-size:12px;">在下方新增行前清單</span></div>'}<div class="memo-add-row"><select class="memo-cat-sel" id="memo-cat">${catSel}</select><input type="text" id="memo-inp" placeholder="例：護照、訂飯店確認信..." style="flex:1;" onkeydown="if(event.key==='Enter'){event.preventDefault();addMemo();}"><button class="btn bp" style="padding:0 16px;flex-shrink:0;" onclick="addMemo()">新增</button></div>`;
+}
+function mHelp(){
+  const sec=(ic,title,items)=>`<div style="margin-bottom:18px;"><div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;padding-bottom:8px;border-bottom:1px solid var(--line);"><span style="font-size:20px;">${ic}</span><span style="font-size:15px;font-weight:900;color:var(--ink);">${title}</span></div><div style="display:flex;flex-direction:column;gap:6px;">${items.map(([icon,txt])=>`<div style="display:flex;gap:10px;align-items:flex-start;"><span style="font-size:16px;flex-shrink:0;margin-top:1px;">${icon}</span><span style="font-size:13px;color:#3a4a45;line-height:1.55;">${txt}</span></div>`).join('')}</div></div>`;
+  return`<div class="mhd"><div class="mt">📖 使用說明</div><div class="mcl" onclick="setU({modal:null})">✕</div></div>
+<div style="max-height:68vh;overflow-y:auto;padding-right:2px;">
+${sec('📝','行前備忘錄',[
+  ['✅','出發前的打勾清單，分成 🪪 證件、🧳 行李、📅 預訂、📌 其他 四類。'],
+  ['＋','下方輸入框選分類、輸入文字後按「新增」或 Enter 加入。'],
+  ['☑️','點左側方框可切換已完成／未完成，完成的項目會顯示刪除線。'],
+  ['×','點右側 × 刪除該項目。進度條顯示完成比例。'],
+])}
+${sec('🗺','行程規劃',[
+  ['📅','上方分頁選擇天數，可新增、編輯、刪除天數，每天可設定日期與城市（用於查天氣）。'],
+  ['＋','點標題列「快速新增 ▾」下拉選單，選擇分類快捷（餐廳、飯店、交通等）或 ✨ AI 匯入整份行程，也可點底部「＋ 新增地點」直接開啟空白表單。'],
+  ['📍','每個地點可填：名稱、地址、電話、分類、時間、訂位狀態、確認碼、備註。'],
+  ['🕐','系統會根據當前時間自動跳到最近的行程，並以彩色橫條標記「現在」。'],
+  ['🗺️','點「地圖」可用地點名稱＋地址搜尋 Google Maps；「導航」直接導到地址。'],
+  ['📞','電話號碼旁的 📞 可直接撥打。'],
+  ['💬','備註欄位點擊可展開全文彈窗，也可從那裡進入編輯。'],
+  ['⠿ ↑ ↓','每張卡片底部可拖曳（⠿）或點箭頭（↑↓）調整地點順序。'],
+])}
+${sec('💰','帳目記錄',[
+  ['＋','點「新增帳目」輸入品項與金額；輸入品項文字後系統會自動偵測分類。'],
+  ['👤','選擇「誰付款」及「分帳對象」，支援多人分擔。'],
+  ['💱','支援多種幣別，系統會自動換算為結算幣別（可在旅程工具中設定）。'],
+  ['📊','頁面上方顯示總花費、人均費用，以及各分類的消費比例長條圖。'],
+  ['🧾','支援掃描收據，或直接貼上文字讓 AI 自動解析金額與品項。'],
+])}
+${sec('⚖','分帳計算',[
+  ['💰','自動計算每人應收 / 應付金額，顯示最少轉帳次數的建議清單。'],
+  ['📋','帳目明細顯示每筆費用的付款人及分擔比例，勾選特定人可只看該人。'],
+])}
+${sec('🔗','分享與同步',[
+  ['🔗','點漢堡選單「分享連結」複製帶有同步代碼的完整網址，傳給旅伴即可共同編輯。'],
+  ['☁️','同一個同步代碼對應同一份旅程，所有旅伴的修改即時同步。'],
+  ['🔒','沒有代碼的人看不到你的旅程，建議使用較複雜不易猜到的代碼。'],
+])}
+${sec('✨','AI 匯入行程',[
+  ['📋','在 Gemini 或 ChatGPT 輸入提示詞（點「快速新增 ▾」→「✨ AI 匯入行程」→ 複製提示詞），讓 AI 排好行程。'],
+  ['📥','複製 AI 的回覆，貼入匯入框，系統自動解析天數、地點、時間、電話、分類。'],
+  ['✅','匯入前有預覽可確認，確認後按「匯入行程」一鍵建立所有天數與地點。'],
+])}
+${sec('📷','封面與主題',[
+  ['🖼️','點漢堡選單「更換封面」可選擇預設圖片、貼上圖片網址或上傳自己的照片。'],
+  ['📐','建議使用 16:9 比例（1920×1080px）的橫式照片，手機和電腦都好看。'],
+  ['🎯','「焦點位置」可調整照片裁切中心，避免人臉或主體被裁掉。'],
+])}
+</div>
+<button class="btn bp" style="width:100%;padding:11px;margin-top:12px;" onclick="setU({modal:null})">了解了，開始規劃！</button>`;
 }
 function addMemo(){
   const txt=document.getElementById('memo-inp')?.value?.trim();
