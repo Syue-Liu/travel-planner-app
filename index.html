@@ -134,13 +134,11 @@ input:focus,select:focus,textarea:focus{border-color:#42a787;box-shadow:0 0 0 3p
 .tmpl-btn{padding:8px 13px;border-radius:12px;font-size:13px;font-weight:700;cursor:pointer;border:1px solid rgba(0,0,0,.06);display:inline-flex;align-items:center;gap:6px;white-space:nowrap;transition:opacity .15s,transform .1s}
 .tmpl-btn:active{transform:scale(.97)}
 /* sort controls top-right of card */
-.loc-sort-ctrl{position:absolute;top:10px;right:10px;display:flex;gap:2px;align-items:center;z-index:2;padding:3px;border-radius:999px;background:rgba(248,252,250,.92);border:1px solid rgba(15,94,94,.14);box-shadow:0 6px 16px rgba(18,38,35,.08);backdrop-filter:blur(8px)}
-.loc-card-wrap.loc-now .loc-sort-ctrl{top:42px;background:rgba(255,255,255,.9)}
-.sort-btn{width:27px;height:27px;border-radius:999px;display:flex;align-items:center;justify-content:center;font-size:13px;cursor:pointer;border:0;background:transparent;color:#55706a;padding:0;user-select:none;-webkit-user-select:none;flex-shrink:0}
-.sort-btn:hover,.sort-btn:active{background:rgba(15,94,94,.08);color:#0f5e5e}
-.sort-btn:disabled{opacity:.25;cursor:not-allowed;background:transparent;color:#9aa8a4}
-.sort-grip{cursor:grab;color:#9aa8a4;letter-spacing:-.5px;touch-action:none;font-size:17px}
-.sort-grip:active{cursor:grabbing;color:#0f5e5e}
+.loc-sort-ctrl{position:absolute;top:8px;right:8px;display:flex;gap:3px;align-items:center;z-index:2}
+.sort-btn{width:28px;height:28px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:13px;cursor:pointer;border:1px solid var(--line);background:var(--card);color:var(--ink);padding:0;user-select:none;-webkit-user-select:none;flex-shrink:0}
+.sort-btn:disabled{opacity:.2;cursor:not-allowed}
+.sort-grip{cursor:grab;color:#b0bdb9;letter-spacing:-.5px;touch-action:none;font-size:17px}
+.sort-grip:active{cursor:grabbing;color:#42a787}
 /* icon action buttons */
 .act-row{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-top:8px}
 .btn-ic{width:34px;height:34px;border-radius:999px;display:flex;align-items:center;justify-content:center;font-size:15px;cursor:pointer;border:1px solid var(--line);background:var(--card);color:var(--ink);flex-shrink:0;text-decoration:none;padding:0;line-height:1}
@@ -215,7 +213,6 @@ input:focus,select:focus,textarea:focus{border-color:#42a787;box-shadow:0 0 0 3p
   .loc-time{width:58px;min-width:58px;font-size:15px;line-height:1.2;text-align:left}
   .loc-name{padding-right:108px}
   .loc-sort-ctrl{top:10px;right:10px}
-  .loc-card-wrap.loc-now .loc-sort-ctrl{top:42px}
   .act-row{padding-right:0}
   .stats{grid-template-columns:1fr}
   .txn{grid-template-columns:1fr;gap:4px;text-align:center}
@@ -223,6 +220,19 @@ input:focus,select:focus,textarea:focus{border-color:#42a787;box-shadow:0 0 0 3p
   .ar{flex-direction:column}
   .cover-grid{grid-template-columns:1fr}
 }
+
+/* ── Map view ──────────────────────────────── */
+#map-view-wrap { padding-bottom: 8px; }
+#map-filter-bar { display:flex; gap:7px; overflow-x:auto; padding:2px 2px 10px; scrollbar-width:none; }
+#map-filter-bar::-webkit-scrollbar { display:none; }
+.map-filter-btn { padding:7px 14px; border-radius:999px; font-size:13px; font-weight:700; white-space:nowrap; cursor:pointer; border:1px solid var(--line); background:#fff; color:var(--muted); flex-shrink:0; }
+.map-filter-btn.on { background:#183b40; color:#fff; border-color:#183b40; }
+#map-container { width:100%; height:calc(100vh - 260px); min-height:380px; border-radius:14px; overflow:hidden; border:1px solid var(--line); box-shadow:0 8px 24px rgba(31,59,53,.08); }
+#map-status { font-size:12px; color:var(--muted); margin-top:8px; text-align:center; min-height:18px; }
+.map-legend { display:flex; flex-wrap:wrap; gap:8px; margin-top:10px; }
+.map-legend-item { display:flex; align-items:center; gap:5px; font-size:12px; font-weight:700; padding:4px 10px; border-radius:999px; border:1px solid transparent; }
+.leaflet-popup-content { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans TC", sans-serif !important; }
+
 </style>
 </head>
 <body>
@@ -373,7 +383,8 @@ function render(){
   const ad=S.days[si];
   const te=S.expenses.reduce((s,e)=>s+expValue(e),0);
   const {b,tx}=settle(S.expenses,S.travelers);
-  root.innerHTML=`<div class="app">${hdr(te)}${gnav()}<main class="body">${S.view==='memo'?memoView():''}${S.view==='itinerary'?itin(ad,si):''}${S.view==='expenses'?exps(te):''}${S.view==='split'?splt(b,tx,te):''}</main></div>${S.modal?buildModal():''}`;
+  root.innerHTML=`<div class="app">${hdr(te)}${gnav()}<main class="body">${S.view==='memo'?memoView():''}${S.view==='itinerary'?itin(ad,si):''}${S.view==='map'?mapView():''}${S.view==='expenses'?exps(te):''}${S.view==='split'?splt(b,tx,te):''}</main></div>${S.modal?buildModal():''}`;
+  if(S.view==='map')setTimeout(initMap,0);
   setTimeout(()=>{const t=document.querySelector('.day-tabs .dtab.on');if(t)t.scrollIntoView({inline:'nearest',block:'nearest',behavior:'instant'});},0);
 }
 function hdr(te){
@@ -388,7 +399,7 @@ function hdr(te){
 }
 function saveTN(){const v=document.getElementById('tn-in')?.value?.trim()||S.tnDraft.trim()||'未命名旅程';setD({tripName:v,editTN:false});}
 function gnav(){
-  const ts=[['memo','📝 備忘'],['itinerary','🗺 行程'],['expenses','💰 帳目'],['split','⚖ 分帳']];
+  const ts=[['memo','📝 備忘'],['itinerary','🗺 行程'],['map','📍 地圖'],['expenses','💰 帳目'],['split','⚖ 分帳']];
   return`<nav class="nav">${ts.map(([k,l])=>`<button class="nav-btn${S.view===k?' on':''}" onclick="setU({view:'${k}'})">${l}</button>`).join('')}</nav>`;
 }
 function itin(day,si){
@@ -1111,6 +1122,119 @@ async function readReceipt(file){
     setTimeout(()=>{const s=document.getElementById('ocr-status');if(s)s.textContent=`已帶入：${FM.item||'收據'} / ${FM.amount||'未抓到金額'} / ${FM.category}`;},0);
   }catch{if(st)st.textContent='辨識失敗，請換一張更清楚的照片或手動輸入。';}
 }
+
+// ── Map tab ─────────────────────────────────
+let _mapInstance=null;
+let _geoCache={};  // query -> {lat,lng} | null
+let _mapFilterDay='all'; // 'all' | day.id
+
+function mapView(){
+  const dayBtns=[{id:'all',title:'全部天數'},...S.days].map(d=>`<button class="map-filter-btn${_mapFilterDay===d.id?' on':''}" onclick="_mapFilterDay='${d.id}';setU({});">${d.id==='all'?'🗓️ 全部':('📅 '+esc(d.title))}</button>`).join('');
+  const legend=Object.entries(CE).map(([cat,ico])=>`<div class="map-legend-item" style="background:${CB[cat]};color:${CF[cat]};border-color:${CBr[cat]}33;">${ico} ${cat}</div>`).join('');
+  return`<div id="map-view-wrap"><div id="map-filter-bar">${dayBtns}</div><div id="map-container"></div><div id="map-status">正在載入地圖...</div><div class="map-legend">${legend}</div></div>`;
+}
+
+async function _geocode(query){
+  if(query in _geoCache)return _geoCache[query];
+  try{
+    const r=await fetch('https://nominatim.openstreetmap.org/search?q='+encodeURIComponent(query)+'&format=json&limit=1&accept-language=zh-TW,zh,en',{headers:{'User-Agent':'TravelPlannerApp/1.0'}});
+    const d=await r.json();
+    if(d&&d[0]){const c={lat:parseFloat(d[0].lat),lng:parseFloat(d[0].lon)};_geoCache[query]=c;return c;}
+  }catch(e){}
+  _geoCache[query]=null;return null;
+}
+
+function _sleep(ms){return new Promise(r=>setTimeout(r,ms));}
+
+async function initMap(){
+  if(S.view!=='map')return;
+  const container=document.getElementById('map-container');
+  const statusEl=document.getElementById('map-status');
+  if(!container)return;
+
+  // Load Leaflet CSS
+  if(!document.getElementById('leaflet-css')){
+    const lk=document.createElement('link');
+    lk.id='leaflet-css';lk.rel='stylesheet';
+    lk.href='https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css';
+    document.head.appendChild(lk);
+  }
+  // Load Leaflet JS
+  if(!window.L){
+    const ok=await loadScript('https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js');
+    if(!ok||!window.L){if(statusEl)statusEl.textContent='地圖套件載入失敗，請檢查網路連線。';return;}
+  }
+
+  // Destroy previous map instance
+  if(_mapInstance){try{_mapInstance.remove();}catch(e){}  _mapInstance=null;}
+
+  // Init map
+  _mapInstance=L.map('map-container',{zoomControl:true,attributionControl:true}).setView([23.6978,120.9605],7);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{
+    attribution:'© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+    maxZoom:19
+  }).addTo(_mapInstance);
+
+  // Collect locations based on filter
+  let allLocs=[];
+  S.days.forEach((day,di)=>{
+    if(_mapFilterDay!=='all'&&_mapFilterDay!==day.id)return;
+    (day.locations||[]).forEach((loc,li)=>{allLocs.push({loc,day,dayIdx:di,locIdx:li});});
+  });
+
+  if(!allLocs.length){if(statusEl)statusEl.textContent='目前選取的天數沒有任何地點。';return;}
+  if(statusEl)statusEl.textContent=`正在定位 ${allLocs.length} 個地點（使用 OpenStreetMap Nominatim）...`;
+
+  const bounds=[];let geocodedCount=0,failCount=0;
+  // Number label for sequential ordering
+  let seq=0;
+  for(const{loc,day,dayIdx,locIdx}of allLocs){
+    seq++;
+    const query=(loc.address?loc.name+' '+loc.address:loc.name).trim();
+    if(!query)continue;
+    const coord=await _geocode(query);
+    await _sleep(1100); // Nominatim rate limit: 1 req/sec
+    if(!coord){failCount++;continue;}
+    geocodedCount++;
+    bounds.push([coord.lat,coord.lng]);
+    const cat=loc.category||ac(loc.name+' '+(loc.notes||'')+' '+(loc.address||''));
+    const color=CBr[cat]||'#1D9E75';
+    const bgColor=CB[cat]||'#E1F5EE';
+    const icon=L.divIcon({
+      html:`<div style="position:relative;width:36px;height:42px;">
+        <div style="position:absolute;left:0;top:0;width:36px;height:36px;background:${color};border-radius:50% 50% 50% 0;transform:rotate(-45deg);box-shadow:0 2px 8px rgba(0,0,0,.3);border:2.5px solid #fff;"></div>
+        <div style="position:absolute;left:0;top:0;width:36px;height:36px;display:flex;align-items:center;justify-content:center;font-size:14px;line-height:1;">${CE[cat]||'📌'}</div>
+        <div style="position:absolute;left:50%;bottom:0;transform:translateX(-50%);background:${color};color:#fff;border-radius:999px;font-size:9px;font-weight:900;padding:1px 5px;min-width:16px;text-align:center;line-height:16px;height:16px;box-shadow:0 1px 4px rgba(0,0,0,.25);">${seq}</div>
+      </div>`,
+      iconSize:[36,42],
+      iconAnchor:[18,42],
+      popupAnchor:[0,-44],
+      className:''
+    });
+    const resLabel={booked:'✅ 已訂位',pending:'⏳ 待確認',no_need:'—— 不需訂位'};
+    const popup=`<div style="font-size:13px;min-width:170px;max-width:240px;font-family:-apple-system,sans-serif;">
+      <div style="display:flex;align-items:center;gap:6px;margin-bottom:5px;">
+        <span style="background:${bgColor};color:${color};border-radius:999px;padding:2px 8px;font-size:11px;font-weight:800;">${CE[cat]||'📌'} ${cat}</span>
+        <span style="font-size:11px;color:#888;font-weight:700;">#${seq}</span>
+      </div>
+      <div style="font-weight:900;font-size:15px;margin-bottom:3px;line-height:1.3;">${esc(loc.name)}</div>
+      <div style="color:#555;font-size:12px;margin-bottom:2px;">📅 ${esc(day.title)}${loc.time?' · '+esc(loc.time):''}</div>
+      ${loc.address?`<div style="color:#0c447c;font-size:12px;margin-bottom:3px;">📍 ${esc(loc.address)}</div>`:''}
+      ${loc.phone?`<div style="font-size:12px;margin-bottom:3px;"><a href="tel:${esc(loc.phone)}" style="color:#0c447c;font-weight:700;">📞 ${esc(loc.phone)}</a></div>`:''}
+      ${loc.reservation&&resLabel[loc.reservation]?`<div style="font-size:11px;margin-bottom:3px;">${resLabel[loc.reservation]}${loc.resCode?' · '+esc(loc.resCode):''}</div>`:''}
+      ${loc.notes?`<div style="font-size:12px;color:#444;background:#f5f8f5;border-left:3px solid ${color};padding:5px 8px;border-radius:0 6px 6px 0;margin-top:5px;line-height:1.5;">${esc(loc.notes.slice(0,120))+(loc.notes.length>120?'…':'')}</div>`:''}
+    </div>`;
+    L.marker([coord.lat,coord.lng],{icon}).addTo(_mapInstance).bindPopup(popup,{maxWidth:260});
+    if(statusEl)statusEl.textContent=`已定位 ${geocodedCount} / ${allLocs.length} 個地點...`;
+  }
+  if(bounds.length>1)_mapInstance.fitBounds(bounds,{padding:[40,40]});
+  else if(bounds.length===1)_mapInstance.setView(bounds[0],15);
+  if(statusEl){
+    const msg=geocodedCount>0?`已在地圖標示 ${geocodedCount} 個地點${failCount?' · '+failCount+' 個無法定位（地址可能不夠詳細）':''}`:'無法定位任何地點，請確認地址欄位是否填寫正確。';
+    statusEl.textContent=msg;
+  }
+}
+
 load();
 loadFx();
 </script>
