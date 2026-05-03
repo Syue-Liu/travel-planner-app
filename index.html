@@ -252,12 +252,14 @@ input:focus,select:focus,textarea:focus{border-color:#42a787;box-shadow:0 0 0 3p
 @keyframes toast-in{from{opacity:0;transform:translateX(-50%) translateY(12px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}
 
 /* ── Wishlist tab ───────────────────────────── */
-.wl-topbar{display:flex;gap:8px;margin-bottom:14px;align-items:center;}
-.wl-filter-row{display:flex;gap:6px;overflow-x:auto;flex:1;scrollbar-width:none;padding-bottom:2px;}
+.wl-topbar{display:flex;flex-direction:column;gap:10px;margin-bottom:14px;}
+.wl-filter-row{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;padding-bottom:2px;}
 .wl-filter-row::-webkit-scrollbar{display:none;}
 .wl-filter-btn{padding:7px 13px;border-radius:999px;font-size:13px;font-weight:700;cursor:pointer;border:1px solid var(--line);background:#fff;color:var(--muted);white-space:nowrap;flex-shrink:0;}
 .wl-filter-btn.on{background:#0f5e5e;color:#fff;border-color:#0f5e5e;}
-.wl-add-btn{flex-shrink:0;padding:8px 16px;border-radius:999px;font-size:13px;font-weight:800;background:#0f5e5e;color:#fff;border:none;cursor:pointer;white-space:nowrap;}
+.wl-action-row{display:flex;gap:8px;}
+.wl-add-btn{flex:1;padding:9px 16px;border-radius:999px;font-size:13px;font-weight:800;background:#0f5e5e;color:#fff;border:none;cursor:pointer;white-space:nowrap;text-align:center;}
+.wl-ai-btn{flex:1;padding:9px 16px;border-radius:999px;font-size:13px;font-weight:800;background:#5b3fc4;color:#fff;border:none;cursor:pointer;white-space:nowrap;text-align:center;}
 .wl-group{margin-bottom:18px;}
 .wl-group-label{font-size:11px;font-weight:900;letter-spacing:.07em;color:var(--muted);text-transform:uppercase;margin-bottom:8px;padding-left:2px;}
 .wl-card{background:#fff;border-radius:14px;border:1.5px solid var(--line);padding:13px 14px;margin-bottom:8px;position:relative;box-shadow:0 4px 14px rgba(31,59,53,.05);}
@@ -424,7 +426,10 @@ async function psave(){
 }
 function setD(u){S={...S,...u};psave();render();}
 function setU(u){S={...S,...u};render();}
+let _preserveScroll=false;
 function render(){
+  const savedScroll=_preserveScroll?window.scrollY:0;
+  _preserveScroll=false;
   const root=document.getElementById('root');if(!root)return;
   const si=Math.min(S.dayIdx,S.days.length-1);
   const ad=S.days[si];
@@ -432,7 +437,11 @@ function render(){
   const {b,tx}=settle(S.expenses,S.travelers);
   root.innerHTML=`<div class="app">${hdr(te)}${gnav()}<main class="body">${S.view==='memo'?memoView():''}${S.view==='itinerary'?itin(ad,si):''}${S.view==='wishlist'?wishlistView():''}${S.view==='expenses'?exps(te):''}${S.view==='split'?splt(b,tx,te):''}</main></div>${S.modal?buildModal():''}`;
 
-  setTimeout(()=>{const t=document.querySelector('.day-tabs .dtab.on');if(t)t.scrollIntoView({inline:'nearest',block:'nearest',behavior:'instant'});},0);
+  setTimeout(()=>{
+    const t=document.querySelector('.day-tabs .dtab.on');
+    if(t)t.scrollIntoView({inline:'nearest',block:'nearest',behavior:'instant'});
+    if(savedScroll>0)window.scrollTo({top:savedScroll,behavior:'instant'});
+  },0);
 }
 function hdr(te){
   const statsStrip='';
@@ -999,6 +1008,7 @@ function mvLoc(dayId,locId,dir){
   const days=JSON.parse(JSON.stringify(S.days)),day=days.find(d=>d.id===dayId),i=day.locations.findIndex(l=>l.id===locId),j=i+dir;
   if(i<0||j<0||j>=day.locations.length)return;
   [day.locations[i],day.locations[j]]=[day.locations[j],day.locations[i]];
+  _preserveScroll=true;
   setD({days});
 }
 function showNote(locId){
@@ -1006,7 +1016,7 @@ function showNote(locId){
   if(!l)return;
   setU({modal:{t:'note',locId,name:l.name,notes:l.notes}});
 }
-function buildModal(){if(S.modal?.t==='wl_add')return buildWlAddModal();
+function buildModal(){if(S.modal?.t==='wl_add')return buildWlAddModal();if(S.modal?.t==='wl_import')return buildWlImportModal();
   const m=S.modal;let c='';
   if(m.t==='tripGate')c=mTripGate();else if(m.t==='loc')c=mLoc();else if(m.t==='nd'||m.t==='ed')c=mDay();else if(m.t==='exp')c=mExp();else if(m.t==='tv')c=mTv();else if(m.t==='cover')c=mCover();else if(m.t==='tools')c=mTools();else if(m.t==='import')c=mImport();else if(m.t==='note')c=mNote();else if(m.t==='help')c=mHelp();
   const lock=m.t==='tripGate';
@@ -1192,7 +1202,7 @@ function wishlistView(){
     const cnt=c.id==='all'?items.length:items.filter(i=>i.cat===c.id).length;
     return`<button class="wl-filter-btn${filter===c.id?' on':''}" onclick="_wlFilter='${c.id}';setU({})">${c.emoji} ${c.label}${cnt?` <span style="opacity:.6;font-size:10px;">${cnt}</span>`:''}</button>`;
   }).join('');
-  const topbar=`<div class="wl-topbar"><div class="wl-filter-row">${catBtns}</div><button class="wl-add-btn" onclick="wlOpenAdd()">＋ 新增</button></div>`;
+  const topbar=`<div class="wl-topbar"><div class="wl-filter-row">${catBtns}</div><div class="wl-action-row"><button class="wl-add-btn" onclick="wlOpenAdd()">＋ 新增地點</button><button class="wl-ai-btn" onclick="setU({modal:{t:'wl_import'}})">✨ AI 匯入清單</button></div></div>`;
 
   const visible=filter==='all'?items:items.filter(i=>i.cat===filter);
   let body='';
@@ -1292,6 +1302,99 @@ function buildWlAddModal(){
       </div>
     </div>
   </div>`;
+}
+
+
+// ── Wishlist AI Import ──────────────────────────────
+const WL_IMPORT_PROMPT=`請幫我推薦 [目的地] 的旅遊必去清單，包含咖啡廳、美食、伴手禮、景點、購物等，請嚴格按照以下格式輸出，不要加任何 Markdown、粗體、標題符號：
+
+分類|名稱|地址|電話|備註
+
+分類只能從以下選一個，完全照填：
+咖啡廳、美食、伴手禮、景點、購物、住宿、其他
+
+格式說明：
+- 每行固定用「|」分成五段：分類 | 名稱 | 地址 | 電話 | 備註
+- 地址請填完整地址讓 Google Maps 可準確導航（查不到可留空）
+- 電話：餐廳、咖啡廳請認真查詢；景點若無電話則留空
+- 備註請填推薦理由、注意事項、必點商品等（1-2句話）
+- 不要加粗體 ** 不要加 # 不要加項目符號 - 不要加編號
+
+範例輸出（以花蓮為例）：
+咖啡廳|曙光咖啡|花蓮縣花蓮市中山路74號|03-831-3888|老屋改造，必點手沖單品，假日人多建議早去
+美食|公正包子|花蓮縣花蓮市公正街94號|03-832-7000|老字號必吃，蒸籠香氣濃，建議9點前到
+伴手禮|洄瀾薯道|花蓮縣花蓮市中山路462號|03-833-3000|地瓜系列伴手禮，花蓮限定口味
+景點|七星潭|花蓮縣新城鄉七星街48號||石礫灘日出超美，建議帶保暖衣物
+購物|東大門夜市|花蓮縣花蓮市自強路一段1號||四個區域各有特色，阿美麻糬必吃`;
+
+function buildWlImportModal(){
+  window._wlGeminiPrompt=WL_IMPORT_PROMPT;
+  return`<div class="modal-overlay" onclick="if(event.target===this)setU({modal:null})">
+    <div class="modal-box">
+      <div class="modal-title">✨ AI 匯入清單</div>
+      <div style="background:#f0f0fc;border:1px solid #c8b8f0;border-radius:var(--r);padding:12px;margin-bottom:14px;">
+        <div style="font-size:12px;font-weight:900;color:#3d1fa8;margin-bottom:8px;">步驟一：複製提示詞給 Gemini / ChatGPT</div>
+        <pre style="font-size:11px;line-height:1.7;color:#2d1a6e;background:#e8e4f8;border-radius:8px;padding:10px;overflow-x:auto;white-space:pre-wrap;word-break:break-all;max-height:160px;overflow-y:auto;margin-bottom:10px;">${esc(WL_IMPORT_PROMPT)}</pre>
+        <button class="btn bp" style="width:100%;padding:9px;font-size:13px;background:#5b3fc4;border-color:#5b3fc4;" id="wl-copy-prompt-btn" onclick="wlCopyPrompt()">📋 複製提示詞</button>
+      </div>
+      <div style="font-size:12px;font-weight:900;color:#3d1fa8;margin-bottom:6px;">步驟二：貼入 AI 的回覆</div>
+      <textarea class="import-area" id="wl-import-box" placeholder="貼入 AI 輸出的推薦清單，例如：
+咖啡廳|曙光咖啡|花蓮縣花蓮市中山路74號|03-831-3888|老屋改造必訪
+美食|公正包子|花蓮縣花蓮市公正街94號||老字號必吃..." oninput="wlPreviewImport()" style="height:140px;"></textarea>
+      <div id="wl-import-preview" style="font-size:12px;color:#0f5e5e;margin:8px 0;font-weight:700;min-height:20px;"></div>
+      <div class="modal-actions">
+        <button class="btn" onclick="setU({modal:null})">取消</button>
+        <button class="btn bp" onclick="wlConfirmImport()">匯入清單</button>
+      </div>
+    </div>
+  </div>`;
+}
+
+function wlCopyPrompt(){
+  const text=window._wlGeminiPrompt||'';
+  const btn=document.getElementById('wl-copy-prompt-btn');
+  const done=()=>{if(btn){btn.textContent='✅ 已複製！';setTimeout(()=>{if(btn)btn.textContent='📋 複製提示詞';},2000);}};
+  if(navigator.clipboard?.writeText){navigator.clipboard.writeText(text).then(done).catch(()=>{_wlCopyFallback(text);done();});}
+  else{_wlCopyFallback(text);done();}
+}
+function _wlCopyFallback(text){
+  const ta=document.createElement('textarea');ta.value=text;ta.style.cssText='position:fixed;opacity:0;top:0;left:0;';
+  document.body.appendChild(ta);ta.focus();ta.select();try{document.execCommand('copy');}catch{}document.body.removeChild(ta);
+}
+
+const WL_CAT_TEXT_MAP={'咖啡廳':'cafe','美食':'food','餐廳':'food','伴手禮':'souvenir','紀念品':'souvenir','景點':'attraction','購物':'shopping','住宿':'hotel','飯店':'hotel','其他':'other'};
+
+function _parseWlImport(text){
+  const lines=text.split('\n').map(l=>l.trim()).filter(l=>l&&l.includes('|'));
+  const items=[];
+  for(const line of lines){
+    const parts=line.split('|').map(p=>p.trim());
+    if(parts.length<2)continue;
+    const [catText,name,address='',phone='',note='']=parts;
+    if(!name)continue;
+    const cat=WL_CAT_TEXT_MAP[catText]||'other';
+    items.push({id:uid(),name,cat,address,phone,note,added:false});
+  }
+  return items;
+}
+
+function wlPreviewImport(){
+  const text=document.getElementById('wl-import-box')?.value||'';
+  const items=_parseWlImport(text);
+  const prev=document.getElementById('wl-import-preview');
+  if(prev)prev.textContent=items.length?`✅ 偵測到 ${items.length} 個地點可匯入`:'';
+}
+
+function wlConfirmImport(){
+  const text=document.getElementById('wl-import-box')?.value||'';
+  const newItems=_parseWlImport(text);
+  if(!newItems.length){alert('未偵測到有效格式，請確認貼上的格式正確。');return;}
+  const wishlist=[...(S.wishlist||[]),...newItems];
+  setD({wishlist,modal:null});
+  const t=document.createElement('div');
+  t.className='wl-toast';
+  t.textContent=`✅ 已匯入 ${newItems.length} 個地點到清單`;
+  document.body.appendChild(t);setTimeout(()=>t.remove(),2100);
 }
 
 load();
