@@ -21,10 +21,18 @@ a{text-decoration:none}
 .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
 #root{min-height:100vh}
 .app{min-height:100vh;max-width:980px;margin:0 auto;background:rgba(255,255,255,.7);box-shadow:0 0 0 1px rgba(255,255,255,.55)}
-.cover{position:relative;z-index:30;overflow:visible;min-height:220px;padding:18px 16px 20px;color:#fff;background:#0f5e5e;background-image:linear-gradient(180deg,rgba(8,34,32,.18),rgba(8,34,32,.82)),var(--cover);background-size:cover;background-position:center;display:flex;flex-direction:column;justify-content:space-between}
-.topbar{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
-.hdr-title{font-size:24px;line-height:1.12;font-weight:800;letter-spacing:0;cursor:pointer;text-shadow:0 2px 12px rgba(0,0,0,.25);max-width:70%}
-.hdr-sub{font-size:12px;color:rgba(255,255,255,.88);margin-top:8px;text-shadow:0 1px 8px rgba(0,0,0,.25)}
+.cover{position:relative;z-index:30;overflow:hidden;aspect-ratio:16/9;min-height:200px;max-height:360px;color:#fff;background:#0f5e5e;background-image:linear-gradient(to bottom,rgba(0,0,0,.55) 0%,rgba(0,0,0,.05) 38%,rgba(0,0,0,.05) 55%,rgba(0,0,0,.72) 100%),var(--cover);background-size:cover;background-position:center var(--cover-pos,30%);display:flex;flex-direction:column;justify-content:space-between}
+.topbar{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;padding:16px 16px 0}
+.cover-bottom{padding:0 16px 18px;display:flex;flex-direction:column;gap:6px}
+.hdr-title{font-size:26px;line-height:1.15;font-weight:900;letter-spacing:-.5px;cursor:pointer;text-shadow:0 2px 16px rgba(0,0,0,.5);word-break:break-word}
+.hdr-title-edit-icon{font-size:14px;opacity:.65;margin-left:4px;vertical-align:middle}
+.hdr-sub{font-size:12px;color:rgba(255,255,255,.82);text-shadow:0 1px 8px rgba(0,0,0,.4);display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.hdr-sub-chip{background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.25);border-radius:999px;padding:2px 9px;font-size:11px;font-weight:700;backdrop-filter:blur(6px)}
+.stats-strip{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:0;background:var(--card);border-bottom:1px solid var(--line);box-shadow:0 4px 12px rgba(0,0,0,.06)}
+.stat-cell{padding:13px 14px;display:flex;flex-direction:column;gap:3px;position:relative}
+.stat-cell+.stat-cell::before{content:'';position:absolute;left:0;top:18%;height:64%;width:1px;background:var(--line)}
+.stat-n{font-size:20px;font-weight:900;color:var(--ink);letter-spacing:-.5px;line-height:1}
+.stat-l{font-size:11px;color:var(--muted);font-weight:700}
 .cover-actions{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
 .glass{background:rgba(255,255,255,.18);color:#fff;border:1px solid rgba(255,255,255,.26);backdrop-filter:blur(10px)}
 .cover-menu-wrap{position:relative;z-index:80;flex-shrink:0}
@@ -37,10 +45,7 @@ a{text-decoration:none}
 .title-edit{display:flex;gap:8px;align-items:center;width:100%;margin-top:auto}
 .tni{background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.35);color:#fff;border-radius:12px;padding:11px 12px;font-size:18px;font-family:var(--font-sans);flex:1;min-width:0}
 .tni::placeholder{color:rgba(255,255,255,.62)}
-.quick{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:14px}
-.quick-card{padding:10px 11px;border-radius:13px;background:rgba(255,255,255,.2);border:1px solid rgba(255,255,255,.22);backdrop-filter:blur(8px)}
-.quick-n{font-size:18px;font-weight:800}
-.quick-l{font-size:11px;color:rgba(255,255,255,.82)}
+.quick{display:none}
 .nav{position:sticky;top:0;z-index:20;display:flex;gap:6px;padding:8px;background:rgba(255,255,255,.92);backdrop-filter:blur(14px);border-bottom:1px solid rgba(217,226,223,.8)}
 .nav-btn{flex:1;min-height:42px;padding:8px 6px;font-size:14px;color:var(--muted);border:0;background:transparent;border-radius:999px;cursor:pointer}
 .nav-btn.on{color:#fff;background:var(--teal);font-weight:700;box-shadow:0 7px 18px rgba(15,94,94,.22)}
@@ -146,24 +151,21 @@ input:focus,select:focus,textarea:focus{border-color:#42a787;box-shadow:0 0 0 3p
 .mini{font-size:12px;color:var(--muted);font-weight:700}
 @media (min-width:720px){
   .app{margin:18px auto;border-radius:24px;overflow:hidden;min-height:calc(100vh - 36px)}
-  .cover{min-height:270px;padding:26px}
+  .cover{aspect-ratio:unset;min-height:320px;max-height:420px}
   .body{padding:20px 24px 34px}
-  .hdr-title{font-size:34px}
-  .quick{max-width:520px}
+  .hdr-title{font-size:36px;letter-spacing:-.8px}
+  .stat-n{font-size:22px}
   .msh{border-radius:22px;margin-bottom:24px}
 }
 @media (max-width:640px){
   body{font-size:14px}
-  .cover{min-height:205px}
-  .hdr-title{font-size:22px;max-width:100%}
+  .cover{aspect-ratio:16/9;min-height:180px;max-height:280px}
+  .hdr-title{font-size:22px}
   .topbar{display:flex;align-items:flex-start}
   .cover-menu{position:fixed;right:12px;top:calc(env(safe-area-inset-top) + 72px);left:12px;z-index:200;min-width:0;max-height:calc(100vh - 110px);overflow:auto}
   .mobile-stack{grid-template-columns:1fr!important}
   .mobile-stack > div{min-width:0}
   .mobile-stack input[type=time]{-webkit-appearance:none;appearance:none;text-align:left;min-height:54px}
-  .quick{grid-template-columns:repeat(3,1fr)}
-  .quick-card{padding:9px 8px}
-  .quick-n{font-size:16px}
   .loc-wrap{grid-template-columns:46px minmax(0,1fr);gap:9px;padding:13px 12px}
   .stats{grid-template-columns:1fr}
   .txn{grid-template-columns:1fr;gap:4px;text-align:center}
@@ -287,7 +289,7 @@ async function initCloud(){
       if(!snap.exists){psave();return;}
       const data=snap.data()||{};
       cloud.applying=true;
-      S={...S,...data,settleCurrency:data.settleCurrency||S.settleCurrency||'TWD',travelerIcons:data.travelerIcons||S.travelerIcons||{},budget:Number(data.budget||0),cover:data.cover||S.cover,view:S.view,dayIdx:S.dayIdx,modal:S.modal,editTN:S.editTN,tnDraft:S.tnDraft};
+      S={...S,...data,settleCurrency:data.settleCurrency||S.settleCurrency||'TWD',travelerIcons:data.travelerIcons||S.travelerIcons||{},budget:Number(data.budget||0),cover:data.cover||S.cover,coverPos:data.coverPos||S.coverPos||'30%',view:S.view,dayIdx:S.dayIdx,modal:S.modal,editTN:S.editTN,tnDraft:S.tnDraft};
       cloud.status='已同步';
       render();
       cloud.applying=false;
@@ -307,7 +309,7 @@ async function load(){
 }
 async function psave(){
   if(cloud.applying)return;
-  const t={tripName:S.tripName,cover:S.cover,budget:Number(S.budget||0),settleCurrency:S.settleCurrency||'TWD',days:S.days,travelers:S.travelers,travelerIcons:S.travelerIcons||{},expenses:S.expenses,updatedAt:new Date().toISOString()};
+  const t={tripName:S.tripName,cover:S.cover,coverPos:S.coverPos||'30%',budget:Number(S.budget||0),settleCurrency:S.settleCurrency||'TWD',days:S.days,travelers:S.travelers,travelerIcons:S.travelerIcons||{},expenses:S.expenses,updatedAt:new Date().toISOString()};
   try{
     if(cloud.ready&&cloud.doc){cloud.status='同步中';await cloud.doc.set(t,{merge:true});cloud.status='已同步';}
     else await setSaved(SK,JSON.stringify(t));
@@ -326,9 +328,13 @@ function render(){
 }
 function hdr(te){
   const count=S.days.reduce((sum,d)=>sum+(d.locations?.length||0),0);
-  if(S.editTN)return`<header class="cover" style="--cover:url('${esc(S.cover)}')"><div class="title-edit"><input class="tni" id="tn-in" value="${esc(S.tnDraft)}" placeholder="行程名稱" oninput="S.tnDraft=this.value" onkeydown="if(event.key==='Enter')saveTN()" autofocus><button class="btn glass" onclick="saveTN()">完成</button></div></header>`;
+  const statsStrip=`<div class="stats-strip"><div class="stat-cell"><div class="stat-n">${S.days.length}</div><div class="stat-l">天行程</div></div><div class="stat-cell"><div class="stat-n">${count}</div><div class="stat-l">地點</div></div><div class="stat-cell"><div class="stat-n">${fmt(te)}</div><div class="stat-l">總花費</div></div></div>`;
+  if(S.editTN)return`<header class="cover" style="--cover:url('${esc(S.cover)}')"><div class="topbar"></div><div class="cover-bottom"><div class="title-edit"><input class="tni" id="tn-in" value="${esc(S.tnDraft)}" placeholder="行程名稱" oninput="S.tnDraft=this.value" onkeydown="if(event.key==='Enter')saveTN()" autofocus><button class="btn glass" onclick="saveTN()">完成</button></div></div></header>${statsStrip}`;
+  const coverStyle=`--cover:url('${esc(S.cover)}');--cover-pos:${S.coverPos||'30%'}`;
+  if(S.editTN)return`<header class="cover" style="${coverStyle}"><div class="topbar"></div><div class="cover-bottom"><div class="title-edit"><input class="tni" id="tn-in" value="${esc(S.tnDraft)}" placeholder="行程名稱" oninput="S.tnDraft=this.value" onkeydown="if(event.key==='Enter')saveTN()" autofocus><button class="btn glass" onclick="saveTN()">完成</button></div></div></header>${statsStrip}`;
   const menu=S.menuOpen?`<div class="cover-menu"><button onclick="copyShareLink();setU({menuOpen:false})"><span class="mi">🔗</span>分享連結</button><button onclick="setU({modal:{t:'tools'},menuOpen:false})"><span class="mi">☰</span>旅程工具</button><button onclick="setU({modal:{t:'cover'},menuOpen:false})"><span class="mi">📷</span>更換封面</button><button onclick="setU({modal:{t:'tv'},menuOpen:false})"><span class="mi">👥</span>旅伴管理</button></div>`:'';
-  return`<header class="cover" style="--cover:url('${esc(S.cover)}')"><div class="topbar"><div><div class="hdr-title" onclick="setU({editTN:true,tnDraft:'${esc(S.tripName)}'})">${esc(S.tripName)} <span style="font-size:15px;opacity:.75;">✏️</span></div><div class="hdr-sub">${esc(cloud.status)}${cloud.tripId?` · 分享代碼 ${esc(cloud.tripId)}`:' · 單機開啟時會儲存在目前裝置'}</div></div><div class="cover-menu-wrap"><button class="hamb" aria-label="開啟選單" onclick="setU({menuOpen:!S.menuOpen})"><span></span><span></span><span></span></button>${menu}</div></div><div class="quick"><div class="quick-card"><div class="quick-n">${S.days.length}</div><div class="quick-l">天行程</div></div><div class="quick-card"><div class="quick-n">${count}</div><div class="quick-l">地點</div></div><div class="quick-card"><div class="quick-n">${fmt(te)}</div><div class="quick-l">總花費</div></div></div></header>`;
+  const syncChip=cloud.tripId?`<span class="hdr-sub-chip">🔗 ${esc(cloud.tripId)}</span>`:'';
+  return`<header class="cover" style="${coverStyle}"><div class="topbar"><div></div><div class="cover-menu-wrap"><button class="hamb" aria-label="開啟選單" onclick="setU({menuOpen:!S.menuOpen})"><span></span><span></span><span></span></button>${menu}</div></div><div class="cover-bottom"><div class="hdr-title" onclick="setU({editTN:true,tnDraft:'${esc(S.tripName)}'})"><span>${esc(S.tripName)}</span><span class="hdr-title-edit-icon">✏️</span></div><div class="hdr-sub"><span>${esc(cloud.status||'本機儲存')}</span>${syncChip}</div></div></header>${statsStrip}`;
 }
 function saveTN(){const v=document.getElementById('tn-in')?.value?.trim()||S.tnDraft.trim()||'未命名旅程';setD({tripName:v,editTN:false});}
 function gnav(){
@@ -444,11 +450,19 @@ function mTv(){
 }
 function mCover(){
   const choices=COVERS.map(([name,url])=>`<button class="cover-choice${S.cover===url?' on':''}" style="background-image:linear-gradient(180deg,rgba(0,0,0,.05),rgba(0,0,0,.45)),url('${url}')" onclick="setD({cover:'${url}',modal:null})"><span>${name}</span></button>`).join('');
+  const pos=S.coverPos||'30%';
+  const posOpts=[['10%','偏上（主體在照片上半）'],['30%','居中偏上（預設）'],['50%','正中央'],['70%','居中偏下'],['90%','偏下（主體在照片下半）']];
+  const posRadios=posOpts.map(([v,l])=>`<label style="display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:10px;cursor:pointer;background:${pos===v?'#e4f3ed':'transparent'};border:1px solid ${pos===v?'#0f5e5e':'transparent'};"><input type="radio" name="coverPos" value="${v}" ${pos===v?'checked':''} onchange="S.coverPos=this.value;render()" style="accent-color:#0f5e5e;width:16px;height:16px;flex-shrink:0;"><span style="font-size:13px;">${l}</span></label>`).join('');
   return`<div class="mhd"><div class="mt">更換封面</div><div class="mcl" onclick="setU({modal:null})">✕</div></div>
 <div class="cover-grid">${choices}</div>
-<div class="fg"><label class="fl">上傳自己的封面</label><input type="file" id="cover-file" accept="image/*" onchange="uploadCover(this.files?.[0])"><div class="tip">圖片會壓縮後存進旅程資料；若未啟用雲端同步，則只會存在目前瀏覽器。</div></div>
+<div class="fg"><label class="fl">上傳自己的封面</label><input type="file" id="cover-file" accept="image/*" onchange="uploadCover(this.files?.[0])">
+<div style="margin-top:8px;padding:10px 12px;background:#f0f8f4;border-radius:10px;border:1px solid #c5e5d5;">
+  <div style="font-size:12px;font-weight:900;color:#085041;margin-bottom:5px;">📐 推薦圖片比例</div>
+  <div style="font-size:12px;color:#2d5a4a;line-height:1.7;">✅ 最佳：<b>16:9</b>（1920×1080px）手機＋電腦都完美<br>✅ 次佳：<b>4:3</b>（1200×900px）適合風景照<br>⚠️ 避免：直式照片（會在電腦被嚴重裁切）</div>
+</div></div>
 <div class="fg"><label class="fl">或貼上圖片網址</label><input type="url" id="cover-url" placeholder="https://..." value="${S.cover&&!COVERS.some(c=>c[1]===S.cover)&&!S.cover.startsWith('data:')?esc(S.cover):''}"></div>
-<div class="ar"><button class="btn bp" style="flex:1;padding:10px;" onclick="saveCoverUrl()">套用圖片網址</button><button class="btn" style="flex:1;padding:10px;" onclick="setU({modal:null})">取消</button></div>`;
+<div class="fg"><label class="fl">焦點位置（照片主體在哪裡？）</label><div style="display:flex;flex-direction:column;gap:4px;">${posRadios}</div><div class="tip" style="margin-top:6px;">調整後封面會即時預覽，找到最好的裁切位置再關閉。</div></div>
+<div class="ar"><button class="btn bp" style="flex:1;padding:10px;" onclick="saveCoverUrl()">套用圖片網址</button><button class="btn" style="flex:1;padding:10px;" onclick="setD({coverPos:pos,modal:null})">完成</button></div>`;
 }
 function mTools(){
   const settleOpts=Object.keys(CUR).map(c=>`<option value="${c}"${(S.settleCurrency||'TWD')===c?' selected':''}>${c}</option>`).join('');
