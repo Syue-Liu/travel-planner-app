@@ -134,11 +134,13 @@ input:focus,select:focus,textarea:focus{border-color:#42a787;box-shadow:0 0 0 3p
 .tmpl-btn{padding:8px 13px;border-radius:12px;font-size:13px;font-weight:700;cursor:pointer;border:1px solid rgba(0,0,0,.06);display:inline-flex;align-items:center;gap:6px;white-space:nowrap;transition:opacity .15s,transform .1s}
 .tmpl-btn:active{transform:scale(.97)}
 /* sort controls top-right of card */
-.loc-sort-ctrl{position:absolute;top:8px;right:8px;display:flex;gap:3px;align-items:center;z-index:2}
-.sort-btn{width:28px;height:28px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:13px;cursor:pointer;border:1px solid var(--line);background:var(--card);color:var(--ink);padding:0;user-select:none;-webkit-user-select:none;flex-shrink:0}
-.sort-btn:disabled{opacity:.2;cursor:not-allowed}
-.sort-grip{cursor:grab;color:#b0bdb9;letter-spacing:-.5px;touch-action:none;font-size:17px}
-.sort-grip:active{cursor:grabbing;color:#42a787}
+.loc-sort-ctrl{position:absolute;top:10px;right:10px;display:flex;gap:2px;align-items:center;z-index:2;padding:3px;border-radius:999px;background:rgba(248,252,250,.92);border:1px solid rgba(15,94,94,.14);box-shadow:0 6px 16px rgba(18,38,35,.08);backdrop-filter:blur(8px)}
+.loc-card-wrap.loc-now .loc-sort-ctrl{top:42px;background:rgba(255,255,255,.9)}
+.sort-btn{width:27px;height:27px;border-radius:999px;display:flex;align-items:center;justify-content:center;font-size:13px;cursor:pointer;border:0;background:transparent;color:#55706a;padding:0;user-select:none;-webkit-user-select:none;flex-shrink:0}
+.sort-btn:hover,.sort-btn:active{background:rgba(15,94,94,.08);color:#0f5e5e}
+.sort-btn:disabled{opacity:.25;cursor:not-allowed;background:transparent;color:#9aa8a4}
+.sort-grip{cursor:grab;color:#9aa8a4;letter-spacing:-.5px;touch-action:none;font-size:17px}
+.sort-grip:active{cursor:grabbing;color:#0f5e5e}
 /* icon action buttons */
 .act-row{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-top:8px}
 .btn-ic{width:34px;height:34px;border-radius:999px;display:flex;align-items:center;justify-content:center;font-size:15px;cursor:pointer;border:1px solid var(--line);background:var(--card);color:var(--ink);flex-shrink:0;text-decoration:none;padding:0;line-height:1}
@@ -213,6 +215,7 @@ input:focus,select:focus,textarea:focus{border-color:#42a787;box-shadow:0 0 0 3p
   .loc-time{width:58px;min-width:58px;font-size:15px;line-height:1.2;text-align:left}
   .loc-name{padding-right:108px}
   .loc-sort-ctrl{top:10px;right:10px}
+  .loc-card-wrap.loc-now .loc-sort-ctrl{top:42px}
   .act-row{padding-right:0}
   .stats{grid-template-columns:1fr}
   .txn{grid-template-columns:1fr;gap:4px;text-align:center}
