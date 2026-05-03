@@ -221,25 +221,30 @@ input:focus,select:focus,textarea:focus{border-color:#42a787;box-shadow:0 0 0 3p
   .cover-grid{grid-template-columns:1fr}
 }
 
-/* ── Map view ──────────────────────────────── */
-#map-view-wrap { display:flex; flex-direction:column; gap:0; }
-#map-toolbar { display:flex; align-items:center; gap:7px; padding:0 0 10px; flex-wrap:wrap; }
-#map-day-tabs { display:flex; gap:6px; overflow-x:auto; flex:1; scrollbar-width:none; }
-#map-day-tabs::-webkit-scrollbar { display:none; }
-.map-dtab { padding:7px 14px; border-radius:999px; font-size:13px; font-weight:700; white-space:nowrap; cursor:pointer; border:1px solid var(--line); background:#fff; color:var(--muted); flex-shrink:0; }
-.map-dtab.on { background:#183b40; color:#fff; border-color:#183b40; }
-#map-locate-btn { flex-shrink:0; padding:7px 14px; border-radius:999px; font-size:13px; font-weight:700; border:1px solid #3977d4; background:#eef3fd; color:#1a4fa8; cursor:pointer; white-space:nowrap; display:flex; align-items:center; gap:5px; }
-#map-locate-btn:active { background:#dce8fc; }
-#map-locate-btn.locating { background:#fffbe8; border-color:#e6ac30; color:#7a5a00; animation:loc-pulse .9s ease-in-out infinite; }
-@keyframes loc-pulse { 0%,100%{opacity:1} 50%{opacity:.6} }
-#map-container { width:100%; height:calc(100vh - 230px); min-height:400px; border-radius:14px; overflow:hidden; border:1px solid var(--line); box-shadow:0 8px 24px rgba(31,59,53,.08); }
-#map-status { font-size:12px; color:var(--muted); margin-top:8px; text-align:center; min-height:18px; line-height:1.5; }
-.map-legend { display:flex; flex-wrap:wrap; gap:7px; margin-top:10px; }
-.map-legend-item { display:flex; align-items:center; gap:4px; font-size:11px; font-weight:700; padding:3px 9px; border-radius:999px; border:1px solid transparent; }
-.leaflet-popup-content-wrapper { border-radius:14px !important; box-shadow:0 8px 24px rgba(0,0,0,.18) !important; }
-.leaflet-popup-content { font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans TC",sans-serif !important; margin:12px 14px !important; }
-.leaflet-popup-tip-container { display:none; }
-.map-me-dot { width:18px; height:18px; background:#3977d4; border-radius:50%; border:3px solid #fff; box-shadow:0 0 0 3px rgba(57,119,212,.35),0 2px 8px rgba(0,0,0,.3); }
+/* ── Explore tab ───────────────────────────── */
+.exp-ctx-bar{display:flex;align-items:center;gap:8px;padding:10px 14px;background:#f0faf6;border-radius:12px;border:1px solid #b7dfcf;margin-bottom:12px;flex-wrap:wrap;}
+.exp-ctx-city{font-size:13px;font-weight:800;color:#085041;}
+.exp-ctx-day{font-size:12px;color:var(--muted);}
+.exp-cat-row{display:flex;gap:7px;overflow-x:auto;padding:0 0 12px;scrollbar-width:none;flex-wrap:wrap;}
+.exp-cat-row::-webkit-scrollbar{display:none;}
+.exp-cat-btn{padding:8px 14px;border-radius:999px;font-size:13px;font-weight:700;cursor:pointer;border:1px solid var(--line);background:#fff;color:var(--muted);white-space:nowrap;display:flex;align-items:center;gap:5px;flex-shrink:0;}
+.exp-cat-btn.on{background:#0f5e5e;color:#fff;border-color:#0f5e5e;}
+.exp-search-row{display:flex;gap:8px;margin-bottom:14px;}
+.exp-search-row input{flex:1;}
+.exp-search-row button{flex-shrink:0;padding:0 18px;}
+.exp-results{display:flex;flex-direction:column;gap:9px;}
+.exp-card{background:#fff;border-radius:14px;border:1px solid var(--line);overflow:hidden;box-shadow:0 4px 14px rgba(31,59,53,.06);display:flex;align-items:stretch;}
+.exp-card-left{width:5px;flex-shrink:0;}
+.exp-card-body{flex:1;padding:12px 14px;min-width:0;}
+.exp-card-name{font-weight:900;font-size:15px;margin-bottom:3px;word-break:break-word;}
+.exp-card-addr{font-size:12px;color:var(--muted);margin-bottom:6px;word-break:break-word;}
+.exp-card-tags{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:8px;}
+.exp-card-tag{font-size:11px;padding:2px 8px;border-radius:999px;font-weight:700;}
+.exp-card-actions{display:flex;gap:7px;flex-wrap:wrap;}
+.exp-empty{text-align:center;padding:32px 12px;color:var(--muted);font-size:14px;}
+.exp-loading{text-align:center;padding:24px 12px;color:var(--muted);font-size:14px;}
+.exp-add-toast{position:fixed;bottom:calc(24px + env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);background:#0f5e5e;color:#fff;border-radius:12px;padding:10px 20px;font-size:14px;font-weight:800;z-index:200;box-shadow:0 8px 24px rgba(15,94,94,.35);pointer-events:none;animation:toast-in .25s ease;}
+@keyframes toast-in{from{opacity:0;transform:translateX(-50%) translateY(12px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}
 
 </style>
 </head>
@@ -391,7 +396,7 @@ function render(){
   const ad=S.days[si];
   const te=S.expenses.reduce((s,e)=>s+expValue(e),0);
   const {b,tx}=settle(S.expenses,S.travelers);
-  root.innerHTML=`<div class="app">${hdr(te)}${gnav()}<main class="body">${S.view==='memo'?memoView():''}${S.view==='itinerary'?itin(ad,si):''}${S.view==='map'?mapView():''}${S.view==='expenses'?exps(te):''}${S.view==='split'?splt(b,tx,te):''}</main></div>${S.modal?buildModal():''}`;
+  root.innerHTML=`<div class="app">${hdr(te)}${gnav()}<main class="body">${S.view==='memo'?memoView():''}${S.view==='itinerary'?itin(ad,si):''}${S.view==='explore'?exploreView():''}${S.view==='expenses'?exps(te):''}${S.view==='split'?splt(b,tx,te):''}</main></div>${S.modal?buildModal():''}`;
 
   setTimeout(()=>{const t=document.querySelector('.day-tabs .dtab.on');if(t)t.scrollIntoView({inline:'nearest',block:'nearest',behavior:'instant'});},0);
 }
@@ -407,7 +412,7 @@ function hdr(te){
 }
 function saveTN(){const v=document.getElementById('tn-in')?.value?.trim()||S.tnDraft.trim()||'未命名旅程';setD({tripName:v,editTN:false});}
 function gnav(){
-  const ts=[['memo','📝 備忘'],['itinerary','🗺 行程'],['map','📍 地圖'],['expenses','💰 帳目'],['split','⚖ 分帳']];
+  const ts=[['memo','📝 備忘'],['itinerary','🗺 行程'],['explore','🔍 探索'],['expenses','💰 帳目'],['split','⚖ 分帳']];
   return`<nav class="nav">${ts.map(([k,l])=>`<button class="nav-btn${S.view===k?' on':''}" onclick="setU({view:'${k}'})">${l}</button>`).join('')}</nav>`;
 }
 function itin(day,si){
@@ -1131,229 +1136,144 @@ async function readReceipt(file){
   }catch{if(st)st.textContent='辨識失敗，請換一張更清楚的照片或手動輸入。';}
 }
 
-// ── Map tab ─────────────────────────────────
-let _mapInstance = null;
-let _geoCache    = {};   // key -> {lat,lng} | false
-let _mapFilterDay= 'all';
-let _mapInitId   = 0;    // stale-run guard
-let _meMarker    = null; // current-location marker
+// ── Explore tab ──────────────────────────────
+const EXP_CATS=[
+  {id:'cafe',     label:'咖啡廳', emoji:'☕', q:'咖啡廳 cafe coffee', cat:'餐飲'},
+  {id:'food',     label:'美食餐廳',emoji:'🍜', q:'餐廳 restaurant food', cat:'餐飲'},
+  {id:'souvenir', label:'伴手禮', emoji:'🎁', q:'伴手禮 souvenir gift shop', cat:'購物'},
+  {id:'attraction',label:'景點',  emoji:'🎫', q:'景點 attraction tourist', cat:'景點'},
+  {id:'shopping', label:'購物',   emoji:'🛍️', q:'購物 shopping mall store', cat:'購物'},
+  {id:'hotel',    label:'住宿',   emoji:'🏨', q:'飯店 hotel hostel', cat:'住宿'},
+  {id:'bar',      label:'酒吧',   emoji:'🍺', q:'酒吧 bar pub izakaya', cat:'餐飲'},
+  {id:'dessert',  label:'甜點',   emoji:'🍰', q:'甜點 dessert bakery', cat:'餐飲'},
+];
+let _expCat=null;
+let _expResults=[];
+let _expSearchVal='';
+let _expAdded={};  // locId -> true, for button feedback
 
-function mapView(){
-  const dayTabs = [{id:'all',title:'全部天數'}, ...S.days].map(d=>{
-    const label = d.id==='all' ? '🗓️ 全部' : '📅 '+esc(d.title);
-    return `<button class="map-dtab${_mapFilterDay===d.id?' on':''}" onclick="changeMapFilter('${d.id}')">${label}</button>`;
-  }).join('');
-  const legend = Object.entries(CE).map(([cat,ico])=>
-    `<div class="map-legend-item" style="background:${CB[cat]};color:${CF[cat]};border-color:${CBr[cat]}33;">${ico} ${cat}</div>`
-  ).join('');
-  return `<div id="map-view-wrap">
-    <div id="map-toolbar">
-      <div id="map-day-tabs">${dayTabs}</div>
-      <button id="map-locate-btn" onclick="mapLocateMe()">📍 目前位置</button>
+function exploreView(){
+  const si=Math.min(S.dayIdx,S.days.length-1);
+  const day=S.days[si];
+  const city=day?.city||'';
+  const catBtns=EXP_CATS.map(c=>`<button class="exp-cat-btn${_expCat===c.id?' on':''}" onclick="expPickCat('${c.id}')">${c.emoji} ${c.label}</button>`).join('');
+  const ctxBar=`<div class="exp-ctx-bar">
+    <span style="font-size:18px;">${city?'📍':'🗓️'}</span>
+    <div><div class="exp-ctx-city">${city?esc(city):'未設定城市'}</div>
+    <div class="exp-ctx-day">搜尋範圍 · ${esc(day?.title||'')}${city?'':' — 請在行程頁籤的「編輯天數」中填入城市名稱'}</div></div>
+    ${city?`<button class="btn" style="margin-left:auto;font-size:12px;padding:5px 11px;" onclick="expPickCat(_expCat)">🔄 重新搜尋</button>`:''}
+  </div>`;
+  const searchRow=`<div class="exp-search-row">
+    <input type="text" placeholder="輸入地名或關鍵字，例：${city||'台北'}拉麵" value="${esc(_expSearchVal)}" id="exp-search-inp" oninput="_expSearchVal=this.value" onkeydown="if(event.key==='Enter')expSearch()">
+    <button class="btn bp" onclick="expSearch()">搜尋</button>
+  </div>`;
+  let resultsHtml='';
+  if(_expResults===null){
+    resultsHtml=`<div class="exp-loading">⏳ 搜尋中...</div>`;
+  } else if(_expResults.length===0 && _expCat!==null){
+    resultsHtml=`<div class="exp-empty"><div style="font-size:30px;margin-bottom:8px;">🔍</div>找不到結果，試試換個關鍵字或補充城市名稱</div>`;
+  } else if(_expResults.length===0){
+    resultsHtml=`<div class="exp-empty"><div style="font-size:30px;margin-bottom:8px;">✨</div>選擇上方分類快速搜尋<br>或輸入關鍵字自訂搜尋</div>`;
+  } else {
+    resultsHtml=`<div class="exp-results">${_expResults.map((item,idx)=>expCardHtml(item,idx,day)).join('')}</div>`;
+  }
+  return`<div>${ctxBar}<div class="exp-cat-row">${catBtns}</div>${searchRow}${resultsHtml}</div>`;
+}
+
+function expCardHtml(item, idx, day){
+  const si=Math.min(S.dayIdx,S.days.length-1);
+  const added=_expAdded[item._uid];
+  const cat=item.cat||'其他';
+  const color=CBr[cat]||'#888780';
+  const bg=CB[cat]||'#F1EFE8';
+  const fg=CF[cat]||'#444441';
+  const tags=[CE[cat]+' '+cat, item.type].filter(Boolean).map(t=>`<span class="exp-card-tag" style="background:${bg};color:${fg};">${esc(t)}</span>`).join('');
+  const gmQ=encodeURIComponent((item.address?item.name+' '+item.address:item.name));
+  return`<div class="exp-card" id="exp-card-${idx}">
+    <div class="exp-card-left" style="background:${color};"></div>
+    <div class="exp-card-body">
+      <div class="exp-card-name">${esc(item.name)}</div>
+      ${item.address?`<div class="exp-card-addr">📍 ${esc(item.address)}</div>`:''}
+      <div class="exp-card-tags">${tags}</div>
+      <div class="exp-card-actions">
+        <button class="btn${added?' bp':''}" style="font-size:12px;padding:5px 12px;" onclick="expAddToDay(${idx})">
+          ${added?'✅ 已加入':'➕ 加入 '+esc(day?.title||'行程')}
+        </button>
+        <a href="https://www.google.com/maps/search/?api=1&query=${gmQ}" target="_blank" rel="noopener">
+          <button class="btn" style="font-size:12px;padding:5px 12px;">🗺️ Google Maps</button>
+        </a>
+      </div>
     </div>
-    <div id="map-container"></div>
-    <div id="map-status">正在載入地圖...</div>
-    <div class="map-legend">${legend}</div>
   </div>`;
 }
 
-function changeMapFilter(dayId){
-  _mapFilterDay = dayId;
-  // refresh tab highlight without full re-render
-  document.querySelectorAll('.map-dtab').forEach(el=>{
-    const m = el.getAttribute('onclick')?.match(/changeMapFilter\('([^']+)'\)/);
-    if(m) el.classList.toggle('on', m[1]===dayId);
-  });
-  initMap();
+function expPickCat(catId){
+  _expCat=catId;
+  _expResults=null; // loading state
+  setU({});         // re-render to show spinner
+  const si=Math.min(S.dayIdx,S.days.length-1);
+  const city=S.days[si]?.city||'';
+  const cat=EXP_CATS.find(c=>c.id===catId);
+  if(!cat) return;
+  _expSearchVal=city?(city+' '+cat.label):cat.label;
+  _expDoSearch(city?(city+' '+cat.q):cat.q, cat.cat);
 }
 
-// ── Multi-strategy geocoder: Photon → Nominatim fallback
-async function _tryPhoton(q){
+function expSearch(){
+  const val=(document.getElementById('exp-search-inp')?.value||_expSearchVal).trim();
+  if(!val) return;
+  _expSearchVal=val;
+  _expResults=null;
+  setU({});
+  _expDoSearch(val, null);
+}
+
+async function _expDoSearch(query, defaultCat){
   try{
-    const r=await fetch('https://photon.komoot.io/api/?q='+encodeURIComponent(q)+'&limit=1');
-    if(r.ok){const d=await r.json();if(d?.features?.length){const[lng,lat]=d.features[0].geometry.coordinates;return{lat,lng};}}
-  }catch(e){}
-  return null;
-}
-async function _tryNominatim(q){
-  try{
-    const r=await fetch('https://nominatim.openstreetmap.org/search?q='+encodeURIComponent(q)+'&format=json&limit=1&accept-language=zh-TW,zh,en');
-    if(r.ok){const d=await r.json();if(d?.length){return{lat:parseFloat(d[0].lat),lng:parseFloat(d[0].lon)};}}
-  }catch(e){}
-  return null;
-}
-async function _geocode(name, address, city){
-  // Build candidate queries: most specific → least specific
-  const candidates=[];
-  if(address)          candidates.push(name+' '+address);   // name + full address
-  if(city && address)  candidates.push(address);            // address alone
-  if(city && !address) candidates.push(name+' '+city);      // name + city (key for no-address locs)
-  candidates.push(name);                                     // name alone
-
-  const cacheKey = candidates[0].trim().toLowerCase();
-  if(cacheKey in _geoCache) return _geoCache[cacheKey];
-
-  for(const q of candidates){
-    let c = await _tryPhoton(q);
-    if(!c){ await new Promise(r=>setTimeout(r,300)); c=await _tryNominatim(q); }
-    if(c){ _geoCache[cacheKey]=c; return c; }
-    await new Promise(r=>setTimeout(r,300));
+    const r=await fetch('https://photon.komoot.io/api/?q='+encodeURIComponent(query)+'&limit=15');
+    const d=await r.json();
+    const features=d?.features||[];
+    _expResults=features.map((f,i)=>{
+      const p=f.properties||{};
+      const name=p.name||p.street||query;
+      if(!name||name.length<1)return null;
+      const addrParts=[p.housenumber?p.street+' '+p.housenumber:p.street, p.city||p.county].filter(Boolean);
+      const address=addrParts.join('，');
+      const osmType=p.type||p.osm_value||'';
+      const typeLabel=_expTypeLabel(osmType);
+      const cat=defaultCat||_expGuessCat(osmType+' '+name);
+      return{name, address, type:typeLabel, cat, _uid:'exp-'+i+'-'+Date.now()};
+    }).filter(Boolean);
+  } catch(e){
+    _expResults=[];
   }
-  _geoCache[cacheKey]=false;
-  return false;
+  setU({});
 }
 
-// ── Current location
-function mapLocateMe(){
-  const btn = document.getElementById('map-locate-btn');
-  const statusEl = document.getElementById('map-status');
-  if(!navigator.geolocation){ if(statusEl) statusEl.textContent='您的瀏覽器不支援定位功能。'; return; }
-  if(btn) btn.classList.add('locating');
-  if(statusEl) statusEl.textContent='正在取得目前位置...';
-  navigator.geolocation.getCurrentPosition(
-    pos=>{
-      if(btn) btn.classList.remove('locating');
-      const {latitude:lat, longitude:lng} = pos.coords;
-      if(!_mapInstance){ if(statusEl) statusEl.textContent='地圖尚未載入，請稍後再試。'; return; }
-      // Remove previous me-marker
-      if(_meMarker){ _mapInstance.removeLayer(_meMarker); _meMarker=null; }
-      const meIcon = L.divIcon({html:`<div class="map-me-dot"></div>`,iconSize:[18,18],iconAnchor:[9,9],className:''});
-      _meMarker = L.marker([lat,lng],{icon:meIcon,zIndexOffset:1000})
-        .addTo(_mapInstance)
-        .bindPopup('<div style="font-weight:900;font-size:13px;">📍 您目前的位置</div>',{maxWidth:180})
-        .openPopup();
-      _mapInstance.setView([lat,lng], Math.max(_mapInstance.getZoom(),14), {animate:true});
-      if(statusEl) statusEl.textContent='✅ 已標示目前位置';
-    },
-    err=>{
-      if(btn) btn.classList.remove('locating');
-      const msgs={1:'定位被拒絕，請在瀏覽器允許位置存取。',2:'無法取得位置訊號，請確認裝置定位是否開啟。',3:'定位逾時，請再試一次。'};
-      if(statusEl) statusEl.textContent='⚠️ '+(msgs[err.code]||'定位失敗');
-    },
-    {enableHighAccuracy:true, timeout:10000, maximumAge:30000}
-  );
+function _expTypeLabel(t){
+  const map={cafe:'咖啡廳',restaurant:'餐廳',bar:'酒吧',fast_food:'速食',bakery:'烘焙',hotel:'飯店',hostel:'旅館',motel:'汽車旅館',museum:'博物館',park:'公園',attraction:'景點',monument:'紀念碑',mall:'購物中心',supermarket:'超市',gift_shop:'禮品店',souvenir:'伴手禮',convenience:'便利商店',department_store:'百貨'};
+  return map[t]||'';
 }
 
-// ── Map initialisation
-async function initMap(){
-  if(S.view!=='map') return;
-  const myId = ++_mapInitId;
-  const container = document.getElementById('map-container');
-  const statusEl  = document.getElementById('map-status');
-  if(!container) return;
+function _expGuessCat(text){
+  return ac(text);
+}
 
-  // Load Leaflet CSS
-  if(!document.getElementById('leaflet-css')){
-    const lk=document.createElement('link');
-    lk.id='leaflet-css'; lk.rel='stylesheet';
-    lk.href='https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css';
-    document.head.appendChild(lk);
-  }
-  // Load Leaflet JS
-  if(!window.L){
-    const ok=await loadScript('https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js');
-    if(!ok||!window.L){ if(statusEl) statusEl.textContent='地圖套件載入失敗，請確認網路連線。'; return; }
-  }
-  if(myId!==_mapInitId) return;
-
-  // Destroy old instance (preserve me-marker reference but it gets removed with map)
-  if(_mapInstance){ try{ _mapInstance.remove(); }catch(e){} _mapInstance=null; _meMarker=null; }
-
-  // Collect locations
-  const allLocs=[];
-  S.days.forEach(day=>{
-    if(_mapFilterDay!=='all' && _mapFilterDay!==day.id) return;
-    (day.locations||[]).forEach((loc,i)=>allLocs.push({loc,day,seq:allLocs.length+1}));
-  });
-
-  // Init Leaflet map
-  _mapInstance = L.map('map-container',{zoomControl:true,attributionControl:true})
-    .setView([23.6978,120.9605],7);
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{
-    attribution:'© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
-    maxZoom:19
-  }).addTo(_mapInstance);
-
-  if(!allLocs.length){
-    if(statusEl) statusEl.textContent='此天數目前沒有地點，請先在「行程」頁籤新增地點。';
-    return;
-  }
-
-  // Check cache – if all resolved already, skip loading text
-  const anyUncached = allLocs.some(({loc,day})=>{
-    const k=(loc.address?loc.name+' '+loc.address:loc.address?loc.address:loc.city?loc.name+' '+day.city:loc.name).trim().toLowerCase();
-    return !(k in _geoCache);
-  });
-  if(anyUncached && statusEl) statusEl.textContent=`正在定位 ${allLocs.length} 個地點...`;
-
-  const bounds=[]; let okCount=0, failCount=0;
-  const resLabel={booked:'✅ 已訂位',pending:'⏳ 待確認',no_need:'—— 不需訂位'};
-
-  function addMarker({loc,day,seq}){
-    const q = (loc.address ? loc.name+' '+loc.address : loc.name).trim();
-    const coord = _geoCache[q.toLowerCase()];
-    if(!coord) return false;
-    bounds.push([coord.lat,coord.lng]);
-    const cat   = loc.category||ac(loc.name+' '+(loc.notes||'')+' '+(loc.address||''));
-    const color = CBr[cat]||'#1D9E75';
-    const bgC   = CB[cat]||'#E1F5EE';
-    const fgC   = CF[cat]||'#085041';
-    const icon = L.divIcon({
-      html:`<div style="position:relative;width:36px;height:44px;">
-        <div style="position:absolute;inset:0 0 8px 0;background:${color};border-radius:50% 50% 50% 0;transform:rotate(-45deg);box-shadow:0 3px 10px rgba(0,0,0,.35);border:2.5px solid #fff;"></div>
-        <div style="position:absolute;inset:0 0 8px 0;display:flex;align-items:center;justify-content:center;font-size:15px;">${CE[cat]||'📌'}</div>
-        <div style="position:absolute;left:50%;bottom:0;transform:translateX(-50%);background:${color};color:#fff;border-radius:999px;font-size:9px;font-weight:900;padding:0 5px;min-width:18px;text-align:center;line-height:18px;height:18px;border:1.5px solid rgba(255,255,255,.6);">${seq}</div>
-      </div>`,
-      iconSize:[36,44],iconAnchor:[18,44],popupAnchor:[0,-46],className:''
-    });
-    const gmQ   = encodeURIComponent((loc.address||loc.name).trim());
-    const popup = `<div style="font-size:13px;min-width:170px;max-width:250px;line-height:1.55;">
-      <div style="display:flex;align-items:center;gap:5px;margin-bottom:5px;">
-        <span style="background:${bgC};color:${fgC};border-radius:999px;padding:2px 9px;font-size:11px;font-weight:800;">${CE[cat]} ${cat}</span>
-        <span style="font-size:10px;color:#bbb;font-weight:700;">#${seq}</span>
-      </div>
-      <div style="font-weight:900;font-size:15px;margin-bottom:2px;">${esc(loc.name)}</div>
-      <div style="color:#666;font-size:12px;">📅 ${esc(day.title)}${loc.time?' &nbsp;·&nbsp; 🕐 '+esc(loc.time):''}</div>
-      ${loc.address?`<div style="color:#1a5fa8;font-size:12px;margin-top:2px;">📍 ${esc(loc.address)}</div>`:''}
-      ${loc.phone?`<div style="font-size:12px;margin-top:3px;"><a href="tel:${esc(loc.phone)}" style="color:#1a5fa8;font-weight:700;">📞 ${esc(loc.phone)}</a></div>`:''}
-      ${loc.reservation&&resLabel[loc.reservation]?`<div style="font-size:11px;margin-top:2px;color:#555;">${resLabel[loc.reservation]}${loc.resCode?' · '+esc(loc.resCode):''}</div>`:''}
-      ${loc.notes?`<div style="font-size:12px;color:#444;background:#f5f8f5;border-left:3px solid ${color};padding:5px 9px;border-radius:0 8px 8px 0;margin-top:6px;">${esc(loc.notes.slice(0,140))+(loc.notes.length>140?'…':'')}</div>`:''}
-      <a href="https://www.google.com/maps/search/?api=1&query=${gmQ}" target="_blank" rel="noopener"
-        style="display:inline-block;margin-top:8px;padding:5px 12px;background:#0f5e5e;color:#fff;border-radius:8px;font-size:12px;font-weight:800;text-decoration:none;">
-        🗺️ Google Maps 導航
-      </a>
-    </div>`;
-    L.marker([coord.lat,coord.lng],{icon}).addTo(_mapInstance).bindPopup(popup,{maxWidth:270});
-    return true;
-  }
-
-  // Geocode each loc sequentially
-  for(let i=0;i<allLocs.length;i++){
-    if(myId!==_mapInitId) return;
-    const item = allLocs[i];
-    const q    = (item.loc.address ? item.loc.name+' '+item.loc.address : item.loc.name).trim();
-    const key  = q.toLowerCase();
-    if(!(key in _geoCache)){
-      await _geocode(item.loc.name, item.loc.address||'', item.day.city||'');
-      if(myId!==_mapInitId) return;
-    }
-    if(_geoCache[key]){ okCount++; addMarker(item); }
-    else failCount++;
-    if(statusEl && anyUncached) statusEl.textContent=`定位中 ${i+1}/${allLocs.length}...`;
-    if(bounds.length>1){ try{ _mapInstance.fitBounds(bounds,{padding:[40,40],maxZoom:15}); }catch(e){} }
-    else if(bounds.length===1) _mapInstance.setView(bounds[0],14);
-  }
-
-  // Final fit
-  if(bounds.length>1)  _mapInstance.fitBounds(bounds,{padding:[40,40]});
-  else if(bounds.length===1) _mapInstance.setView(bounds[0],15);
-
-  if(statusEl){
-    if(okCount===0)
-      statusEl.innerHTML='⚠️ 無法定位任何地點。請在「行程」頁籤補充地址（例：東京都台東区浅草2丁目3-1），或加上城市名讓搜尋更準確。';
-    else
-      statusEl.textContent=`✅ 已標示 ${okCount} 個地點${failCount?' · '+failCount+' 個找不到位置（建議補充地址）':''}`;
-  }
+function expAddToDay(idx){
+  const item=_expResults[idx];
+  if(!item)return;
+  const si=Math.min(S.dayIdx,S.days.length-1);
+  const days=JSON.parse(JSON.stringify(S.days));
+  const day=days[si];
+  day.locations.push({id:uid(),name:item.name,address:item.address||'',phone:'',time:'',notes:'',category:item.cat||ac(item.name),reservation:''});
+  _expAdded[item._uid]=true;
+  setD({days});
+  // Show toast
+  const toast=document.createElement('div');
+  toast.className='exp-add-toast';
+  toast.textContent='✅ 已加入「'+day.title+'」';
+  document.body.appendChild(toast);
+  setTimeout(()=>toast.remove(),2000);
 }
 
 load();
