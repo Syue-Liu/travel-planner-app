@@ -1167,21 +1167,39 @@ function changeMapFilter(dayId){
   initMap();
 }
 
-// ── Photon geocoder (free, CORS-friendly, handles Asian addresses well)
-async function _geocode(query){
-  const key = query.trim().toLowerCase();
-  if(key in _geoCache) return _geoCache[key];
+// ── Multi-strategy geocoder: Photon → Nominatim fallback
+async function _tryPhoton(q){
   try{
-    const r = await fetch('https://photon.komoot.io/api/?q='+encodeURIComponent(query)+'&limit=1');
-    if(r.ok){
-      const d = await r.json();
-      if(d?.features?.length){
-        const [lng,lat] = d.features[0].geometry.coordinates;
-        return (_geoCache[key] = {lat,lng});
-      }
-    }
+    const r=await fetch('https://photon.komoot.io/api/?q='+encodeURIComponent(q)+'&limit=1');
+    if(r.ok){const d=await r.json();if(d?.features?.length){const[lng,lat]=d.features[0].geometry.coordinates;return{lat,lng};}}
   }catch(e){}
-  _geoCache[key] = false;
+  return null;
+}
+async function _tryNominatim(q){
+  try{
+    const r=await fetch('https://nominatim.openstreetmap.org/search?q='+encodeURIComponent(q)+'&format=json&limit=1&accept-language=zh-TW,zh,en');
+    if(r.ok){const d=await r.json();if(d?.length){return{lat:parseFloat(d[0].lat),lng:parseFloat(d[0].lon)};}}
+  }catch(e){}
+  return null;
+}
+async function _geocode(name, address, city){
+  // Build candidate queries: most specific → least specific
+  const candidates=[];
+  if(address)          candidates.push(name+' '+address);   // name + full address
+  if(city && address)  candidates.push(address);            // address alone
+  if(city && !address) candidates.push(name+' '+city);      // name + city (key for no-address locs)
+  candidates.push(name);                                     // name alone
+
+  const cacheKey = candidates[0].trim().toLowerCase();
+  if(cacheKey in _geoCache) return _geoCache[cacheKey];
+
+  for(const q of candidates){
+    let c = await _tryPhoton(q);
+    if(!c){ await new Promise(r=>setTimeout(r,300)); c=await _tryNominatim(q); }
+    if(c){ _geoCache[cacheKey]=c; return c; }
+    await new Promise(r=>setTimeout(r,300));
+  }
+  _geoCache[cacheKey]=false;
   return false;
 }
 
@@ -1262,8 +1280,8 @@ async function initMap(){
   }
 
   // Check cache – if all resolved already, skip loading text
-  const anyUncached = allLocs.some(({loc})=>{
-    const k=(loc.address?loc.name+' '+loc.address:loc.name).trim().toLowerCase();
+  const anyUncached = allLocs.some(({loc,day})=>{
+    const k=(loc.address?loc.name+' '+loc.address:loc.address?loc.address:loc.city?loc.name+' '+day.city:loc.name).trim().toLowerCase();
     return !(k in _geoCache);
   });
   if(anyUncached && statusEl) statusEl.textContent=`正在定位 ${allLocs.length} 個地點...`;
@@ -1316,9 +1334,8 @@ async function initMap(){
     const q    = (item.loc.address ? item.loc.name+' '+item.loc.address : item.loc.name).trim();
     const key  = q.toLowerCase();
     if(!(key in _geoCache)){
-      await _geocode(q);
+      await _geocode(item.loc.name, item.loc.address||'', item.day.city||'');
       if(myId!==_mapInitId) return;
-      if(i < allLocs.length-1) await new Promise(r=>setTimeout(r,420)); // Photon rate limit
     }
     if(_geoCache[key]){ okCount++; addMarker(item); }
     else failCount++;
