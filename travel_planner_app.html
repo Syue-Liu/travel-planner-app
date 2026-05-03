@@ -134,9 +134,13 @@ input:focus,select:focus,textarea:focus{border-color:#42a787;box-shadow:0 0 0 3p
 .tmpl-btn{padding:8px 13px;border-radius:12px;font-size:13px;font-weight:700;cursor:pointer;border:1px solid rgba(0,0,0,.06);display:inline-flex;align-items:center;gap:6px;white-space:nowrap;transition:opacity .15s,transform .1s}
 .tmpl-btn:active{transform:scale(.97)}
 /* sort controls top-right of card */
-.loc-sort-ctrl{position:absolute;top:8px;right:8px;display:flex;gap:0;align-items:center;z-index:2;background:var(--card);border:1px solid var(--line);border-radius:999px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.08);}
-.sort-btn{width:30px;height:28px;border-radius:0;display:flex;align-items:center;justify-content:center;font-size:13px;cursor:pointer;border:none;border-right:1px solid var(--line);background:transparent;color:var(--ink);padding:0;user-select:none;-webkit-user-select:none;flex-shrink:0}
-.sort-btn:last-child{border-right:none}
+.loc-sort-ctrl{position:absolute;top:8px;right:8px;display:flex;gap:0;align-items:center;z-index:2;background:rgba(0,0,0,.04);border-radius:999px;overflow:hidden;transition:background .15s;}
+.loc-sort-ctrl:hover{background:rgba(0,0,0,.07);}
+.loc-sort-ctrl.sort-below{top:40px;}
+.sort-btn{width:28px;height:26px;border-radius:0;display:flex;align-items:center;justify-content:center;font-size:13px;cursor:pointer;border:none;background:transparent;color:#aab8b4;padding:0;user-select:none;-webkit-user-select:none;flex-shrink:0;transition:background .12s,color .12s;}
+.sort-btn:hover:not([disabled]){background:rgba(15,94,94,.13);color:#0f5e5e;}
+.sort-btn:active:not([disabled]){background:rgba(15,94,94,.22);}
+.sort-btn[disabled]{opacity:.25;cursor:not-allowed;}
 .sort-btn:disabled{opacity:.2;cursor:not-allowed}
 .sort-grip{cursor:grab;color:#b0bdb9;letter-spacing:-.5px;touch-action:none;font-size:17px}
 .sort-grip:active{cursor:grabbing;color:#42a787}
@@ -270,6 +274,12 @@ input:focus,select:focus,textarea:focus{border-color:#42a787;box-shadow:0 0 0 3p
 .wl-toast{position:fixed;bottom:calc(24px + env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);background:#0f5e5e;color:#fff;border-radius:12px;padding:10px 20px;font-size:14px;font-weight:800;z-index:200;box-shadow:0 8px 24px rgba(15,94,94,.35);pointer-events:none;animation:wl-toast-in .25s ease;white-space:nowrap;}
 @keyframes wl-toast-in{from{opacity:0;transform:translateX(-50%) translateY(10px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}
 .exp-ctx-bar{display:none;}
+/* ── Sync quick entry ─── */
+.sync-quick{display:flex;align-items:center;gap:7px;margin-top:10px;padding:8px 12px;background:rgba(255,255,255,.14);border-radius:12px;border:1px solid rgba(255,255,255,.22);backdrop-filter:blur(8px);}
+.sync-quick input{flex:1;background:transparent;border:none;outline:none;color:#fff;font-size:13px;font-weight:600;min-width:0;}
+.sync-quick input::placeholder{color:rgba(255,255,255,.6);}
+.sync-quick-btn{flex-shrink:0;background:rgba(255,255,255,.22);border:none;border-radius:8px;color:#fff;font-size:13px;font-weight:800;padding:5px 12px;cursor:pointer;white-space:nowrap;}
+.sync-quick-btn:hover{background:rgba(255,255,255,.35);}
 </style>
 </head>
 <body>
@@ -431,7 +441,7 @@ function hdr(te){
   if(S.editTN)return`<header class="cover" style="${coverStyle}"><div class="topbar"></div><div class="cover-bottom"><div class="title-edit"><input class="tni" id="tn-in" value="${esc(S.tnDraft)}" placeholder="行程名稱" oninput="S.tnDraft=this.value" onkeydown="if(event.key==='Enter')saveTN()" autofocus><button class="btn glass" onclick="saveTN()">完成</button></div></div></header>${statsStrip}`;
   const menu=S.menuOpen?`<div class="cover-menu"><button onclick="copyShareLink();setU({menuOpen:false})"><span class="mi">🔗</span>分享連結</button><button onclick="setU({modal:{t:'tools'},menuOpen:false})"><span class="mi">☰</span>旅程工具</button><button onclick="setU({modal:{t:'cover'},menuOpen:false})"><span class="mi">📷</span>更換封面</button><button onclick="setU({modal:{t:'tv'},menuOpen:false})"><span class="mi">👥</span>旅伴管理</button><button onclick="setU({modal:{t:'help'},menuOpen:false})"><span class="mi">📖</span>使用說明</button></div>`:'';
   const syncChip=cloud.tripId?`<span class="hdr-sub-chip">🔗 ${esc(cloud.tripId)}</span>`:'';
-  return`<header class="cover" style="${coverStyle}"><div class="topbar"><div></div><div class="cover-menu-wrap"><button class="hamb" aria-label="開啟選單" onclick="setU({menuOpen:!S.menuOpen})"><span></span><span></span><span></span></button>${menu}</div></div><div class="cover-bottom"><div class="hdr-title" onclick="setU({editTN:true,tnDraft:'${esc(S.tripName)}'})"><span>${esc(S.tripName)}</span><span class="hdr-title-edit-icon">✏️</span></div><div class="hdr-sub"><span>${esc(cloud.status||'本機儲存')}</span>${syncChip}</div></div></header>${statsStrip}`;
+  return`<header class="cover" style="${coverStyle}"><div class="topbar"><div></div><div class="cover-menu-wrap"><button class="hamb" aria-label="開啟選單" onclick="setU({menuOpen:!S.menuOpen})"><span></span><span></span><span></span></button>${menu}</div></div><div class="cover-bottom"><div class="hdr-title" onclick="setU({editTN:true,tnDraft:'${esc(S.tripName)}'})"><span>${esc(S.tripName)}</span><span class="hdr-title-edit-icon">✏️</span></div><div class="hdr-sub"><span>${esc(cloud.status||'本機儲存')}</span>${syncChip}</div>${!cloud.ready?`<div class="sync-quick"><span style="font-size:14px;">🔗</span><input id="hdr-sync-inp" type="text" placeholder="輸入同步代碼，Enter 跳轉" autocomplete="off" autocapitalize="none" spellcheck="false" onkeydown="if(event.key==='Enter'){var v=this.value.trim();if(v){var el=document.getElementById('trip-code');if(el)el.value=v;else{S._quickCode=v;}switchTrip(false);}}"><button class="sync-quick-btn" onclick="var v=document.getElementById('hdr-sync-inp').value.trim();if(v){var el=document.getElementById('trip-code');if(el)el.value=v;switchTrip(false);}">跳轉</button></div>`:''}</div></header>${statsStrip}`;
 }
 function saveTN(){const v=document.getElementById('tn-in')?.value?.trim()||S.tnDraft.trim()||'未命名旅程';setD({tripName:v,editTN:false});}
 function gnav(){
@@ -465,7 +475,7 @@ function itin(day,si){
     // Map uses name + address for better Google Maps accuracy
     const mapQuery=l.address?`${l.name} ${l.address}`:l.name;
     const mapBtns=l.address||l.name?`<a href="${mu(mapQuery)}" target="_blank" rel="noopener"><button class="btn bp" style="font-size:12px;min-height:30px;padding:5px 10px;">地圖</button></a><a href="${nu(l.address||l.name)}" target="_blank" rel="noopener"><button class="btn ba" style="font-size:12px;min-height:30px;padding:5px 10px;">導航</button></a>`:'';
-    const sortBtns=`<div class="loc-sort-ctrl"><button class="sort-btn sort-grip" title="拖曳" onpointerdown="startTouchDrag(event,'${day.id}','${l.id}')">⠿</button><button class="sort-btn" title="上移" onclick="mvLoc('${day.id}','${l.id}',-1)" ${i===0?'disabled':''}>↑</button><button class="sort-btn" title="下移" onclick="mvLoc('${day.id}','${l.id}',1)" ${i===day.locations.length-1?'disabled':''}>↓</button></div>`;
+    const sortBtns=`<div class="loc-sort-ctrl${isNow?' sort-below':''}"><button class="sort-btn sort-grip" title="拖曳" onpointerdown="startTouchDrag(event,'${day.id}','${l.id}')">⠿</button><button class="sort-btn" title="上移" onclick="mvLoc('${day.id}','${l.id}',-1)" ${i===0?'disabled':''}>↑</button><button class="sort-btn" title="下移" onclick="mvLoc('${day.id}','${l.id}',1)" ${i===day.locations.length-1?'disabled':''}>↓</button></div>`;
     return`<div class="loc-card-wrap${isNow?' loc-now':''}" data-locid="${l.id}" data-dayid="${day.id}" ondragover="dragOver(event)" ondragleave="dragLeave(event)" ondrop="dragDrop(event,'${day.id}','${l.id}')" ondragend="dragEnd()"><div class="card" style="border-left-color:${isNow?catBg:borderColor};border-left-width:${isNow?'5':'3'}px;${isNow?`--now-bg:${catLight};`:''}">${sortBtns}${nowBar}<div class="loc-wrap"><div class="loc-time" style="${isNow?`color:${catDark};font-weight:900;`:''}">${esc(l.time||'--:--')}</div><div class="loc-body"><div class="loc-name">${esc(l.name)} ${badge}${resBadge}${nowBadge}</div>${l.address?`<div class="loc-addr">${esc(l.address)}</div>`:''}${phoneEl}${notesEl}<div class="act-row">${mapBtns}<button class="btn-ic" title="編輯" onclick="oLoc('${l.id}')">✏️</button><button class="btn-ic br" title="刪除" onclick="dLoc('${day.id}','${l.id}')">🗑️</button></div></div></div></div></div>`;
   }).join('');
   const quickItems=[...TMPL.map((t,i)=>`<button class="quick-item" onclick="setU({quickOpen:false});oLoc('',${i})"><span style="background:${CB[t.cat]};color:${CF[t.cat]};border-radius:8px;padding:2px 7px;font-size:12px;font-weight:800;">${CE[t.cat]} ${t.cat}</span> ${esc(t.name)}</button>`),`<hr style="border:none;border-top:1px solid var(--line);margin:3px 0;"><button class="quick-item" style="color:#5b3fc4;font-weight:900;" onclick="setU({quickOpen:false,modal:{t:'import'}})">✨ AI 匯入行程</button>`].join('');
