@@ -57,7 +57,7 @@ a{text-decoration:none}
 .dtab{padding:8px 14px;border-radius:999px;font-size:13px;font-weight:700;white-space:nowrap;cursor:pointer;border:1px solid var(--line);background:#fff;color:var(--muted);box-shadow:0 4px 14px rgba(29,58,50,.05)}
 .dtab.on{background:#183b40;color:#fff;border-color:#183b40}
 .dtab-add{border-style:dashed;background:#fff8ec;color:#8b540c}
-.section-head{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;margin-bottom:10px}
+.section-head{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;margin-bottom:10px;position:relative}
 .section-title{font-weight:800;font-size:17px;line-height:1.25;min-width:0;word-break:keep-all}
 .section-actions{display:flex;align-items:center;justify-content:flex-end;gap:6px;flex-wrap:nowrap;position:relative;flex-shrink:0}
 .action-group{display:flex;align-items:center;gap:7px;position:relative;flex-wrap:nowrap}
@@ -166,11 +166,15 @@ input:focus,select:focus,textarea:focus{border-color:#42a787;box-shadow:0 0 0 3p
 @keyframes now-pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.78;transform:scale(.97)}}
 .loc-card-wrap.loc-now>.card{background:linear-gradient(160deg,var(--now-bg,#f4fcf8) 0%,#fff 55%)!important}
 .loc-now-bar{display:flex;align-items:center;gap:8px;padding:6px 12px;font-size:12px;font-weight:900;letter-spacing:.04em}
-.weather-bar{display:flex;align-items:center;gap:10px;padding:10px 14px;background:#f0f8ff;border-radius:12px;font-size:13px;font-weight:700;margin-bottom:12px;border:1px solid #cde4f5;flex-wrap:wrap;color:#1a3a5c}
-.weather-ic{font-size:22px;line-height:1;flex-shrink:0}
-.weather-val{font-size:17px;font-weight:900;color:#0f5e5e}
-.weather-sub{font-size:11px;color:var(--muted);font-weight:700}
-.weather-city{font-size:11px;color:var(--muted);margin-left:auto}
+.weather-bar{display:grid;grid-template-columns:auto minmax(0,1fr) auto auto;align-items:center;gap:12px;padding:13px 16px;background:linear-gradient(135deg,#eef9ff 0%,#f6fbf8 100%);border-radius:16px;font-size:13px;font-weight:800;margin-bottom:14px;border:1px solid #cde4f5;color:#1a3a5c;box-shadow:0 8px 20px rgba(42,112,153,.08)}
+.weather-ic{width:42px;height:42px;border-radius:14px;background:rgba(255,255,255,.72);display:flex;align-items:center;justify-content:center;font-size:24px;line-height:1;flex-shrink:0;box-shadow:inset 0 0 0 1px rgba(255,255,255,.7)}
+.weather-main{min-width:0}
+.weather-val{font-size:21px;font-weight:950;color:#0f5e5e;line-height:1.1;white-space:nowrap}
+.weather-feels{font-size:12px;font-weight:800;color:#76837f;margin-left:4px}
+.weather-sub{font-size:12px;color:#66736f;font-weight:800;margin-top:3px}
+.weather-metric{display:flex;flex-direction:column;gap:2px;align-items:flex-start;white-space:nowrap}
+.weather-metric strong{font-size:15px;color:#143d63}
+.weather-city{font-size:12px;color:#66736f;white-space:nowrap;font-weight:900}
 .import-area{width:100%;min-height:160px;border:1px solid var(--line);border-radius:var(--r);padding:10px 12px;font-size:13px;font-family:var(--font,sans-serif);resize:vertical;background:var(--color-background-secondary,#f8fafa);line-height:1.6}
 .import-preview{background:#f0f8f4;border:1px solid #b6e0cc;border-radius:var(--r);padding:12px;margin-top:10px;font-size:12px;max-height:220px;overflow-y:auto}
 .import-day-hd{font-weight:900;font-size:13px;color:#085041;margin-bottom:4px;margin-top:10px}
@@ -213,13 +217,19 @@ input:focus,select:focus,textarea:focus{border-color:#42a787;box-shadow:0 0 0 3p
   .action-group.primary{flex:1;justify-content:flex-start;flex-wrap:wrap}
   .action-group.manage{justify-content:flex-end}
   .section-actions .btn{min-height:42px;padding:8px 12px}
-  .quick-holder{position:static}
-  .quick-menu{position:static;flex:0 0 100%;width:calc(100vw - 28px);max-width:none;min-width:0;margin-top:4px;max-height:48vh;overflow-y:auto}
+  .quick-holder{position:relative}
+  .quick-menu{position:static;width:100%;max-width:none;min-width:0;margin-top:-2px;max-height:42vh;overflow-y:auto;padding:4px}
   .loc-wrap{grid-template-columns:58px minmax(0,1fr);gap:9px;padding:13px 12px;padding-right:12px}
   .loc-time{width:58px;min-width:58px;font-size:15px;line-height:1.2;text-align:left}
   .loc-name{padding-right:108px}
   .loc-sort-ctrl{top:10px;right:10px}
   .act-row{padding-right:0}
+  .weather-bar{grid-template-columns:auto minmax(0,1fr) auto;gap:10px;padding:12px}
+  .weather-ic{width:38px;height:38px;border-radius:13px;font-size:22px}
+  .weather-val{font-size:18px}
+  .weather-feels{display:block;margin-left:0;margin-top:2px}
+  .weather-metric strong{font-size:14px}
+  .weather-city{grid-column:1/-1;justify-self:end}
   .stats{grid-template-columns:1fr}
   .txn{grid-template-columns:1fr;gap:4px;text-align:center}
   .txn div{text-align:center!important}
@@ -266,6 +276,8 @@ input:focus,select:focus,textarea:focus{border-color:#42a787;box-shadow:0 0 0 3p
 .wl-card{background:#fff;border-radius:14px;border:1.5px solid var(--line);padding:13px 14px;margin-bottom:8px;position:relative;box-shadow:0 4px 14px rgba(31,59,53,.05);}
 .wl-card-name{font-weight:900;font-size:15px;margin-bottom:3px;padding-right:28px;line-height:1.3;}
 .wl-card-note{font-size:12px;color:var(--muted);margin-bottom:9px;line-height:1.5;}
+.wl-address-row{display:flex;align-items:center;gap:7px;margin-bottom:9px;color:#1a5fa8;font-size:12px;line-height:1.5;}
+.wl-address-row span{min-width:0;word-break:break-word;}
 .wl-card-actions{display:flex;flex-wrap:wrap;gap:6px;align-items:center;}
 .wl-map-btn{font-size:11px;padding:4px 10px;border-radius:999px;border:1px solid #0f5e5e;background:#0f5e5e;color:#fff;font-weight:800;cursor:pointer;white-space:nowrap;text-decoration:none;display:inline-flex;align-items:center;gap:4px;}
 .wl-map-btn:hover,.wl-map-btn:active{background:#0b4b4b;border-color:#0b4b4b;}
@@ -498,10 +510,10 @@ function itin(day,si){
     if(!wx||wx.loading){weatherBar=`<div class="weather-loading">⏳ 載入 ${esc(day.city)} 天氣中...</div>`;}
     else if(wx.data){
       const wi=wxInfo(wx.data.code);
-      weatherBar=`<div class="weather-bar"><span class="weather-ic">${wi.e}</span><div><div class="weather-val">${wx.data.temp}°C <span style="font-size:13px;font-weight:700;color:#888;">體感 ${wx.data.feels}°C</span></div><div class="weather-sub">${wi.d}</div></div><div style="display:flex;flex-direction:column;gap:2px;"><div style="font-size:13px;font-weight:700;">💧 ${wx.data.humidity}%</div><div class="weather-sub">濕度</div></div><div class="weather-city">📍 ${esc(day.city)}</div></div>`;
+      weatherBar=`<div class="weather-bar"><span class="weather-ic">${wi.e}</span><div class="weather-main"><div class="weather-val">${wx.data.temp}°C <span class="weather-feels">體感 ${wx.data.feels}°C</span></div><div class="weather-sub">${wi.d}</div></div><div class="weather-metric"><strong>💧 ${wx.data.humidity}%</strong><span class="weather-sub">濕度</span></div><div class="weather-city">📍 ${esc(day.city)}</div></div>`;
     }
   }
-  return`<div class="day-tabs">${tabs}<button class="dtab dtab-add" onclick="FM={title:'第${nd}天',date:'',city:''};setU({modal:{t:'nd'}})">+ 新增</button></div>${weatherBar}<div class="section-head"><div class="section-title">${esc(day.title)}${day.date?`<span style="font-size:12px;font-weight:600;color:var(--muted);margin-left:6px;">${day.date}</span>`:''}</div><div class="section-actions"><div class="action-group primary"><button class="btn" title="跳到現在" onclick="jumpToNow()">🕐</button><div class="quick-holder"><button class="btn" style="background:#f0faf5;border-color:#9fe1cb;color:#085041;font-weight:800;white-space:nowrap;" onclick="setU({quickOpen:!S.quickOpen})">＋ 快速新增</button>${quickMenu}</div></div><div class="action-group manage"><button class="btn" onclick="FM={title:\'${esc(day.title)}\',date:\'${esc(day.date||'')}\',city:\'${esc(day.city||'')}\'}; setU({modal:{t:\'ed\',dayId:\'${day.id}\'}})">編輯</button>${S.days.length>1?`<button class="btn br" onclick="dDay(\'${day.id}\')">刪除</button>`:''}</div></div></div>${locs}<button class="add-btn" onclick="oLoc('')">＋ 新增地點</button>`;
+  return`<div class="day-tabs">${tabs}<button class="dtab dtab-add" onclick="FM={title:'第${nd}天',date:'',city:''};setU({modal:{t:'nd'}})">+ 新增</button></div>${weatherBar}<div class="section-head"><div class="section-title">${esc(day.title)}${day.date?`<span style="font-size:12px;font-weight:600;color:var(--muted);margin-left:6px;">${day.date}</span>`:''}</div><div class="section-actions"><div class="action-group primary"><button class="btn" title="跳到現在" onclick="jumpToNow()">🕐</button><div class="quick-holder"><button class="btn" style="background:#f0faf5;border-color:#9fe1cb;color:#085041;font-weight:800;white-space:nowrap;" onclick="setU({quickOpen:!S.quickOpen})">＋ 快速新增</button></div></div><div class="action-group manage"><button class="btn" onclick="FM={title:\'${esc(day.title)}\',date:\'${esc(day.date||'')}\',city:\'${esc(day.city||'')}\'}; setU({modal:{t:\'ed\',dayId:\'${day.id}\'}})">編輯</button>${S.days.length>1?`<button class="btn br" onclick="dDay(\'${day.id}\')">刪除</button>`:''}</div></div>${quickMenu}</div>${locs}<button class="add-btn" onclick="oLoc('')">＋ 新增地點</button>`;
 }
 function exps(te){
   const cs=CATS.map(c=>({c,t:S.expenses.filter(e=>e.category===c).reduce((s,e)=>s+expValue(e),0)})).filter(x=>x.t>0);
@@ -1235,17 +1247,17 @@ function wlCardHtml(item){
   const fg=CF[appCat]||'#444441';
   const badge=`<span class="wl-badge" style="background:${bg};color:${fg};">${catMeta.emoji} ${catMeta.label}</span>`;
   const mapQuery=(item.address?`${item.name} ${item.address}`:item.name||'').trim();
-  const mapBtn=mapQuery?`<a class="wl-map-btn" href="${mu(mapQuery)}" target="_blank" rel="noopener">🗺️ 地圖</a>`:'';
+  const mapBtn=mapQuery?`<a class="wl-map-btn" href="${mu(mapQuery)}" target="_blank" rel="noopener">地圖</a>`:'';
   const dayBtns=S.days.map((d,i)=>`<button class="wl-day-btn" onclick="wlAddToDay('${item.id}',${i})">➕ ${esc(d.title)}</button>`).join('');
   const done=item.added?`<span style="font-size:11px;color:#aaa;padding:4px 0;">✅ 已加入行程</span>`:'';
   return`<div class="wl-card" id="wlc-${item.id}">
     <button class="wl-del-btn" onclick="wlDelete('${item.id}')" title="刪除">×</button>
     ${badge}
     <div class="wl-card-name">${esc(item.name)}</div>
-    ${item.address?`<div class="wl-card-note" style="color:#1a5fa8;">📍 ${esc(item.address)}</div>`:''}
+    ${item.address?`<div class="wl-address-row"><span>📍 ${esc(item.address)}</span>${mapBtn}</div>`:''}
     ${item.phone?`<div class="wl-card-note">📞 <a href="tel:${esc(item.phone)}" style="color:#1a5fa8;font-weight:700;">${esc(item.phone)}</a></div>`:''}
     ${item.note?`<div class="wl-card-note">${esc(item.note)}</div>`:''}
-    <div class="wl-card-actions">${mapBtn}${dayBtns}${done}</div>
+    <div class="wl-card-actions">${item.address?'':mapBtn}${dayBtns}${done}</div>
   </div>`;
 }
 
@@ -1404,6 +1416,11 @@ function wlConfirmImport(){
 
 load();
 loadFx();
+document.addEventListener('click',e=>{
+  if(S.quickOpen&&!e.target.closest('.quick-menu')&&!e.target.closest('.quick-holder')){
+    setU({quickOpen:false});
+  }
+});
 </script>
 </body>
 </html>
