@@ -421,7 +421,7 @@ input:focus,select:focus,textarea:focus{border-color:#42a787;box-shadow:0 0 0 3p
 </style>
 </head>
 <body>
-<h1 class="sr-only">互動旅遊行程規劃器，包含地點管理、帳目記錄與自動分帳功能</h1>
+<h1 class="sr-only">互動旅遊行程規劃器，包含地點管理、記帳與自動分帳功能</h1>
 <div id="root"></div>
 <script>
 const SK='travel-v11-shared';
@@ -476,6 +476,9 @@ function fmt(n,c=S.settleCurrency||'TWD'){
   const zero=['TWD','JPY','KRW'].includes(c);
   return `${CUR_LABEL[c]||c+' '}${(zero?Math.round(n):Number(n).toFixed(2)).toLocaleString()}`;
 }
+function isPersonalExp(e){
+  return e?.expenseMode==='personal'||(!e?.paidBy&&!(e?.splitWith||[]).length&&!e?.shares);
+}
 async function loadFx(){
   try{
     const r=await fetch('https://open.er-api.com/v6/latest/TWD');
@@ -490,6 +493,7 @@ function settle(exps,tvls){
   const b=Object.fromEntries(tvls.map(t=>[t,0]));
   const cur=S.settleCurrency||'TWD';
   for(const e of exps){
+    if(isPersonalExp(e))continue;
     const shares=e.shares||null;
     if(shares){
       for(const [p,raw] of Object.entries(shares)){const sh=convertAmount(raw,e.currency||'TWD',cur);if(p===e.paidBy)continue;if(p in b)b[p]-=sh;if(e.paidBy in b)b[e.paidBy]+=sh;}
@@ -593,7 +597,7 @@ function fabConfig(){
   const cfg={
     itinerary:{manual:'手動新增地點',manualSub:'新增一個行程地點',manualIcon:'＋',ai:'AI 匯入行程',aiSub:'貼上 AI 行程一次建立',aiIcon:'✨'},
     wishlist:{manual:'手動新增清單',manualSub:'加入想去的店家或景點',manualIcon:'＋',ai:'AI 匯入清單',aiSub:'批次加入推薦地點',aiIcon:'✨'},
-    expenses:{manual:'新增帳目',manualSub:'輸入品項、金額與分帳',manualIcon:'💰',ai:'AI 辨識收據',aiSub:'開啟帳目表單上傳收據',aiIcon:'📷'},
+    expenses:{manual:'新增記帳',manualSub:'手動輸入日常花費',manualIcon:'💰',ai:'AI 收據記帳',aiSub:'上傳收據自動帶入金額分類',aiIcon:'📷'},
     memo:{manual:'新增備忘',manualSub:'加入行前清單項目',manualIcon:'📝',ai:'AI 產生備忘',aiSub:'自動產生旅行待辦清單',aiIcon:'✨'}
   };
   return cfg[S.view]||null;
@@ -611,14 +615,14 @@ function fabManual(el){
   S.wlFabOpen=false;
   if(S.view==='itinerary'){_heroOrigin=el.getBoundingClientRect();oLoc('');}
   else if(S.view==='wishlist'){wlOpenAdd(el);}
-  else if(S.view==='expenses'){_heroOrigin=el.getBoundingClientRect();oExp('');}
+  else if(S.view==='expenses'){_heroOrigin=el.getBoundingClientRect();oExp('',{ocr:false});}
   else if(S.view==='memo'){openModal(el,{t:'memo_add'});}
 }
 function fabAi(el){
   S.wlFabOpen=false;
   if(S.view==='itinerary')openModal(el,{t:'import'});
   else if(S.view==='wishlist')openModal(el,{t:'wl_import'});
-  else if(S.view==='expenses'){_heroOrigin=el.getBoundingClientRect();oExp('');}
+  else if(S.view==='expenses'){_heroOrigin=el.getBoundingClientRect();oExp('',{ocr:true});}
   else if(S.view==='memo')openModal(el,{t:'memo_import'});
 }
 function hdr(te){
@@ -632,7 +636,7 @@ function hdr(te){
 }
 function saveTN(){const v=document.getElementById('tn-in')?.value?.trim()||S.tnDraft.trim()||'未命名旅程';setD({tripName:v,editTN:false});}
 function gnav(){
-  const ts=[['memo','📝 備忘'],['itinerary','🗺 行程'],['wishlist','🌟 清單'],['expenses','💰 帳目'],['split','⚖ 分帳']];
+  const ts=[['memo','📝 備忘'],['itinerary','🗺 行程'],['wishlist','🌟 清單'],['expenses','💰 記帳'],['split','⚖ 分帳']];
   return`<nav class="nav">${ts.map(([k,l])=>`<button class="nav-btn${S.view===k?' on':''}" onclick="setU({view:'${k}'})">${l}</button>`).join('')}</nav>`;
 }
 function itin(day,si){
@@ -689,13 +693,18 @@ function exps(te){
   const budget=Number(S.budget||0), budgetCur=convertAmount(budget,'TWD',S.settleCurrency||'TWD'), pct=budgetCur?Math.min(100,Math.round(te/budgetCur*100)):0, cls=pct>=100?'over':pct>=80?'warn':'';
   const bud=`<div class="budget-card"><div class="bar-lb"><span>旅行預算</span><span>${budget?`${fmt(te)} / ${fmt(budgetCur)}`:`${fmt(te)} · 尚未設定預算`}</span></div><div class="budget-line"><div class="budget-fill ${cls}" style="width:${budget?pct:0}%;"></div></div><div class="tip">${esc(FX.status)}${FX.date?` · ${esc(String(FX.date).slice(0,16))}`:''}</div></div>`;
   const bars=cs.length?`<div class="card" style="padding:14px;margin-bottom:10px;"><div style="font-size:13px;color:var(--muted);margin-bottom:10px;font-weight:900;">消費分類</div>${cs.map(({c,t})=>`<div class="bar-lb"><span>${CE[c]} ${c}</span><span style="font-weight:800;">${fmt(t)}</span></div><div class="bar-tr"><div style="height:100%;border-radius:999px;background:${CBr[c]};width:${te?Math.round(t/te*100):0}%;"></div></div>`).join('')}</div>`:'';
-  const list=S.expenses.length?S.expenses.map(e=>`<div class="card"><div class="exp-row"><div class="cat-ic" style="background:${CB[e.category]||'#F1EFE8'}">${CE[e.category]||'📌'}</div><div class="exp-inf"><div class="exp-nm">${esc(e.item)}</div><div class="exp-mt">${esc(e.paidBy)} · ${e.shares?'自訂分擔':`${e.splitWith?.length||0}人分`} · <span style="color:${CF[e.category]||'#444'};">${e.category||'其他'}</span>${e.currency&&e.currency!=='TWD'?` · ${esc(e.currency)} ${Number(e.amount||0).toLocaleString()}`:''}</div></div><div class="exp-rt"><div class="exp-am">${fmt(expValue(e))}</div><div class="brow" style="margin-top:7px;justify-content:flex-end;"><button class="btn" style="min-height:30px;padding:4px 8px;" onclick="_heroOrigin=this.getBoundingClientRect();oExp('${e.id}')">編輯</button><button class="btn br" style="min-height:30px;padding:4px 8px;" onclick="dExp('${e.id}')">刪</button></div></div></div></div>`).join(''):`<div class="empty"><div style="font-size:30px;margin-bottom:8px;">💰</div>尚無帳目記錄</div>`;
-  return`<div class="tool-row"><button class="btn bp mobile-fab-replaced" onclick="_heroOrigin=this.getBoundingClientRect();oExp('')">新增帳目</button><button class="btn" onclick="setU({modal:{t:'tools'}})">預算 / 匯出</button></div><div class="stats"><div class="stat"><div class="stat-n">${fmt(te)}</div><div class="stat-l">總花費</div></div><div class="stat"><div class="stat-n">${S.travelers.length?fmt(te/S.travelers.length):'-'}</div><div class="stat-l">人均</div></div></div>${bud}${bars}${list}<button class="add-btn mobile-fab-replaced" onclick="oExp('')">+ 新增帳目</button>`;
+  const list=S.expenses.length?S.expenses.map(e=>{
+    const personal=isPersonalExp(e);
+    const meta=personal?'純記帳':`${esc(e.paidBy||'未選付款人')} · ${e.shares?'自訂分擔':`${e.splitWith?.length||0}人分`}`;
+    return`<div class="card"><div class="exp-row"><div class="cat-ic" style="background:${CB[e.category]||'#F1EFE8'}">${CE[e.category]||'📌'}</div><div class="exp-inf"><div class="exp-nm">${esc(e.item)}</div><div class="exp-mt">${meta} · <span style="color:${CF[e.category]||'#444'};">${e.category||'其他'}</span>${e.currency&&e.currency!=='TWD'?` · ${esc(e.currency)} ${Number(e.amount||0).toLocaleString()}`:''}</div></div><div class="exp-rt"><div class="exp-am">${fmt(expValue(e))}</div><div class="brow" style="margin-top:7px;justify-content:flex-end;"><button class="btn" style="min-height:30px;padding:4px 8px;" onclick="_heroOrigin=this.getBoundingClientRect();oExp('${e.id}')">編輯</button><button class="btn br" style="min-height:30px;padding:4px 8px;" onclick="dExp('${e.id}')">刪</button></div></div></div></div>`;
+  }).join(''):`<div class="empty"><div style="font-size:30px;margin-bottom:8px;">💰</div>尚無記帳記錄</div>`;
+  return`<div class="tool-row"><button class="btn bp mobile-fab-replaced" onclick="_heroOrigin=this.getBoundingClientRect();oExp('')">新增記帳</button><button class="btn" onclick="setU({modal:{t:'tools'}})">預算 / 匯出</button></div><div class="stats"><div class="stat"><div class="stat-n">${fmt(te)}</div><div class="stat-l">總花費</div></div><div class="stat"><div class="stat-n">${S.travelers.length?fmt(te/S.travelers.length):'-'}</div><div class="stat-l">人均</div></div></div>${bud}${bars}${list}<button class="add-btn mobile-fab-replaced" onclick="oExp('')">+ 新增記帳</button>`;
 }
 function splt(b,tx,te){
-  const br=S.travelers.map(t=>{const v=b[t]||0,paid=S.expenses.filter(e=>e.paidBy===t).reduce((s,e)=>s+expValue(e),0),pos=v>=0;return`<div class="brow2"><div><div style="font-weight:900;font-size:15px;">${esc(t)}</div><div style="font-size:12px;color:var(--muted);">已付 ${fmt(paid)}</div></div><div style="font-weight:900;font-size:14px;color:${pos?'#0F6E56':'#A32D2D'};text-align:right;">${pos?`+ ${fmt(Math.abs(v))} 應收`:`${fmt(Math.abs(v))} 應付`}</div></div>`;}).join('');
-  const tc=tx.length?tx.map(t=>`<div class="txn"><div style="font-weight:900;font-size:15px;">${esc(t.from)}</div><div><div style="font-size:12px;color:#854F0B;">轉帳給</div><div style="font-size:16px;font-weight:900;color:#633806;">${fmt(t.amount)}</div></div><div style="font-weight:900;text-align:right;font-size:15px;">→ ${esc(t.to)}</div></div>`).join(''):`<div style="text-align:center;padding:16px;color:var(--muted);font-size:14px;background:#fff;border-radius:var(--r);border:1px solid var(--line);">${S.expenses.length?'✅ 帳目已平衡！':'尚無帳目記錄'}</div>`;
-  const det=S.expenses.length?`<div class="sh">帳目明細</div>${S.expenses.map(e=>`<div class="card" style="padding:12px 14px;margin-bottom:8px;"><div style="display:flex;justify-content:space-between;gap:8px;margin-bottom:4px;"><div style="font-weight:900;">${CE[e.category]||'📌'} ${esc(e.item)}</div><div style="font-weight:900;">${fmt(expValue(e))}</div></div><div style="font-size:12px;color:var(--muted);margin-bottom:8px;">${esc(e.paidBy)} 先付款${e.shares?' · 自訂分擔':` · 每人 ${fmt(expValue(e)/(e.splitWith?.length||1))}`}</div><div style="display:flex;flex-wrap:wrap;gap:5px;">${(e.shares?Object.entries(e.shares).filter(([,v])=>Number(v)>0).map(([p,v])=>`${p}:${v}`):(e.splitWith||[]).map(p=>[p,null])).map(([p,v])=>`<span style="font-size:12px;padding:3px 9px;background:${p===e.paidBy?'#E1F5EE':'#f2f5f3'};color:${p===e.paidBy?'#085041':'#66736f'};border-radius:999px;border:1px solid ${p===e.paidBy?'#9FE1CB':'transparent'};">${esc(p)}${v?` ${fmt(convertAmount(v,e.currency||'TWD',S.settleCurrency||'TWD'))}`:''}${p===e.paidBy?' (付)':''}</span>`).join('')}</div></div>`).join('')}`:'';
+  const sharedExpenses=S.expenses.filter(e=>!isPersonalExp(e));
+  const br=S.travelers.map(t=>{const v=b[t]||0,paid=sharedExpenses.filter(e=>e.paidBy===t).reduce((s,e)=>s+expValue(e),0),pos=v>=0;return`<div class="brow2"><div><div style="font-weight:900;font-size:15px;">${esc(t)}</div><div style="font-size:12px;color:var(--muted);">共同分帳已付 ${fmt(paid)}</div></div><div style="font-weight:900;font-size:14px;color:${pos?'#0F6E56':'#A32D2D'};text-align:right;">${pos?`+ ${fmt(Math.abs(v))} 應收`:`${fmt(Math.abs(v))} 應付`}</div></div>`;}).join('');
+  const tc=tx.length?tx.map(t=>`<div class="txn"><div style="font-weight:900;font-size:15px;">${esc(t.from)}</div><div><div style="font-size:12px;color:#854F0B;">轉帳給</div><div style="font-size:16px;font-weight:900;color:#633806;">${fmt(t.amount)}</div></div><div style="font-weight:900;text-align:right;font-size:15px;">→ ${esc(t.to)}</div></div>`).join(''):`<div style="text-align:center;padding:16px;color:var(--muted);font-size:14px;background:#fff;border-radius:var(--r);border:1px solid var(--line);">${sharedExpenses.length?'✅ 共同分帳已平衡！':'尚無共同分帳記錄'}</div>`;
+  const det=sharedExpenses.length?`<div class="sh">共同分帳明細</div>${sharedExpenses.map(e=>`<div class="card" style="padding:12px 14px;margin-bottom:8px;"><div style="display:flex;justify-content:space-between;gap:8px;margin-bottom:4px;"><div style="font-weight:900;">${CE[e.category]||'📌'} ${esc(e.item)}</div><div style="font-weight:900;">${fmt(expValue(e))}</div></div><div style="font-size:12px;color:var(--muted);margin-bottom:8px;">${esc(e.paidBy)} 先付款${e.shares?' · 自訂分擔':` · 每人 ${fmt(expValue(e)/(e.splitWith?.length||1))}`}</div><div style="display:flex;flex-wrap:wrap;gap:5px;">${(e.shares?Object.entries(e.shares).filter(([,v])=>Number(v)>0).map(([p,v])=>`${p}:${v}`):(e.splitWith||[]).map(p=>[p,null])).map(([p,v])=>`<span style="font-size:12px;padding:3px 9px;background:${p===e.paidBy?'#E1F5EE':'#f2f5f3'};color:${p===e.paidBy?'#085041':'#66736f'};border-radius:999px;border:1px solid ${p===e.paidBy?'#9FE1CB':'transparent'};">${esc(p)}${v?` ${fmt(convertAmount(v,e.currency||'TWD',S.settleCurrency||'TWD'))}`:''}${p===e.paidBy?' (付)':''}</span>`).join('')}</div></div>`).join('')}`:'';
   return`<div class="sh">各人結算</div><div class="card">${br}</div><div class="sh">付款方式</div>${tc}${det}`;
 }
 // buildModal defined below with note support
@@ -725,20 +734,22 @@ function mDay(){
 <div class="ar"><button class="btn bp" style="flex:1;padding:10px;" onclick="sDay()">儲存</button><button class="btn" style="flex:1;padding:10px;" onclick="setU({modal:null})">取消</button></div>`;
 }
 function mExp(){
-  const tOpts=S.travelers.map(t=>`<option value="${esc(t)}"${FM.paidBy===t?' selected':''}>${esc(t)}</option>`).join('');
+  const tOpts=`<option value=""${!FM.paidBy?' selected':''}>無 / 請選擇</option>`+S.travelers.map(t=>`<option value="${esc(t)}"${FM.paidBy===t?' selected':''}>${esc(t)}</option>`).join('');
   const cOpts=CATS.map(c=>`<option value="${c}"${FM.category===c?' selected':''}>${CE[c]} ${c}</option>`).join('');
   const curOpts=Object.keys(CUR).map(c=>`<option value="${c}"${(FM.currency||'TWD')===c?' selected':''}>${c}</option>`).join('');
   const scs=S.travelers.map(t=>`<span class="sc${(FM.splitWith||[]).includes(t)?' on':''}" data-name="${esc(t)}" onclick="tgSplit('${esc(t)}')">${esc(t)}</span>`).join('');
+  const personal=(FM.expenseMode||'personal')==='personal';
   const custom=FM.splitMode==='custom';
   const shareRows=S.travelers.map(t=>`<div class="mobile-stack" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;align-items:center;margin-bottom:8px;"><div class="mini">${esc(t)}</div><input class="share-in" data-person="${esc(t)}" type="number" inputmode="decimal" value="${FM.shares?.[t]||''}" placeholder="0" oninput="FM.shares=FM.shares||{};FM.shares['${esc(t)}']=this.value"></div>`).join('');
   const ah=FM.item?`<div class="ah">自動偵測：${CE[ac(FM.item)]} ${ac(FM.item)}</div>`:'';
-  return`<div class="mhd"><div class="mt">${S.modal.expId?'編輯帳目':'新增帳目'}</div><div class="mcl" onclick="setU({modal:null})">✕</div></div>
-<div class="receipt-box"><label class="fl">AI 辨識收據</label><input type="file" accept="image/*" onchange="readReceipt(this.files?.[0])"><div id="ocr-status" class="mini">可上傳收據照片，會嘗試辨識品項、金額並自動分類。</div></div>
+  return`<div class="mhd"><div class="mt">${S.modal.ocr?'AI 收據記帳':(S.modal.expId?'編輯記帳':'新增記帳')}</div><div class="mcl" onclick="setU({modal:null})">✕</div></div>
+${S.modal.ocr?`<div class="receipt-box"><label class="fl">AI 收據記帳</label><input type="file" accept="image/*" onchange="readReceipt(this.files?.[0])"><div id="ocr-status" class="mini">上傳收據照片後，會嘗試辨識品項、金額並自動分類。</div></div>`:''}
+<div class="fg"><label class="fl">記帳模式</label><div class="scs"><span class="sc${personal?' on':''}" onclick="FM.expenseMode='personal';FM.paidBy='';FM.splitWith=[];FM.shares={};setU({modal:S.modal})">純記帳</span><span class="sc${!personal?' on':''}" onclick="FM.expenseMode='shared';FM.splitWith=FM.splitWith?.length?FM.splitWith:[...S.travelers];setU({modal:S.modal})">共同分帳</span></div><div class="tip">${personal?'只記錄花費，不會進入分帳計算。':'用於多人旅行，需選擇誰付款與分攤方式。'}</div></div>
 <div class="fg"><label class="fl">品項 *</label><input id="exp-item" type="text" value="${esc(FM.item||'')}" placeholder="例：車票、晚餐、飯店..." oninput="FM.item=this.value;updAH()">${ah}</div>
 <div class="mobile-stack" style="display:grid;grid-template-columns:2fr 1fr;gap:8px;margin-bottom:12px;"><div><label class="fl">金額 *</label><input type="number" inputmode="decimal" value="${FM.amount||''}" placeholder="0" oninput="FM.amount=this.value"></div><div><label class="fl">幣別</label><select onchange="FM.currency=this.value">${curOpts}</select></div></div>
-<div class="mobile-stack" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;"><div><label class="fl">分類</label><select id="exp-cat" onchange="FM.category=this.value"><option value="">自動偵測</option>${cOpts}</select></div><div><label class="fl">誰付款</label><select onchange="FM.paidBy=this.value">${tOpts}</select></div></div>
-<div class="fg"><label class="fl">分帳方式</label><div class="scs"><span class="sc${!custom?' on':''}" onclick="FM.splitMode='equal';setU({modal:S.modal})">平均分</span><span class="sc${custom?' on':''}" onclick="FM.splitMode='custom';FM.shares=FM.shares||{};setU({modal:S.modal})">自訂金額</span></div></div>
-${custom?`<div class="fg"><label class="fl">每個人負擔金額（${FM.currency||'TWD'}，加總需等於總金額）</label>${shareRows}</div>`:`<div class="fg"><label class="fl">分帳對象（點選切換）</label><div class="scs">${scs}</div></div>`}
+<div class="mobile-stack" style="display:grid;grid-template-columns:${personal?'1fr':'1fr 1fr'};gap:8px;margin-bottom:12px;"><div><label class="fl">分類</label><select id="exp-cat" onchange="FM.category=this.value"><option value="">自動偵測</option>${cOpts}</select></div>${personal?'':`<div><label class="fl">誰付款 *</label><select onchange="FM.paidBy=this.value">${tOpts}</select></div>`}</div>
+${personal?'':`<div class="fg"><label class="fl">分帳方式</label><div class="scs"><span class="sc${!custom?' on':''}" onclick="FM.splitMode='equal';setU({modal:S.modal})">平均分</span><span class="sc${custom?' on':''}" onclick="FM.splitMode='custom';FM.shares=FM.shares||{};setU({modal:S.modal})">自訂金額</span></div></div>
+${custom?`<div class="fg"><label class="fl">每個人負擔金額（${FM.currency||'TWD'}，加總需等於總金額）</label>${shareRows}</div>`:`<div class="fg"><label class="fl">分帳對象（點選切換）</label><div class="scs">${scs}</div></div>`}`}
 <div class="ar"><button class="btn bp" style="flex:1;padding:10px;" onclick="sExp()">儲存</button><button class="btn" style="flex:1;padding:10px;" onclick="setU({modal:null})">取消</button></div>`;
 }
 function mTv(){
@@ -776,7 +787,7 @@ function mTools(){
 <div class="fg"><label class="fl">結算幣別</label><select onchange="setD({settleCurrency:this.value,modal:{t:'tools'}})">${settleOpts}</select><div class="tip">${esc(FX.status)}。匯率來源：ExchangeRate-API Open Access，每日更新一次。</div></div>
 <div class="fg"><label class="fl">旅行總預算（NT$）</label><input type="number" inputmode="numeric" value="${S.budget||''}" placeholder="例：50000" oninput="S.budget=this.value"></div>
 <div class="ar"><button class="btn bp" style="flex:1;padding:10px;" onclick="setD({budget:Number(S.budget||0),modal:null})">儲存預算</button><button class="btn" style="flex:1;padding:10px;" onclick="exportTrip()">封存旅程</button></div>
-<div class="ar"><button class="btn" style="flex:1;padding:10px;" onclick="exportCSV()">匯出帳目 CSV</button><button class="btn" style="flex:1;padding:10px;" onclick="document.getElementById('import-trip').click()">匯入旅程檔</button></div>
+<div class="ar"><button class="btn" style="flex:1;padding:10px;" onclick="exportCSV()">匯出記帳 CSV</button><button class="btn" style="flex:1;padding:10px;" onclick="document.getElementById('import-trip').click()">匯入旅程檔</button></div>
 <input id="import-trip" type="file" accept="application/json" style="display:none" onchange="importTrip(this.files?.[0])">
 <div class="tip">「封存旅程」會下載一份完整 JSON 檔，旅遊結束後可保存；日後也可以用「匯入旅程檔」還原。</div>
 <div class="tip">多幣別換算目前使用內建概略匯率，可先記帳與分帳；正式結算前建議再確認匯率。</div>`;
@@ -798,10 +809,14 @@ function oLoc(locId,tmplIdx){
   else FM={name:'',address:'',phone:'',time:'',notes:'',category:''};
   setU({modal:{t:'loc',locId:locId||null}});
 }
-function oExp(expId){
-  if(expId){const e=S.expenses.find(x=>x.id===expId);FM={...e,amount:String(e.amount),currency:e.currency||'TWD',splitMode:e.shares?'custom':'equal',shares:{...(e.shares||{})},splitWith:[...(e.splitWith||[])]};}
-  else FM={item:'',amount:'',currency:'TWD',category:'',paidBy:S.travelers[0]||'',splitMode:'equal',shares:{},splitWith:[...S.travelers]};
-  setU({modal:{t:'exp',expId:expId||null}});
+function oExp(expId,opts={}){
+  if(expId){
+    const e=S.expenses.find(x=>x.id===expId);
+    const mode=isPersonalExp(e)?'personal':'shared';
+    FM={...e,amount:String(e.amount),currency:e.currency||'TWD',expenseMode:mode,splitMode:e.shares?'custom':'equal',shares:{...(e.shares||{})},splitWith:[...(e.splitWith||[])]};
+  }
+  else FM={item:'',amount:'',currency:'TWD',category:'',paidBy:'',expenseMode:'personal',splitMode:'equal',shares:{},splitWith:[]};
+  setU({modal:{t:'exp',expId:expId||null,ocr:!!opts.ocr}});
 }
 function sLoc(){
   if(!FM.name?.trim()){alert('請輸入地點名稱');return;}
@@ -821,15 +836,17 @@ function sExp(){
   if(!FM.item?.trim()||!FM.amount){alert('請輸入品項和金額');return;}
   const exps=JSON.parse(JSON.stringify(S.expenses));
   const cur=FM.currency||'TWD', amount=parseFloat(FM.amount)||0;
-  let shares=null,splitWith=FM.splitWith?.length?FM.splitWith:[...S.travelers];
-  if(FM.splitMode==='custom'){
+  const personal=(FM.expenseMode||'personal')==='personal';
+  let shares=null,splitWith=personal?[]:(FM.splitWith?.length?FM.splitWith:[...S.travelers]);
+  if(!personal&&!FM.paidBy){alert('共同分帳請選擇誰付款');return;}
+  if(!personal&&FM.splitMode==='custom'){
     shares={};
     document.querySelectorAll('.share-in').forEach(el=>{const v=parseFloat(el.value)||0;if(v>0)shares[el.dataset.person]=v;});
     const sum=Object.values(shares).reduce((s,v)=>s+Number(v),0);
     if(Math.abs(sum-amount)>0.5){alert(`自訂分擔加總 ${sum.toLocaleString()}，需等於總金額 ${amount.toLocaleString()}`);return;}
     splitWith=Object.keys(shares);
   }
-  const exp={id:S.modal.expId||uid(),item:FM.item,amount,currency:cur,amountBase:Math.round(convertAmount(amount,cur,'TWD')),category:FM.category||ac(FM.item),paidBy:FM.paidBy||S.travelers[0],splitWith,shares,date:new Date().toLocaleDateString('zh-TW')};
+  const exp={id:S.modal.expId||uid(),item:FM.item,amount,currency:cur,amountBase:Math.round(convertAmount(amount,cur,'TWD')),category:FM.category||ac(FM.item),paidBy:personal?'':FM.paidBy,expenseMode:personal?'personal':'shared',splitWith,shares:personal?null:shares,date:new Date().toLocaleDateString('zh-TW')};
   if(S.modal.expId){const i=exps.findIndex(e=>e.id===S.modal.expId);exps[i]=exp;}else exps.push(exp);
   setD({expenses:exps,modal:null});
 }
@@ -1369,16 +1386,16 @@ ${sec('🌟','旅遊清單',[
   ['🗺️','地址旁的「🗺️ Maps」以名稱＋地址搜尋 Google Maps，定位更準確。'],
   ['➕','每張卡片下方有「➕ 第X天」按鈕，一鍵將地點（含地址、電話、備註）加入指定天數行程。加入後標示「✅ 已加入行程」。'],
 ])}
-${sec('💰','帳目記錄',[
-  ['＋','點「新增帳目」輸入品項與金額，輸入文字後系統自動偵測分類。'],
-  ['👤','選擇付款人及分帳對象，支援多人分擔與自訂比例。'],
+${sec('💰','記帳',[
+  ['＋','點「新增記帳」手動輸入品項與金額，預設為純記帳，不會進入分帳計算。'],
+  ['👤','切換到「共同分帳」後，才需要選擇付款人與分帳對象，支援平均分與自訂金額。'],
   ['💱','支援多幣別，自動換算為結算幣別（可在旅程工具設定）。'],
   ['📊','上方顯示總花費、人均費用及各分類消費比例長條圖。'],
-  ['🧾','支援貼上收據文字讓 AI 自動解析金額與品項。'],
+  ['🧾','點「AI 收據記帳」上傳收據照片，自動帶入品項、金額與分類。'],
 ])}
 ${sec('⚖','分帳計算',[
   ['💰','自動計算每人應收／應付，顯示最少轉帳次數的建議清單。'],
-  ['📋','帳目明細列出每筆費用的付款人及分擔比例，可篩選特定人員。'],
+  ['📋','只會計算「共同分帳」的記錄；純記帳會留在記帳頁，不影響最後分帳。'],
 ])}
 ${sec('🔗','分享與同步',[
   ['🏠','封面下方「同步代碼輸入框」，輸入代碼後按 Enter 或「跳轉」可直接進入旅程，不用進選單。'],
@@ -1449,8 +1466,8 @@ function exportTrip(){
   downloadFile(`${S.tripName||'travel'}-${stamp}.json`,'application/json;charset=utf-8',JSON.stringify({version:1,exportedAt:new Date().toISOString(),trip:S},null,2));
 }
 function exportCSV(){
-  const rows=[['日期','品項','分類','付款人','原幣別','原金額','折合NTD','分帳對象']];
-  S.expenses.forEach(e=>rows.push([e.date||'',e.item||'',e.category||'',e.paidBy||'',e.currency||'TWD',e.amount||0,expBase(e),(e.splitWith||[]).join('、')]));
+  const rows=[['日期','品項','模式','分類','付款人','原幣別','原金額','折合NTD','分帳對象']];
+  S.expenses.forEach(e=>rows.push([e.date||'',e.item||'',isPersonalExp(e)?'純記帳':'共同分帳',e.category||'',e.paidBy||'',e.currency||'TWD',e.amount||0,expBase(e),(e.splitWith||[]).join('、')]));
   const csv=rows.map(r=>r.map(v=>`"${String(v).replace(/"/g,'""')}"`).join(',')).join('\n');
   downloadFile(`${S.tripName||'travel'}-expenses.csv`,'text/csv;charset=utf-8','\ufeff'+csv);
 }
@@ -1480,7 +1497,7 @@ async function readReceipt(file){
     if(p.item)FM.item=p.item;
     if(p.amount)FM.amount=String(Math.round(p.amount));
     FM.category=p.category||ac(FM.item);
-    render();
+    if(typeof _refreshHeroContent==='function')_refreshHeroContent();else render();
     setTimeout(()=>{const s=document.getElementById('ocr-status');if(s)s.textContent=`已帶入：${FM.item||'收據'} / ${FM.amount||'未抓到金額'} / ${FM.category}`;},0);
   }catch{if(st)st.textContent='辨識失敗，請換一張更清楚的照片或手動輸入。';}
 }
