@@ -99,7 +99,7 @@ a{text-decoration:none}
 .sort-btn:disabled{opacity:.2;cursor:not-allowed}
 .sort-grip{cursor:grab;color:#b0bdb9;touch-action:none}
 .sort-grip:active{cursor:grabbing;color:#42a787}
-.quick-menu{position:fixed;top:auto;left:auto;width:min(88vw,260px);background:#fff;border:1px solid var(--line);border-radius:var(--r);box-shadow:0 8px 28px rgba(0,0,0,.18);z-index:100;padding:5px;display:flex;flex-direction:column;gap:1px}
+.quick-menu{position:fixed;top:-9999px;left:-9999px;opacity:0;pointer-events:none;width:min(88vw,260px);background:#fff;border:1px solid var(--line);border-radius:var(--r);box-shadow:0 8px 28px rgba(0,0,0,.18);z-index:100;padding:5px;display:flex;flex-direction:column;gap:1px;transition:opacity .15s ease;}
 .quick-item{width:100%;text-align:left;background:none;border:none;padding:9px 11px;font-size:13px;font-weight:700;color:var(--ink);cursor:pointer;border-radius:8px;display:flex;align-items:center;gap:8px;white-space:nowrap}
 .quick-item:hover,.quick-item:active{background:#f0faf5}
 .brow{display:flex;gap:7px;flex-wrap:wrap}
@@ -247,7 +247,7 @@ input:focus,select:focus,textarea:focus{border-color:#42a787;box-shadow:0 0 0 3p
   .action-group.primary{flex:1;justify-content:flex-start}
   .action-group.manage{justify-content:flex-end}
   .section-actions .btn{min-height:42px;padding:8px 12px}
-  .quick-menu{width:min(90vw,260px)}
+  .quick-menu{width:min(92vw,280px)}
   .loc-wrap{grid-template-columns:58px minmax(0,1fr);gap:9px;padding:13px 12px;padding-right:12px}
   .loc-time{width:58px;min-width:58px;font-size:15px;line-height:1.2;text-align:left}
   .loc-name{padding-right:108px}
@@ -348,6 +348,15 @@ input:focus,select:focus,textarea:focus{border-color:#42a787;box-shadow:0 0 0 3p
   transition:transform .36s cubic-bezier(.32,1.08,.58,1);}
 .sheet-wrap.open{transform:translateY(0);}
 .sheet-handle{width:36px;height:4px;background:#d1d9d6;border-radius:999px;margin:10px auto 14px;}
+
+/* ── Location action sheet ── */
+.loc-action-sheet{display:flex;flex-direction:column;padding:0 0 8px;}
+.loc-action-title{font-size:12px;color:var(--muted);font-weight:700;padding:8px 16px 12px;text-align:center;border-bottom:1px solid var(--line);margin-bottom:6px;}
+.loc-action-item{display:flex;align-items:center;gap:12px;padding:13px 16px;font-size:15px;font-weight:700;cursor:pointer;border-radius:10px;margin:0 6px;transition:background .12s;border:none;background:none;width:calc(100% - 12px);text-align:left;color:var(--ink);}
+.loc-action-item:hover,.loc-action-item:active{background:#f0f4f2;}
+.loc-action-item.danger{color:#c0392b;}
+.loc-action-item.danger:hover{background:#fdf0ee;}
+.loc-action-sep{height:1px;background:var(--line);margin:4px 16px;}
 </style>
 </head>
 <body>
@@ -551,7 +560,7 @@ function itin(day,si){
     const mapQuery=l.address?`${l.name} ${l.address}`:l.name;
     const mapBtns=l.address||l.name?`<a href="${mu(mapQuery)}" target="_blank" rel="noopener"><button class="btn bp" style="font-size:12px;min-height:30px;padding:5px 10px;">地圖</button></a><a href="${nu(l.address||l.name)}" target="_blank" rel="noopener"><button class="btn ba" style="font-size:12px;min-height:30px;padding:5px 10px;">導航</button></a>`:'';
     const sortBtns=`<div class="loc-sort-ctrl${isNow?' sort-below':''}"><button class="sort-btn sort-grip" title="拖曳" onpointerdown="startTouchDrag(event,'${day.id}','${l.id}')">⠿</button><button class="sort-btn" title="上移" onclick="mvLoc('${day.id}','${l.id}',-1)" ${i===0?'disabled':''}>↑</button><button class="sort-btn" title="下移" onclick="mvLoc('${day.id}','${l.id}',1)" ${i===day.locations.length-1?'disabled':''}>↓</button></div>`;
-    return`<div class="loc-card-wrap${isNow?' loc-now':''}" data-locid="${l.id}" data-dayid="${day.id}" ondragover="dragOver(event)" ondragleave="dragLeave(event)" ondrop="dragDrop(event,'${day.id}','${l.id}')" ondragend="dragEnd()"><div class="card" style="border-left-color:${isNow?catBg:borderColor};border-left-width:${isNow?'5':'3'}px;${isNow?`--now-bg:${catLight};`:''}">${sortBtns}${nowBar}<div class="loc-wrap"><div class="loc-time" style="${isNow?`color:${catDark};font-weight:900;`:''}">${esc(l.time||'--:--')}</div><div class="loc-body"><div class="loc-name">${esc(l.name)} ${badge}${resBadge}${nowBadge}</div>${l.address?`<div class="loc-addr">${esc(l.address)}</div>`:''}${phoneEl}${notesEl}<div class="act-row">${mapBtns}<button class="btn-ic" title="編輯" onclick="_heroOrigin=this.getBoundingClientRect();oLoc('${l.id}')">✏️</button><button class="btn-ic br" title="刪除" onclick="dLoc('${day.id}','${l.id}')">🗑️</button></div></div></div></div></div>`;
+    return`<div class="loc-card-wrap${isNow?' loc-now':''}" data-locid="${l.id}" data-dayid="${day.id}" ondragover="dragOver(event)" ondragleave="dragLeave(event)" ondrop="dragDrop(event,'${day.id}','${l.id}')" ondragend="dragEnd()" oncontextmenu="locActionSheet(event,'${day.id}','${l.id}');return false;" data-lpress-t="" ontouchstart="_lpStart(event,'${day.id}','${l.id}')" ontouchend="_lpCancel()" ontouchmove="_lpCancel()"><div class="card" style="border-left-color:${isNow?catBg:borderColor};border-left-width:${isNow?'5':'3'}px;${isNow?`--now-bg:${catLight};`:''}">${sortBtns}${nowBar}<div class="loc-wrap"><div class="loc-time" style="${isNow?`color:${catDark};font-weight:900;`:''}">${esc(l.time||'--:--')}</div><div class="loc-body"><div class="loc-name">${esc(l.name)} ${badge}${resBadge}${nowBadge}</div>${l.address?`<div class="loc-addr">${esc(l.address)}</div>`:''}${phoneEl}${notesEl}<div class="act-row">${mapBtns}<button class="btn-ic" title="編輯" onclick="_heroOrigin=this.getBoundingClientRect();oLoc('${l.id}')">✏️</button><button class="btn-ic br" title="刪除" onclick="locDeleteConfirm('${day.id}','${l.id}')">🗑️</button></div></div></div></div></div>`;
   }).join('');
   const quickItems=[...TMPL.map((t,i)=>`<button class="quick-item" onclick="S.quickOpen=false;_heroOrigin=this.getBoundingClientRect();oLoc('',${i})"><span style="background:${CB[t.cat]};color:${CF[t.cat]};border-radius:8px;padding:2px 7px;font-size:12px;font-weight:800;">${CE[t.cat]} ${t.cat}</span> ${esc(t.name)}</button>`),`<hr style="border:none;border-top:1px solid var(--line);margin:3px 0;"><button class="quick-item" style="color:#5b3fc4;font-weight:900;" onclick="S.quickOpen=false;openModal(this,{t:'import'})">✨ AI 匯入行程</button>`].join('');
   const quickMenu=S.quickOpen?`<div class="quick-menu">${quickItems}</div>`:'';
@@ -1222,44 +1231,53 @@ function mHelp(){
 ${sec('📝','行前備忘錄',[
   ['✅','出發前的打勾清單，分成 🪪 證件、🧳 行李、📅 預訂、📌 其他 四類。'],
   ['＋','下方輸入框選分類、輸入文字後按「新增」或 Enter 加入。'],
-  ['☑️','點左側方框可切換已完成／未完成，完成的項目會顯示刪除線。'],
-  ['×','點右側 × 刪除該項目。進度條顯示完成比例。'],
+  ['☑️','點左側方框切換已完成／未完成，完成項目會顯示刪除線。進度條顯示完成比例。'],
+  ['×','點右側 × 刪除該項目。'],
 ])}
 ${sec('🗺','行程規劃',[
   ['📅','上方分頁選擇天數，可新增、編輯、刪除天數，每天可設定日期與城市（用於查天氣）。'],
-  ['＋','點標題列「快速新增 ▾」下拉選單，選擇分類快捷（餐廳、飯店、交通等）或 ✨ AI 匯入整份行程，也可點底部「＋ 新增地點」直接開啟空白表單。'],
+  ['＋','點標題列「＋ 快速新增」下拉選單，選分類快捷（餐廳、飯店、交通等）或 ✨ AI 匯入整份行程；也可點底部「＋ 新增地點」開啟空白表單。'],
   ['📍','每個地點可填：名稱、地址、電話、分類、時間、訂位狀態、確認碼、備註。'],
-  ['🕐','系統會根據當前時間自動跳到最近的行程，並以彩色橫條標記「現在」。'],
-  ['🗺️','點「地圖」可用地點名稱＋地址搜尋 Google Maps；「導航」直接導到地址。'],
+  ['🌤','天氣資訊以小膠囊顯示在天數標題旁，點擊可展開當日完整天氣（溫度、體感、濕度、風速、紫外線）。'],
+  ['🕐','系統自動跳到最近的行程，並以彩色橫條標記「目前最近」。點標題列 🕐 按鈕可手動跳到當下。'],
+  ['💬','備註欄位點「展開 ›」會從卡片原位放大展開（App Store 動畫效果），點空白處或下滑可關閉。'],
+  ['🗺️','點「地圖」以名稱＋地址搜尋 Google Maps；「導航」直接開啟導航。'],
   ['📞','電話號碼旁的 📞 可直接撥打。'],
-  ['💬','備註欄位點擊可展開全文彈窗，也可從那裡進入編輯。'],
-  ['⠿ ↑ ↓','每張卡片底部可拖曳（⠿）或點箭頭（↑↓）調整地點順序。'],
+  ['⠿ ↑ ↓','右上角排序工具列（膠囊樣式）：拖曳 ⠿ 或點 ↑↓ 調整地點順序，操作後頁面位置不會跳回頂部。'],
+])}
+${sec('🌟','旅遊清單',[
+  ['📋','在「清單」頁籤收藏想去的地方，分類有：☕ 咖啡廳、🍜 美食、🎁 伴手禮、🎫 景點、🛍️ 購物、🏨 住宿、📌 其他。'],
+  ['＋','點「＋ 新增地點」可手動填入名稱、分類、地址、電話、備註。'],
+  ['✨','點「✨ AI 匯入清單」取得提示詞，給 Gemini／ChatGPT，貼回 AI 回覆即可批次匯入地點。'],
+  ['✏️','每張卡片右上角有 ✏️ 編輯、× 刪除按鈕。'],
+  ['🗺️','地址旁的「🗺️ Maps」以名稱＋地址搜尋 Google Maps，定位更準確。'],
+  ['➕','每張卡片下方有「➕ 第X天」按鈕，一鍵將地點（含地址、電話、備註）加入指定天數行程。加入後標示「✅ 已加入行程」。'],
 ])}
 ${sec('💰','帳目記錄',[
-  ['＋','點「新增帳目」輸入品項與金額；輸入品項文字後系統會自動偵測分類。'],
-  ['👤','選擇「誰付款」及「分帳對象」，支援多人分擔。'],
-  ['💱','支援多種幣別，系統會自動換算為結算幣別（可在旅程工具中設定）。'],
-  ['📊','頁面上方顯示總花費、人均費用，以及各分類的消費比例長條圖。'],
-  ['🧾','支援掃描收據，或直接貼上文字讓 AI 自動解析金額與品項。'],
+  ['＋','點「新增帳目」輸入品項與金額，輸入文字後系統自動偵測分類。'],
+  ['👤','選擇付款人及分帳對象，支援多人分擔與自訂比例。'],
+  ['💱','支援多幣別，自動換算為結算幣別（可在旅程工具設定）。'],
+  ['📊','上方顯示總花費、人均費用及各分類消費比例長條圖。'],
+  ['🧾','支援貼上收據文字讓 AI 自動解析金額與品項。'],
 ])}
 ${sec('⚖','分帳計算',[
-  ['💰','自動計算每人應收 / 應付金額，顯示最少轉帳次數的建議清單。'],
-  ['📋','帳目明細顯示每筆費用的付款人及分擔比例，勾選特定人可只看該人。'],
+  ['💰','自動計算每人應收／應付，顯示最少轉帳次數的建議清單。'],
+  ['📋','帳目明細列出每筆費用的付款人及分擔比例，可篩選特定人員。'],
 ])}
 ${sec('🔗','分享與同步',[
-  ['🔗','點漢堡選單「分享連結」複製帶有同步代碼的完整網址，傳給旅伴即可共同編輯。'],
-  ['☁️','同一個同步代碼對應同一份旅程，所有旅伴的修改即時同步。'],
-  ['🔒','沒有代碼的人看不到你的旅程，建議使用較複雜不易猜到的代碼。'],
+  ['🏠','封面下方「同步代碼輸入框」，輸入代碼後按 Enter 或「跳轉」可直接進入旅程，不用進選單。'],
+  ['🔗','點右上漢堡選單「分享連結」複製完整網址（含代碼），旅伴點連結即可共同編輯、即時同步。'],
+  ['☁️','同一代碼對應同一份旅程，所有旅伴修改即時同步。建議使用不易猜到的代碼。'],
 ])}
-${sec('✨','AI 匯入行程',[
-  ['📋','在 Gemini 或 ChatGPT 輸入提示詞（點「快速新增 ▾」→「✨ AI 匯入行程」→ 複製提示詞），讓 AI 排好行程。'],
-  ['📥','複製 AI 的回覆，貼入匯入框，系統自動解析天數、地點、時間、電話、分類。'],
-  ['✅','匯入前有預覽可確認，確認後按「匯入行程」一鍵建立所有天數與地點。'],
+${sec('✨','AI 功能',[
+  ['🗺','匯入行程：點「＋ 快速新增」→「✨ AI 匯入行程」，複製提示詞給 Gemini／ChatGPT，貼回回覆一鍵建立所有天數與地點。'],
+  ['🌟','匯入清單：在「清單」頁籤點「✨ AI 匯入清單」，複製提示詞，AI 會推薦咖啡廳、美食、伴手禮等，貼回後批次加入清單。'],
+  ['💬','所有彈窗採用 App Store 風格 Hero 動畫，從按鈕原位放大展開，手指下滑可關閉。'],
 ])}
 ${sec('📷','封面與主題',[
-  ['🖼️','點漢堡選單「更換封面」可選擇預設圖片、貼上圖片網址或上傳自己的照片。'],
-  ['📐','建議使用 16:9 比例（1920×1080px）的橫式照片，手機和電腦都好看。'],
-  ['🎯','「焦點位置」可調整照片裁切中心，避免人臉或主體被裁掉。'],
+  ['🖼️','點漢堡選單「更換封面」可選預設圖片、貼上圖片網址或上傳自己的照片。'],
+  ['📐','建議使用 16:9（1920×1080px）橫式照片，手機和電腦都好看。'],
+  ['🎯','「焦點位置」可調整裁切中心，避免主體被裁掉。'],
 ])}
 </div>
 <button class="btn bp" style="width:100%;padding:11px;margin-top:12px;" onclick="setU({modal:null})">了解了，開始規劃！</button>`;
@@ -1813,20 +1831,23 @@ function setU(u){
 
 function toggleQuickMenu(btn){
   const willOpen=!S.quickOpen;
+  // Store button rect BEFORE render (render re-draws the DOM)
+  const rect=btn?btn.getBoundingClientRect():null;
   setU({quickOpen:willOpen});
-  if(willOpen){
-    requestAnimationFrame(()=>{
+  if(willOpen&&rect){
+    // Two rAF: first lets render paint, second lets layout settle
+    requestAnimationFrame(()=>requestAnimationFrame(()=>{
       const menu=document.querySelector('.quick-menu');
-      if(!menu||!btn)return;
-      const r=btn.getBoundingClientRect();
-      const mw=menu.offsetWidth||260;
+      if(!menu)return;
+      const mw=260;
       const vw=window.innerWidth;
-      // Prefer left-aligned with button; clamp to viewport
-      let left=r.left;
+      let left=rect.left;
       if(left+mw>vw-8) left=Math.max(8,vw-mw-8);
       menu.style.left=left+'px';
-      menu.style.top=(r.bottom+6)+'px';
-    });
+      menu.style.top=(rect.bottom+6)+'px';
+      menu.style.opacity='1';
+      menu.style.pointerEvents='auto';
+    }));
   }
 }
 
@@ -1918,6 +1939,126 @@ function closeWxSheet(){
   card.style.borderRadius='20px'; card.style.boxShadow='none';
   bd?.classList.remove('open');
   setTimeout(()=>{card.remove();bd?.remove();},360);
+}
+
+
+// ── Location Action Sheet (long-press / delete confirm) ───────────────
+let _lpTimer=null;
+
+function _lpStart(e, dayId, locId){
+  _lpCancel();
+  // Only trigger if not interacting with a button/link
+  if(e.target.closest('button,a'))return;
+  _lpTimer=setTimeout(()=>{
+    _lpTimer=null;
+    locActionSheet(null, dayId, locId);
+  }, 500);
+}
+function _lpCancel(){ if(_lpTimer){clearTimeout(_lpTimer);_lpTimer=null;} }
+
+function locActionSheet(e, dayId, locId){
+  if(e)e.preventDefault();
+  const day=S.days.find(d=>d.id===dayId);
+  const loc=day?.locations.find(l=>l.id===locId);
+  if(!loc)return;
+
+  // Remove existing
+  document.getElementById('_locActionBackdrop')?.remove();
+  document.getElementById('_locActionSheet')?.remove();
+
+  const bd=document.createElement('div');
+  bd.id='_locActionBackdrop'; bd.className='sheet-backdrop';
+  bd.onclick=closeLocActionSheet;
+  document.body.appendChild(bd);
+
+  const wrap=document.createElement('div');
+  wrap.id='_locActionSheet'; wrap.className='sheet-wrap';
+  wrap.innerHTML=`
+    <div class="sheet-handle"></div>
+    <div class="loc-action-sheet">
+      <div class="loc-action-title">${esc(loc.name)}</div>
+      <button class="loc-action-item" onclick="closeLocActionSheet();_heroOrigin=null;setTimeout(()=>oLoc('${locId}'),30)">
+        ✏️ <span>編輯地點</span>
+      </button>
+      <button class="loc-action-item" onclick="closeLocActionSheet();locSaveToWishlist('${dayId}','${locId}')">
+        🌟 <span>存到清單</span>
+      </button>
+      <button class="loc-action-item" onclick="closeLocActionSheet();locMoveToWishlist('${dayId}','${locId}')">
+        🌟➜🗑️ <span>移到清單並從行程移除</span>
+      </button>
+      <div class="loc-action-sep"></div>
+      <button class="loc-action-item danger" onclick="closeLocActionSheet();dLoc('${dayId}','${locId}')">
+        🗑️ <span>直接刪除</span>
+      </button>
+    </div>`;
+  document.body.appendChild(wrap);
+
+  // Swipe down
+  let sy=0,cy=0;
+  wrap.addEventListener('touchstart',e=>{sy=e.touches[0].clientY;},{passive:true});
+  wrap.addEventListener('touchmove',e=>{
+    cy=e.touches[0].clientY;
+    const dy=Math.max(0,cy-sy);
+    if(dy>0){wrap.style.transition='none';wrap.style.transform=`translateY(${dy}px)`;bd.style.opacity=String(Math.max(0,1-dy/180));}
+  },{passive:true});
+  wrap.addEventListener('touchend',()=>{
+    wrap.style.transform='';bd.style.opacity='';
+    if(cy-sy>60)closeLocActionSheet();else{wrap.style.transition='';wrap.classList.add('open');}
+    sy=0;cy=0;
+  });
+
+  requestAnimationFrame(()=>requestAnimationFrame(()=>{
+    bd.classList.add('open'); wrap.classList.add('open');
+  }));
+}
+
+function closeLocActionSheet(){
+  const wrap=document.getElementById('_locActionSheet');
+  const bd=document.getElementById('_locActionBackdrop');
+  wrap?.classList.remove('open'); bd?.classList.remove('open');
+  wrap?.style && (wrap.style.transition='');
+  setTimeout(()=>{wrap?.remove();bd?.remove();},360);
+}
+
+// Plan B: delete button → show action sheet
+function locDeleteConfirm(dayId, locId){
+  locActionSheet(null, dayId, locId);
+}
+
+// Reverse CAT → WL cat id
+const CAT_TO_WL={'餐飲':'food','住宿':'hotel','交通':'other','景點':'attraction','購物':'shopping','其他':'other'};
+
+function _locToWlItem(loc){
+  const catId=CAT_TO_WL[loc.category]||'other';
+  return{id:uid(),name:loc.name,cat:catId,address:loc.address||'',phone:loc.phone||'',note:loc.notes||'',added:false};
+}
+
+function locSaveToWishlist(dayId, locId){
+  const day=S.days.find(d=>d.id===dayId);
+  const loc=day?.locations.find(l=>l.id===locId);
+  if(!loc)return;
+  const wishlist=[...(S.wishlist||[]),_locToWlItem(loc)];
+  setD({wishlist});
+  const t=document.createElement('div');
+  t.className='wl-toast';
+  t.textContent='🌟 已存到清單：'+loc.name;
+  document.body.appendChild(t);
+  setTimeout(()=>t.remove(),2200);
+}
+
+function locMoveToWishlist(dayId, locId){
+  const days=JSON.parse(JSON.stringify(S.days));
+  const day=days.find(d=>d.id===dayId);
+  const loc=day?.locations.find(l=>l.id===locId);
+  if(!loc)return;
+  day.locations=day.locations.filter(l=>l.id!==locId);
+  const wishlist=[...(S.wishlist||[]),_locToWlItem(loc)];
+  setD({days,wishlist});
+  const t=document.createElement('div');
+  t.className='wl-toast';
+  t.textContent='🌟 已移到清單：'+loc.name;
+  document.body.appendChild(t);
+  setTimeout(()=>t.remove(),2200);
 }
 
 load();
