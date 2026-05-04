@@ -565,7 +565,7 @@ function itin(day,si){
       const wi=wxInfo(wx.data.code);
       weatherDetail=wx.data;
       weatherDetail._wi=wi;
-      weatherBadge=`<button class="wx-badge" onclick="showWxSheet('${day.id}')" title="點擊查看完整天氣"><span class="wx-badge-ic">${wi.e}</span>${wx.data.temp}°C ${esc(day.city)}</button>`;
+      weatherBadge=`<button class="wx-badge" onclick="showWxSheet('${day.id}',this)" title="點擊查看完整天氣"><span class="wx-badge-ic">${wi.e}</span>${wx.data.temp}°C ${esc(day.city)}</button>`;
     }
   }
   // Store detail for sheet
@@ -1405,7 +1405,7 @@ function wlCardHtml(item){
   const badge=`<span class="wl-badge" style="background:${bg};color:${fg};">${catMeta.emoji} ${catMeta.label}</span>`;
   const dayBtns=S.days.map((d,i)=>`<button class="wl-day-btn" onclick="wlAddToDay('${item.id}',${i})">➕ ${esc(d.title)}</button>`).join('');
   const done=item.added?`<span style="font-size:11px;color:#aaa;padding:4px 0;">✅ 已加入行程</span>`:'';
-  const gmQ=encodeURIComponent((item.address||item.name).trim());
+  const gmQ=encodeURIComponent([item.name,item.address].filter(Boolean).join(' ').trim());
   const gmUrl=`https://www.google.com/maps/search/?api=1&query=${gmQ}`;
   const addrEl=item.address?`<div class="wl-card-note" style="display:flex;align-items:center;gap:6px;">
     <span style="color:#1a5fa8;flex:1;">📍 ${esc(item.address)}</span>
@@ -1766,27 +1766,48 @@ function _mountSheet(content, m){
 // Patch setU so modal changes always trigger overlay mount
 const _origSetU=setU;
 function setU(u){
+  // ── Tab switch: always kill any open modal/overlay cleanly ──────────
+  if(u.view!==undefined && u.view!==S.view){
+    // Instantly remove overlays without animation (user navigated away)
+    document.getElementById('_heroCard')?.remove();
+    document.getElementById('_heroBackdrop')?.remove();
+    document.getElementById('_sheetWrap')?.remove();
+    document.getElementById('_sheetBackdrop')?.remove();
+    document.getElementById('_wxSheet')?.remove();
+    document.getElementById('_wxBackdrop')?.remove();
+    S.quickOpen=false;
+    u={...u,modal:null}; // clear modal state on tab switch
+  }
+
   const hadModal=!!S.modal;
   const hasModal=u.modal!==undefined?!!u.modal:hadModal;
-  // If closing modal, animate close then clear
+
+  // ── Closing modal: animate close then apply state ────────────────────
   if(hadModal&&!hasModal){
     const heroCard=document.getElementById('_heroCard');
     const sheetWrap=document.getElementById('_sheetWrap');
     if(heroCard){
-      _closeHero(()=>{ S={...S,...u}; });
-      S={...S,...u,modal:S.modal}; // keep modal during animation
+      _closeHero(()=>{ S={...S,...u}; render(); });
+      S={...S,...u,modal:S.modal}; // keep modal ref during animation
       return;
     }
     if(sheetWrap){
       sheetWrap.classList.remove('open');
       document.getElementById('_sheetBackdrop')?.classList.remove('open');
       sheetWrap.style.transition='';
-      setTimeout(()=>{sheetWrap.remove();document.getElementById('_sheetBackdrop')?.remove();},360);
+      setTimeout(()=>{
+        sheetWrap.remove();
+        document.getElementById('_sheetBackdrop')?.remove();
+      },360);
     }
   }
+
   S={...S,...u};
   render();
-  if(S.modal)_mountModalOverlay();
+  // Only mount overlay if modal is newly set (not already mounted)
+  if(S.modal && !document.getElementById('_heroCard') && !document.getElementById('_sheetWrap')){
+    _mountModalOverlay();
+  }
 }
 
 
@@ -1810,7 +1831,7 @@ function toggleQuickMenu(btn){
 }
 
 
-function showWxSheet(dayId){
+function showWxSheet(dayId, triggerEl){
   const wx=window['_wx_'+dayId];
   const day=S.days.find(d=>d.id===dayId);
   if(!wx||!day)return;
@@ -1819,65 +1840,84 @@ function showWxSheet(dayId){
   document.getElementById('_wxBackdrop')?.remove();
   document.getElementById('_wxSheet')?.remove();
 
+  const src=triggerEl?triggerEl.getBoundingClientRect():{top:window.innerHeight/2,left:window.innerWidth/2,width:60,height:28};
+  const vw=window.innerWidth, vh=window.innerHeight;
+  const tw=Math.min(vw*0.88,400);
+  const th=Math.min(vh*0.70,520);
+  const tx=(vw-tw)/2, ty=Math.max(24,(vh-th)/2);
+
   const bd=document.createElement('div');
-  bd.id='_wxBackdrop'; bd.className='sheet-backdrop';
+  bd.id='_wxBackdrop'; bd.className='hero-backdrop';
   bd.onclick=closeWxSheet;
   document.body.appendChild(bd);
 
-  const wrap=document.createElement('div');
-  wrap.id='_wxSheet'; wrap.className='sheet-wrap';
-  wrap.innerHTML=`
-    <div class="sheet-handle"></div>
-    <div class="wx-sheet-bd">
-      <div class="wx-sheet-city">📍 ${esc(day.city)} 目前天氣</div>
-      <div class="wx-sheet-temp">${wi.e} ${wx.temp}°C</div>
-      <div class="wx-sheet-desc">${wi.d}</div>
+  const card=document.createElement('div');
+  card.id='_wxSheet'; card.className='hero-card';
+  card.style.cssText=`top:${src.top}px;left:${src.left}px;width:${src.width}px;height:${src.height}px;border-radius:20px;background:linear-gradient(145deg,#0f5e5e,#1a8a6e);`;
+  card.innerHTML=`<div class="hero-body" style="padding:0;">
+    <div class="wx-sheet-bd" style="color:#fff;">
+      <div class="wx-sheet-city" style="color:rgba(255,255,255,.75);">📍 ${esc(day.city)} 目前天氣</div>
+      <div class="wx-sheet-temp" style="color:#fff;">${wi.e} ${wx.temp}°C</div>
+      <div class="wx-sheet-desc" style="color:rgba(255,255,255,.85);">${wi.d}</div>
       <div class="wx-sheet-grid">
-        <div class="wx-sheet-item">
-          <div class="wx-sheet-label">體感溫度</div>
-          <div class="wx-sheet-value">${wx.feels}°C</div>
+        <div class="wx-sheet-item" style="background:rgba(255,255,255,.15);">
+          <div class="wx-sheet-label" style="color:rgba(255,255,255,.7);">體感溫度</div>
+          <div class="wx-sheet-value" style="color:#fff;">${wx.feels}°C</div>
         </div>
-        <div class="wx-sheet-item">
-          <div class="wx-sheet-label">濕度</div>
-          <div class="wx-sheet-value">💧 ${wx.humidity}%</div>
+        <div class="wx-sheet-item" style="background:rgba(255,255,255,.15);">
+          <div class="wx-sheet-label" style="color:rgba(255,255,255,.7);">濕度</div>
+          <div class="wx-sheet-value" style="color:#fff;">💧 ${wx.humidity}%</div>
         </div>
-        ${wx.wind!=null?`<div class="wx-sheet-item">
-          <div class="wx-sheet-label">風速</div>
-          <div class="wx-sheet-value">💨 ${wx.wind} m/s</div>
+        ${wx.wind!=null?`<div class="wx-sheet-item" style="background:rgba(255,255,255,.15);">
+          <div class="wx-sheet-label" style="color:rgba(255,255,255,.7);">風速</div>
+          <div class="wx-sheet-value" style="color:#fff;">💨 ${wx.wind} m/s</div>
         </div>`:''}
-        ${wx.uv!=null?`<div class="wx-sheet-item">
-          <div class="wx-sheet-label">紫外線</div>
-          <div class="wx-sheet-value">☀️ ${wx.uv}</div>
+        ${wx.uv!=null?`<div class="wx-sheet-item" style="background:rgba(255,255,255,.15);">
+          <div class="wx-sheet-label" style="color:rgba(255,255,255,.7);">紫外線</div>
+          <div class="wx-sheet-value" style="color:#fff;">☀️ ${wx.uv}</div>
         </div>`:''}
       </div>
-      <div style="margin-top:16px;font-size:12px;color:var(--muted);text-align:center;">資料來源：OpenWeather</div>
-    </div>`;
-  document.body.appendChild(wrap);
+      <div style="margin-top:18px;font-size:11px;color:rgba(255,255,255,.5);text-align:center;">資料來源：OpenWeather</div>
+    </div>
+  </div>`;
+  document.body.appendChild(card);
 
-  // Swipe down
-  let sy=0,cy=0;
-  wrap.addEventListener('touchstart',e=>{sy=e.touches[0].clientY;},{passive:true});
-  wrap.addEventListener('touchmove',e=>{
-    cy=e.touches[0].clientY;
-    const dy=Math.max(0,cy-sy);
-    if(dy>0){wrap.style.transition='none';wrap.style.transform=`translateY(${dy}px)`;bd.style.opacity=String(Math.max(0,1-dy/200));}
+  // Swipe-down to close
+  let ty0=0,cy0=0;
+  card.addEventListener('touchstart',e=>{ty0=e.touches[0].clientY;},{passive:true});
+  card.addEventListener('touchmove',e=>{
+    cy0=e.touches[0].clientY;
+    const dy=Math.max(0,cy0-ty0);
+    if(dy>0){card.style.transition='none';card.style.transform=`translateY(${dy*.4}px) scale(${1-dy*.0006})`;bd.style.opacity=String(Math.max(0,1-dy/220));}
   },{passive:true});
-  wrap.addEventListener('touchend',()=>{
-    wrap.style.transform='';bd.style.opacity='';
-    if(cy-sy>60)closeWxSheet();else{wrap.style.transition='';wrap.classList.add('open');}
-    sy=0;cy=0;
+  card.addEventListener('touchend',()=>{
+    card.style.transform='';bd.style.opacity='';
+    if(cy0-ty0>75)closeWxSheet();else{card.style.transition='';card.classList.add('animating');}
+    ty0=0;cy0=0;
   });
 
+  card._origin=src;
   requestAnimationFrame(()=>requestAnimationFrame(()=>{
-    bd.classList.add('open'); wrap.classList.add('open');
+    bd.classList.add('open');
+    card.classList.add('animating');
+    card.style.top=`${ty}px`; card.style.left=`${tx}px`;
+    card.style.width=`${tw}px`; card.style.height=`${th}px`;
+    card.style.borderRadius='22px';
+    card.style.boxShadow='0 24px 60px rgba(0,0,0,.28)';
   }));
 }
 
 function closeWxSheet(){
-  const wrap=document.getElementById('_wxSheet');
+  const card=document.getElementById('_wxSheet');
   const bd=document.getElementById('_wxBackdrop');
-  wrap?.classList.remove('open'); bd?.classList.remove('open');
-  setTimeout(()=>{wrap?.remove();bd?.remove();},360);
+  if(!card)return;
+  const o=card._origin||{top:window.innerHeight,left:0,width:0,height:0};
+  card.classList.remove('animating'); card.classList.add('closing');
+  card.style.top=`${o.top}px`; card.style.left=`${o.left}px`;
+  card.style.width=`${o.width}px`; card.style.height=`${o.height}px`;
+  card.style.borderRadius='20px'; card.style.boxShadow='none';
+  bd?.classList.remove('open');
+  setTimeout(()=>{card.remove();bd?.remove();},360);
 }
 
 load();
