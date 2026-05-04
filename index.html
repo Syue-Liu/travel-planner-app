@@ -424,6 +424,63 @@ input:focus,select:focus,textarea:focus{border-color:#42a787;box-shadow:0 0 0 3p
 @media (max-width:640px){
   .app-fab-sheet{left:10px;right:10px;width:auto}
 }
+
+/* ── Plan B: smart selection on loc cards ── */
+.loc-card-wrap{
+  -webkit-user-select:none;user-select:none;
+  -webkit-touch-callout:none;touch-callout:none;
+}
+/* Allow selection on text-content areas (so users can copy address, phone, notes) */
+.loc-card-wrap .loc-addr,
+.loc-card-wrap .loc-phone,
+.loc-card-wrap .loc-phone a,
+.loc-card-wrap .loc-note-pill,
+.loc-card-wrap .loc-note-pill *{
+  -webkit-user-select:text;user-select:text;
+  -webkit-touch-callout:default;touch-callout:default;
+}
+
+
+/* ── Traveler card system (Plan A+D+E) ─────── */
+.tv-card{background:#fff;border:1.5px solid var(--line);border-radius:16px;margin-bottom:10px;overflow:hidden;
+  transition:border-color .2s,box-shadow .2s;
+  border-left:4px solid var(--tv-ac,#0f5e5e);}
+.tv-card:hover{border-color:var(--tv-ac);box-shadow:0 4px 14px rgba(0,0,0,.08);}
+.tv-card.open{box-shadow:0 6px 18px rgba(0,0,0,.1);}
+.tv-head{display:flex;align-items:center;gap:12px;padding:12px 14px;cursor:pointer;}
+.tv-avatar{width:48px;height:48px;border-radius:50%;background:var(--tv-bg,#e7f6f0);
+  display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0;
+  border:2px solid var(--tv-ac,#0f5e5e);box-shadow:0 2px 6px rgba(0,0,0,.08);}
+.tv-avatar-lg{width:64px;height:64px;font-size:32px;}
+.tv-info{flex:1;min-width:0;}
+.tv-name{font-weight:900;font-size:15px;color:var(--ink);display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+.tv-role{display:inline-flex;align-items:center;font-size:11px;font-weight:800;padding:2px 8px;border-radius:999px;
+  background:var(--tv-bg);color:var(--tv-fg);}
+.tv-mini-stats{font-size:12px;color:var(--muted);font-weight:600;margin-top:2px;}
+.tv-del{width:28px;height:28px;border-radius:50%;border:none;background:transparent;color:#bbb;
+  cursor:pointer;font-size:14px;flex-shrink:0;transition:background .15s,color .15s;}
+.tv-del:hover{background:#fee;color:#c00;}
+.tv-detail{padding:0 14px 14px;border-top:1px solid var(--line);background:linear-gradient(180deg,var(--tv-bg) 0,transparent 60px);
+  animation:tv-detail-in .25s ease;}
+@keyframes tv-detail-in{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:translateY(0)}}
+.tv-bio{font-size:13px;color:var(--ink);padding:10px 0;line-height:1.55;}
+.tv-stats-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-top:6px;}
+.tv-stat-cell{background:rgba(255,255,255,.6);border-radius:10px;padding:8px 10px;text-align:center;}
+.tv-stat-n{font-size:16px;font-weight:900;color:var(--tv-fg,var(--ink));}
+.tv-stat-l{font-size:10px;color:var(--muted);font-weight:700;letter-spacing:.05em;margin-top:2px;}
+.tv-add-section{margin-top:18px;padding-top:18px;border-top:2px dashed var(--line);}
+.tv-add-title{font-size:13px;font-weight:900;color:var(--ink);margin-bottom:12px;letter-spacing:.04em;}
+.tv-preview{display:flex;flex-direction:column;align-items:center;gap:8px;padding:14px;
+  background:var(--tv-bg);border-radius:14px;margin-bottom:14px;border:1px solid var(--tv-ac);}
+.tv-preview-name{font-weight:900;font-size:15px;color:var(--tv-fg);}
+.avatar-pick-grid{display:grid;grid-template-columns:repeat(8,1fr);gap:6px;max-height:180px;overflow-y:auto;
+  padding:8px;background:#fafbfa;border-radius:12px;border:1px solid var(--line);margin-bottom:14px;
+  scrollbar-width:thin;}
+.avatar-pick-grid::-webkit-scrollbar{width:6px;}
+.avatar-pick-grid::-webkit-scrollbar-thumb{background:#ccc;border-radius:3px;}
+@media (max-width:480px){
+  .avatar-pick-grid{grid-template-columns:repeat(6,1fr);max-height:200px;}
+}
 </style>
 </head>
 <body>
@@ -457,7 +514,23 @@ const TMPL=[
   {name:'購物行程',cat:'購物',data:{name:'購物',address:'',phone:'',time:'',notes:'確認營業時間與結帳方式'}},
   {name:'其他地點',cat:'其他',data:{name:'',address:'',phone:'',time:'',notes:''}}
 ];
-const AVATARS=['🙂','😎','🌸','🧳','🍜','☕','📷','🗺️','⭐','🍀','🐵','🦊'];
+const AVATARS=['🙂','😎','🤓','🥰','😇','🤩','🥳','😴','🤔','🫠','🐵','🦊','🐱','🐶','🐼','🐨','🐯','🦁','🐰','🐻','🐧','🦄','🐳','🦉','🧳','🗺️','📷','🎒','✈️','🚗','🏖️','⛺','🎿','🏄','🍜','☕','🍕','🍣','🍰','🍺','🍷','🍦','🥨','🍱','🌸','🌺','🌻','🍀','🌟','⭐','🌈','🌙','☀️','❄️','👑','🤠','🥷','🧙','🧝','🧚','🦸','🤖','👻','🐲'];
+const TV_COLORS=[
+  {bg:'#fde2e4',fg:'#a83245',accent:'#d85d7b'},
+  {bg:'#e0f2fe',fg:'#0a4d7a',accent:'#3977d4'},
+  {bg:'#fef3c7',fg:'#7a4f00',accent:'#e6ac30'},
+  {bg:'#dcfce7',fg:'#0a5e3a',accent:'#1d9e75'},
+  {bg:'#ede9fe',fg:'#4c1d95',accent:'#7c3aed'},
+  {bg:'#fee4e6',fg:'#9c0a36',accent:'#e11d48'},
+  {bg:'#cffafe',fg:'#0a5560',accent:'#0891b2'},
+  {bg:'#ffe5cc',fg:'#7a3f00',accent:'#ea7c1f'}
+];
+function getTvColor(name){
+  if(!name)return TV_COLORS[0];
+  let h=0;for(let i=0;i<name.length;i++)h=(h*31+name.charCodeAt(i))>>>0;
+  return TV_COLORS[h%TV_COLORS.length];
+}
+
 const CE={交通:'🚗',餐飲:'🍜',住宿:'🏨',景點:'🎫',購物:'🛍️',其他:'📌'};
 const CB={交通:'#E6F1FB',餐飲:'#FAEEDA',住宿:'#EEEDFE',景點:'#E1F5EE',購物:'#FBEAF0',其他:'#F1EFE8'};
 const CF={交通:'#0C447C',餐飲:'#633806',住宿:'#3C3489',景點:'#085041',購物:'#4B1528',其他:'#444441'};
@@ -513,7 +586,7 @@ function settle(exps,tvls){
   while(cr.length&&de.length){const c=cr[0],d=de[0],am=Math.min(c.v,d.v);if(am>0.01)tx.push({from:d.n,to:c.n,amount:Math.round(am)});c.v-=am;d.v-=am;if(c.v<0.01)cr.shift();if(d.v<0.01)de.shift();}
   return{b,tx};
 }
-let S={tripName:'2026 旅遊計畫',cover:COVERS[0][1],coverPos:'30%',budget:0,settleCurrency:'TWD',days:[{id:'d1',title:'第一天',date:'',locations:[]}],travelers:['旅伴A','旅伴B'],travelerIcons:{旅伴A:'🙂',旅伴B:'😎'},expenses:[],memo:[],view:'itinerary',dayIdx:0,modal:null,editTN:false,tnDraft:'',wishlist:[],wlFabOpen:false};
+let S={tripName:'2026 旅遊計畫',cover:COVERS[0][1],coverPos:'30%',budget:0,settleCurrency:'TWD',days:[{id:'d1',title:'第一天',date:'',locations:[]}],travelers:['旅伴A','旅伴B'],travelerIcons:{旅伴A:'🙂',旅伴B:'😎'},expenses:[],memo:[],view:'itinerary',dayIdx:0,modal:null,editTN:false,tnDraft:'',wishlist:[],wlFabOpen:false,travelerMeta:{},tvExpanded:''};
 let FM={};
 let cloud={ready:false,doc:null,tripId:null,applying:false,status:'單機儲存'};
 function loadScript(src){
@@ -561,14 +634,14 @@ async function load(){
       return;
     }
     const raw=await getSaved(SK)||await getSaved(OLD_SK2)||await getSaved(OLD_SK);
-    if(raw){const sv=JSON.parse(raw);S={...S,...sv,settleCurrency:sv.settleCurrency||'TWD',travelerIcons:sv.travelerIcons||S.travelerIcons||{},budget:Number(sv.budget||0),cover:sv.cover||COVERS[0][1],view:'itinerary',dayIdx:0,modal:null,editTN:false,wishlist:sv.wishlist||[]};}
+    if(raw){const sv=JSON.parse(raw);S={...S,...sv,settleCurrency:sv.settleCurrency||'TWD',travelerIcons:sv.travelerIcons||S.travelerIcons||{},travelerMeta:sv.travelerMeta||{},budget:Number(sv.budget||0),cover:sv.cover||COVERS[0][1],view:'itinerary',dayIdx:0,modal:null,editTN:false,wishlist:sv.wishlist||[]};}
   }catch(e){}
   setTimeout(jumpToNow,80);
   startNowTimer();
 }
 async function psave(){
   if(cloud.applying)return;
-  const t={tripName:S.tripName,cover:S.cover,coverPos:S.coverPos||'30%',budget:Number(S.budget||0),settleCurrency:S.settleCurrency||'TWD',days:S.days,travelers:S.travelers,travelerIcons:S.travelerIcons||{},expenses:S.expenses,memo:S.memo||[],wishlist:S.wishlist||[],updatedAt:new Date().toISOString()};
+  const t={tripName:S.tripName,cover:S.cover,coverPos:S.coverPos||'30%',budget:Number(S.budget||0),settleCurrency:S.settleCurrency||'TWD',days:S.days,travelers:S.travelers,travelerIcons:S.travelerIcons||{},travelerMeta:S.travelerMeta||{},expenses:S.expenses,memo:S.memo||[],wishlist:S.wishlist||[],updatedAt:new Date().toISOString()};
   try{
     if(cloud.ready&&cloud.doc){cloud.status='同步中';await cloud.doc.set(t,{merge:true});cloud.status='已同步';}
     else await setSaved(SK,JSON.stringify(t));
@@ -714,7 +787,7 @@ function splt(b,tx,te){
   const sharedExpenses=S.expenses.filter(e=>!isPersonalExp(e));
   const br=S.travelers.map(t=>{const v=b[t]||0,paid=sharedExpenses.filter(e=>e.paidBy===t).reduce((s,e)=>s+expValue(e),0),pos=v>=0;return`<div class="brow2"><div><div style="font-weight:900;font-size:15px;">${esc(t)}</div><div style="font-size:12px;color:var(--muted);">共同分帳已付 ${fmt(paid)}</div></div><div style="font-weight:900;font-size:14px;color:${pos?'#0F6E56':'#A32D2D'};text-align:right;">${pos?`+ ${fmt(Math.abs(v))} 應收`:`${fmt(Math.abs(v))} 應付`}</div></div>`;}).join('');
   const tc=tx.length?tx.map(t=>`<div class="txn"><div style="font-weight:900;font-size:15px;">${esc(t.from)}</div><div><div style="font-size:12px;color:#854F0B;">轉帳給</div><div style="font-size:16px;font-weight:900;color:#633806;">${fmt(t.amount)}</div></div><div style="font-weight:900;text-align:right;font-size:15px;">→ ${esc(t.to)}</div></div>`).join(''):`<div style="text-align:center;padding:16px;color:var(--muted);font-size:14px;background:#fff;border-radius:var(--r);border:1px solid var(--line);">${sharedExpenses.length?'✅ 共同分帳已平衡！':'尚無共同分帳記錄'}</div>`;
-  const det=sharedExpenses.length?`<div class="sh">共同分帳明細</div>${sharedExpenses.map(e=>`<div class="card" style="padding:12px 14px;margin-bottom:8px;"><div style="display:flex;justify-content:space-between;gap:8px;margin-bottom:4px;"><div style="font-weight:900;">${CE[e.category]||'📌'} ${esc(e.item)}</div><div style="font-weight:900;">${fmt(expValue(e))}</div></div><div style="font-size:12px;color:var(--muted);margin-bottom:8px;">${esc(e.paidBy)} 先付款${e.shares?' · 自訂分擔':` · 每人 ${fmt(expValue(e)/(e.splitWith?.length||1))}`}</div><div style="display:flex;flex-wrap:wrap;gap:5px;">${(e.shares?Object.entries(e.shares).filter(([,v])=>Number(v)>0).map(([p,v])=>`${p}:${v}`):(e.splitWith||[]).map(p=>[p,null])).map(([p,v])=>`<span style="font-size:12px;padding:3px 9px;background:${p===e.paidBy?'#E1F5EE':'#f2f5f3'};color:${p===e.paidBy?'#085041':'#66736f'};border-radius:999px;border:1px solid ${p===e.paidBy?'#9FE1CB':'transparent'};">${esc(p)}${v?` ${fmt(convertAmount(v,e.currency||'TWD',S.settleCurrency||'TWD'))}`:''}${p===e.paidBy?' (付)':''}</span>`).join('')}</div></div>`).join('')}`:'';
+  const det=sharedExpenses.length?`<div class="sh">共同分帳明細</div>${sharedExpenses.map(e=>`<div class="card" style="padding:12px 14px;margin-bottom:8px;"><div style="display:flex;justify-content:space-between;gap:8px;margin-bottom:4px;"><div style="font-weight:900;">${CE[e.category]||'📌'} ${esc(e.item)}</div><div style="font-weight:900;">${fmt(expValue(e))}</div></div><div style="font-size:12px;color:var(--muted);margin-bottom:8px;"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${getTvColor(e.paidBy).accent};margin-right:5px;vertical-align:middle;"></span>${esc(S.travelerIcons?.[e.paidBy]||'')} ${esc(e.paidBy)} 先付款${e.shares?' · 自訂分擔':` · 每人 ${fmt(expValue(e)/(e.splitWith?.length||1))}`}</div><div style="display:flex;flex-wrap:wrap;gap:5px;">${(e.shares?Object.entries(e.shares).filter(([,v])=>Number(v)>0).map(([p,v])=>`${p}:${v}`):(e.splitWith||[]).map(p=>[p,null])).map(([p,v])=>`<span style="font-size:12px;padding:3px 9px;background:${p===e.paidBy?'#E1F5EE':'#f2f5f3'};color:${p===e.paidBy?'#085041':'#66736f'};border-radius:999px;border:1px solid ${p===e.paidBy?'#9FE1CB':'transparent'};">${esc(p)}${v?` ${fmt(convertAmount(v,e.currency||'TWD',S.settleCurrency||'TWD'))}`:''}${p===e.paidBy?' (付)':''}</span>`).join('')}</div></div>`).join('')}`:'';
   return`<div class="sh">各人結算</div><div class="card">${br}</div><div class="sh">付款方式</div>${tc}${det}`;
 }
 // buildModal defined below with note support
@@ -779,17 +852,134 @@ ${personal?'':`<div class="fg"><label class="fl">分帳方式</label><div class=
 ${custom?`<div class="fg"><label class="fl">每個人負擔金額（${FM.currency||'TWD'}，加總需等於總金額）</label>${shareRows}</div>`:`<div class="fg"><label class="fl">分帳對象（點選切換）</label><div class="scs">${scs}</div></div>`}`}
 <div class="ar"><button class="btn bp" style="flex:1;padding:10px;" onclick="sExp()">儲存</button><button class="btn" style="flex:1;padding:10px;" onclick="setU({modal:null})">取消</button></div>`;
 }
-function mTv(){
-  const chips=S.travelers.map(t=>`<div class="chip">${esc(S.travelerIcons?.[t]||'🙂')} ${esc(t)} <span class="chipx" onclick="rmTv('${esc(t)}')">✕</span></div>`).join('');
-  const icon=FM.tvIcon||'🙂';
-  const avatars=AVATARS.map(a=>`<button class="avatar-btn${icon===a?' on':''}" onclick="pickAvatar('${a}',this)">${a}</button>`).join('');
-  return`<div class="mhd"><div class="mt">旅伴管理</div><div class="mcl" onclick="setU({modal:null})">✕</div></div>
-<div style="display:flex;flex-wrap:wrap;gap:7px;margin-bottom:14px;">${chips||'<div style="color:var(--muted);font-size:14px;">尚無旅伴</div>'}</div>
-<label class="fl">代表圖案</label><div class="avatar-pick">${avatars}</div>
-<div class="fg"><label class="fl">新增旅伴</label><input type="text" id="traveler-name-input" placeholder="輸入旅伴名稱，確認後再按新增" oninput="FM.newTraveler=this.value"></div>
-<button class="btn bp" style="width:100%;padding:10px;" onclick="addTv()">新增旅伴</button>
-<div class="tip">選字完成後再按「新增旅伴」；Enter 不會用來新增旅伴。</div>`;
+function getTvStats(name){
+  const exps=S.expenses||[];
+  let paidCount=0,paidTotal=0,sharedCount=0;
+  const cur=S.settleCurrency||'TWD';
+  for(const e of exps){
+    const amt=convertAmount(Number(e.amount||0),e.currency||'TWD',cur);
+    if(e.paidBy===name){paidCount++;paidTotal+=amt;}
+    if((e.splitWith||[]).includes(name))sharedCount++;
+  }
+  return{paidCount,paidTotal,sharedCount,avg:paidCount?paidTotal/paidCount:0};
 }
+
+function mTv(){
+  const cur=S.settleCurrency||'TWD';
+  const expandedId=S.tvExpanded||'';
+  const cards=S.travelers.map(t=>{
+    const ic=S.travelerIcons?.[t]||'🙂';
+    const c=getTvColor(t);
+    const meta=(S.travelerMeta||{})[t]||{};
+    const stats=getTvStats(t);
+    const isOpen=expandedId===t;
+    const role=meta.role?`<span class="tv-role">${esc(meta.role)}</span>`:'';
+    const bio=meta.bio?`<div class="tv-bio">💬 ${esc(meta.bio)}</div>`:'';
+    return`<div class="tv-card${isOpen?' open':''}" style="--tv-bg:${c.bg};--tv-fg:${c.fg};--tv-ac:${c.accent};">
+      <div class="tv-head" onclick="toggleTvExpand('${esc(t)}')">
+        <div class="tv-avatar">${ic}</div>
+        <div class="tv-info">
+          <div class="tv-name">${esc(t)}${role}</div>
+          <div class="tv-mini-stats">${stats.paidCount?'💰 付了 '+stats.paidCount+' 筆 · '+(CUR_LABEL[cur]||'')+fmt(stats.paidTotal):'尚未記帳'}</div>
+        </div>
+        <button class="tv-del" onclick="event.stopPropagation();rmTv('${esc(t)}')" title="移除">✕</button>
+      </div>
+      ${isOpen?`
+      <div class="tv-detail">
+        ${bio}
+        <div class="tv-stats-grid">
+          <div class="tv-stat-cell"><div class="tv-stat-n">${stats.paidCount}</div><div class="tv-stat-l">付款筆數</div></div>
+          <div class="tv-stat-cell"><div class="tv-stat-n">${(CUR_LABEL[cur]||'')+fmt(stats.paidTotal)}</div><div class="tv-stat-l">付出總額</div></div>
+          <div class="tv-stat-cell"><div class="tv-stat-n">${stats.sharedCount}</div><div class="tv-stat-l">分擔筆數</div></div>
+          <div class="tv-stat-cell"><div class="tv-stat-n">${stats.paidCount?(CUR_LABEL[cur]||'')+fmt(stats.avg):'-'}</div><div class="tv-stat-l">平均/筆</div></div>
+        </div>
+        <button class="btn" style="width:100%;font-size:13px;padding:8px;margin-top:10px;" onclick="event.stopPropagation();editTvProfile('${esc(t)}')">✏️ 編輯角色與自介</button>
+      </div>`:''}
+    </div>`;
+  }).join('');
+
+  const icon=FM.tvIcon||'🙂';
+  const previewName=cleanName(FM.newTraveler||'')||'新旅伴';
+  const pc=getTvColor(previewName);
+  const avatars=AVATARS.map(a=>`<button class="avatar-btn${icon===a?' on':''}" onclick="pickAvatar('${a}',this)">${a}</button>`).join('');
+
+  return`<div class="mhd"><div class="mt">👥 旅伴管理</div><div class="mcl" onclick="setU({modal:null})">✕</div></div>
+${cards||'<div style="text-align:center;color:var(--muted);font-size:13px;padding:24px 0;">尚無旅伴<br><span style="font-size:11px;">在下方新增第一位</span></div>'}
+
+<div class="tv-add-section">
+  <div class="tv-add-title">＋ 新增旅伴</div>
+  <div class="tv-preview" style="--tv-bg:${pc.bg};--tv-fg:${pc.fg};--tv-ac:${pc.accent};">
+    <div class="tv-avatar tv-avatar-lg">${icon}</div>
+    <div class="tv-preview-name">${esc(previewName)}</div>
+  </div>
+  <label class="fl">代表圖案（${AVATARS.length} 種可選）</label>
+  <div class="avatar-pick avatar-pick-grid">${avatars}</div>
+  <div class="fg"><label class="fl">名字</label>
+    <input type="text" id="traveler-name-input" placeholder="輸入旅伴名稱，例：小美、阿哲" oninput="FM.newTraveler=this.value;_tvUpdatePreview()">
+  </div>
+  <button class="btn bp" style="width:100%;padding:11px;font-size:14px;" onclick="addTv()">＋ 新增旅伴</button>
+  <div class="tip">選字完成後再按「新增旅伴」；Enter 不會用來新增旅伴。</div>
+</div>`;
+}
+
+function _tvUpdatePreview(){
+  const pv=document.querySelector('.tv-preview');
+  if(!pv)return;
+  const name=cleanName(FM.newTraveler||'')||'新旅伴';
+  const c=getTvColor(name);
+  pv.style.setProperty('--tv-bg',c.bg);
+  pv.style.setProperty('--tv-fg',c.fg);
+  pv.style.setProperty('--tv-ac',c.accent);
+  const nameEl=pv.querySelector('.tv-preview-name');
+  if(nameEl)nameEl.textContent=name;
+}
+
+function toggleTvExpand(name){
+  S.tvExpanded=(S.tvExpanded===name)?'':name;
+  _refreshHeroContent();
+}
+
+function editTvProfile(name){
+  const meta=(S.travelerMeta||{})[name]||{};
+  FM={...FM,editTvName:name,editTvRole:meta.role||'',editTvBio:meta.bio||''};
+  setU({modal:{t:'tvEdit'}});
+}
+
+function buildTvEditModal(){
+  const name=FM.editTvName||'';
+  const ic=S.travelerIcons?.[name]||'🙂';
+  const c=getTvColor(name);
+  return`<div class="mhd"><div class="mt">編輯旅伴角色</div><div class="mcl" onclick="closeTvEdit()">✕</div></div>
+<div class="tv-preview" style="--tv-bg:${c.bg};--tv-fg:${c.fg};--tv-ac:${c.accent};">
+  <div class="tv-avatar tv-avatar-lg">${ic}</div>
+  <div class="tv-preview-name">${esc(name)}</div>
+</div>
+<div class="fg"><label class="fl">角色 / 暱稱</label>
+  <input type="text" id="tv-edit-role" value="${esc(FM.editTvRole||'')}" placeholder="例：嚮導、財務、攝影師、司機" oninput="FM.editTvRole=this.value">
+</div>
+<div class="fg"><label class="fl">一句話自介 / 偏好</label>
+  <input type="text" id="tv-edit-bio" value="${esc(FM.editTvBio||'')}" placeholder="例：想吃所有甜點、怕辣、不愛海鮮" oninput="FM.editTvBio=this.value">
+</div>
+<div class="ar">
+  <button class="btn" onclick="closeTvEdit()">取消</button>
+  <button class="btn bp" onclick="saveTvProfile()">儲存</button>
+</div>`;
+}
+
+function closeTvEdit(){
+  setU({modal:{t:'tv'}});
+}
+
+function saveTvProfile(){
+  const name=FM.editTvName;
+  if(!name)return;
+  const tvMeta={...(S.travelerMeta||{})};
+  tvMeta[name]={role:(FM.editTvRole||'').trim(),bio:(FM.editTvBio||'').trim()};
+  S={...S,travelerMeta:tvMeta};
+  psave();
+  setU({modal:{t:'tv'}});
+}
+
 function mCover(){
   const choices=COVERS.map(([name,url])=>`<button class="cover-choice${S.cover===url?' on':''}" style="background-image:linear-gradient(180deg,rgba(0,0,0,.05),rgba(0,0,0,.45)),url('${url}')" onclick="setD({cover:'${url}',modal:null})"><span>${name}</span></button>`).join('');
   const pos=S.coverPos||'30%';
@@ -1801,7 +1991,7 @@ function wlConfirmImport(){
 
 // ════ HERO & SHEET modal engine ════════════════════════
 // Hero modal types (large forms) — open from trigger element
-const HERO_TYPES=new Set(['loc','exp','nd','ed','wl_add','wl_import','wl_edit','import','tv','cover','tools','help','note','memo_add','memo_import','tripGate']);
+const HERO_TYPES=new Set(['loc','exp','nd','ed','wl_add','wl_import','wl_edit','import','tv','tvEdit','cover','tools','help','note','memo_add','memo_import','tripGate']);
 // Sheet modal types (compact) — slide up from bottom
 const SHEET_TYPES=new Set([]);
 
@@ -1854,6 +2044,7 @@ function _getModalContent(m){
   else if(m.t==='help')c=mHelp();
   else if(m.t==='memo_add')c=mMemoAdd();
   else if(m.t==='memo_import')c=buildMemoImportModal();
+  else if(m.t==='tvEdit')c=buildTvEditModal();
   else if(m.t==='wl_add')c=buildWlAddModal();
   else if(m.t==='wl_import')c=buildWlImportModal();
   else if(m.t==='wl_edit')c=buildWlEditModal();
@@ -2116,8 +2307,8 @@ let _lpTimer=null;
 
 function _lpStart(e, dayId, locId){
   _lpCancel();
-  // Only trigger if not interacting with a button/link
-  if(e.target.closest('button,a'))return;
+  // Skip if on button, link, or selectable content (let iOS native menu handle those)
+  if(e.target.closest('button,a,.loc-addr,.loc-phone,.loc-note-pill'))return;
   _lpTimer=setTimeout(()=>{
     _lpTimer=null;
     locActionSheet(null, dayId, locId);
