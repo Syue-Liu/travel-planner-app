@@ -499,7 +499,16 @@ async function psave(){
     else await setSaved(SK,JSON.stringify(t));
   }catch{cloud.status='同步失敗，暫存本機';try{await setSaved(SK,JSON.stringify(t));}catch{}}
 }
-function setD(u){S={...S,...u};psave();render();}
+function setD(u){
+  // If closing modal, go through setU so Hero/Sheet animations trigger
+  if('modal' in u && !u.modal && S.modal){
+    const dataOnly={...u}; delete dataOnly.modal;
+    S={...S,...dataOnly}; psave();
+    setU({modal:null}); // triggers animation
+    return;
+  }
+  S={...S,...u}; psave(); render();
+}
 function setU(u){S={...S,...u};render();}
 let _preserveScroll=false;
 function render(){
@@ -653,7 +662,7 @@ function mCover(){
   const choices=COVERS.map(([name,url])=>`<button class="cover-choice${S.cover===url?' on':''}" style="background-image:linear-gradient(180deg,rgba(0,0,0,.05),rgba(0,0,0,.45)),url('${url}')" onclick="setD({cover:'${url}',modal:null})"><span>${name}</span></button>`).join('');
   const pos=S.coverPos||'30%';
   const posOpts=[['10%','偏上（主體在照片上半）'],['30%','居中偏上（預設）'],['50%','正中央'],['70%','居中偏下'],['90%','偏下（主體在照片下半）']];
-  const posRadios=posOpts.map(([v,l])=>`<label style="display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:10px;cursor:pointer;background:${pos===v?'#e4f3ed':'transparent'};border:1px solid ${pos===v?'#0f5e5e':'transparent'};"><input type="radio" name="coverPos" value="${v}" ${pos===v?'checked':''} onchange="S.coverPos=this.value;render()" style="accent-color:#0f5e5e;width:16px;height:16px;flex-shrink:0;"><span style="font-size:13px;">${l}</span></label>`).join('');
+  const posRadios=posOpts.map(([v,l])=>`<label style="display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:10px;cursor:pointer;background:${pos===v?'#e4f3ed':'transparent'};border:1px solid ${pos===v?'#0f5e5e':'transparent'};"><input type="radio" name="coverPos" value="${v}" ${pos===v?'checked':''} onchange="S.coverPos=this.value;_refreshHeroContent()" style="accent-color:#0f5e5e;width:16px;height:16px;flex-shrink:0;"><span style="font-size:13px;">${l}</span></label>`).join('');
   return`<div class="mhd"><div class="mt">更換封面</div><div class="mcl" onclick="setU({modal:null})">✕</div></div>
 <div class="cover-grid">${choices}</div>
 <div class="fg"><label class="fl">上傳自己的封面</label><input type="file" id="cover-file" accept="image/*" onchange="uploadCover(this.files?.[0])">
@@ -663,7 +672,7 @@ function mCover(){
 </div></div>
 <div class="fg"><label class="fl">或貼上圖片網址</label><input type="url" id="cover-url" placeholder="https://..." value="${S.cover&&!COVERS.some(c=>c[1]===S.cover)&&!S.cover.startsWith('data:')?esc(S.cover):''}"></div>
 <div class="fg"><label class="fl">焦點位置（照片主體在哪裡？）</label><div style="display:flex;flex-direction:column;gap:4px;">${posRadios}</div><div class="tip" style="margin-top:6px;">調整後封面會即時預覽，找到最好的裁切位置再關閉。</div></div>
-<div class="ar"><button class="btn bp" style="flex:1;padding:10px;" onclick="saveCoverUrl()">套用圖片網址</button><button class="btn" style="flex:1;padding:10px;" onclick="setD({coverPos:pos,modal:null})">完成</button></div>`;
+<div class="ar"><button class="btn bp" style="flex:1;padding:10px;" onclick="saveCoverUrl()">套用圖片網址</button><button class="btn" style="flex:1;padding:10px;" onclick="setD({coverPos:S.coverPos||'30%',modal:null})">完成</button></div>`;
 }
 function mTools(){
   const settleOpts=Object.keys(CUR).map(c=>`<option value="${c}"${(S.settleCurrency||'TWD')===c?' selected':''}>${c}</option>`).join('');
@@ -1805,8 +1814,9 @@ function setU(u){
     const heroCard=document.getElementById('_heroCard');
     const sheetWrap=document.getElementById('_sheetWrap');
     if(heroCard){
-      _closeHero(()=>{ S={...S,...u}; render(); });
-      S={...S,...u,modal:S.modal}; // keep modal ref during animation
+      const finalState={...S,...u};
+      S={...S,modal:S.modal}; // keep modal during animation
+      _closeHero(()=>{ S=finalState; render(); });
       return;
     }
     if(sheetWrap){
@@ -2059,6 +2069,19 @@ function locMoveToWishlist(dayId, locId){
   t.textContent='🌟 已移到清單：'+loc.name;
   document.body.appendChild(t);
   setTimeout(()=>t.remove(),2200);
+}
+
+
+function _refreshHeroContent(){
+  // Re-render just the hero card body content (no animation)
+  const heroBody=document.querySelector('#_heroCard .hero-body');
+  if(!heroBody||!S.modal){render();return;}
+  const content=_getModalContent(S.modal);
+  if(content){
+    heroBody.querySelector('.msh').innerHTML=content;
+  }
+  // Also update main page (for live cover preview)
+  render();
 }
 
 load();
