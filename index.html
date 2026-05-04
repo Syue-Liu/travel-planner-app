@@ -1476,12 +1476,16 @@ function addTv(){
   if(!v||S.travelers.includes(v))return;
   const travelerIcons={...(S.travelerIcons||{}),[v]:FM.tvIcon||'🙂'};
   FM={tvIcon:FM.tvIcon||'🙂',newTraveler:''};
-  setD({travelers:[...S.travelers,v],travelerIcons,modal:{t:'tv'}});
+  S={...S,travelers:[...S.travelers,v],travelerIcons};
+  psave();
+  _refreshHeroContent();
 }
 function rmTv(name){
   const travelerIcons={...(S.travelerIcons||{})};
   delete travelerIcons[name];
-  setD({travelers:S.travelers.filter(t=>t!==name),travelerIcons,modal:{t:'tv'}});
+  S={...S,travelers:S.travelers.filter(t=>t!==name),travelerIcons};
+  psave();
+  _refreshHeroContent();
 }
 function downloadFile(name,type,content){
   const a=document.createElement('a'),blob=new Blob([content],{type});
