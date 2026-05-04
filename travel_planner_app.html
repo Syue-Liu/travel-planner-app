@@ -258,6 +258,9 @@ input:focus,select:focus,textarea:focus{border-color:#42a787;box-shadow:0 0 0 3p
   .txn div{text-align:center!important}
   .ar{flex-direction:column}
   .cover-grid{grid-template-columns:1fr}
+  .app-fab-wrap{display:block}
+  .mobile-fab-replaced{display:none!important}
+  .body{padding-bottom:calc(86px + env(safe-area-inset-bottom))}
 }
 
 /* ── Explore tab ───────────────────────────── */
@@ -398,6 +401,24 @@ input:focus,select:focus,textarea:focus{border-color:#42a787;box-shadow:0 0 0 3p
   transition:transform .15s ease,box-shadow .2s ease;}
 .memo-ai-btn:hover{transform:translateY(-1px);box-shadow:0 6px 18px rgba(91,63,196,.35);}
 .memo-ai-btn:active{transform:translateY(0);}
+
+/* ── Global mobile FAB + iOS action sheet ───────────── */
+.app-fab-wrap{display:none;}
+.app-fab-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.24);z-index:59;-webkit-backdrop-filter:blur(5px);backdrop-filter:blur(5px);animation:fabFade .22s ease;}
+.app-fab-main{position:fixed;right:20px;bottom:calc(20px + env(safe-area-inset-bottom));z-index:62;width:58px;height:58px;border-radius:50%;border:0;background:linear-gradient(140deg,#0f5e5e,#1a8a6e);color:#fff;box-shadow:0 10px 26px rgba(15,94,94,.38),0 2px 8px rgba(0,0,0,.12);font-size:34px;font-weight:300;line-height:1;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:transform .24s ease,box-shadow .24s ease;}
+.app-fab-wrap.open .app-fab-main{transform:rotate(135deg);box-shadow:0 12px 32px rgba(15,94,94,.48);}
+.app-fab-sheet{position:fixed;left:10px;right:10px;bottom:calc(90px + env(safe-area-inset-bottom));z-index:61;display:flex;flex-direction:column;gap:8px;animation:fabSheetUp .24s cubic-bezier(.32,1.08,.58,1);}
+.app-fab-action{width:100%;min-height:56px;border:0;border-radius:16px;background:rgba(255,255,255,.96);box-shadow:0 12px 30px rgba(18,38,35,.18);display:flex;align-items:center;gap:12px;padding:10px 14px;text-align:left;color:var(--ink);font-weight:900;cursor:pointer;-webkit-backdrop-filter:blur(18px);backdrop-filter:blur(18px);}
+.app-fab-action:active{transform:scale(.985);}
+.app-fab-action-ic{width:38px;height:38px;border-radius:13px;display:flex;align-items:center;justify-content:center;background:#e4f4ed;color:#0f5e5e;font-size:19px;flex-shrink:0;}
+.app-fab-action.ai .app-fab-action-ic{background:#eee8ff;color:#5b3fc4;}
+.app-fab-action-title{font-size:15px;line-height:1.2;}
+.app-fab-action-sub{font-size:12px;color:var(--muted);font-weight:700;margin-top:2px;}
+@keyframes fabFade{from{opacity:0}to{opacity:1}}
+@keyframes fabSheetUp{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:translateY(0)}}
+@media (max-width:640px){
+  .app-fab-wrap{display:block}
+}
 </style>
 </head>
 <body>
@@ -560,13 +581,46 @@ function render(){
   const ad=S.days[si];
   const te=S.expenses.reduce((s,e)=>s+expValue(e),0);
   const {b,tx}=settle(S.expenses,S.travelers);
-  root.innerHTML=`<div class="app">${hdr(te)}${gnav()}<main class="body">${S.view==='memo'?memoView():''}${S.view==='itinerary'?itin(ad,si):''}${S.view==='wishlist'?wishlistView():''}${S.view==='expenses'?exps(te):''}${S.view==='split'?splt(b,tx,te):''}</main></div>`;
+  root.innerHTML=`<div class="app">${hdr(te)}${gnav()}<main class="body">${S.view==='memo'?memoView():''}${S.view==='itinerary'?itin(ad,si):''}${S.view==='wishlist'?wishlistView():''}${S.view==='expenses'?exps(te):''}${S.view==='split'?splt(b,tx,te):''}</main></div>${globalFab()}`;
 
   setTimeout(()=>{
     const t=document.querySelector('.day-tabs .dtab.on');
     if(t)t.scrollIntoView({inline:'nearest',block:'nearest',behavior:'instant'});
     if(savedScroll>0)window.scrollTo({top:savedScroll,behavior:'instant'});
   },0);
+}
+function fabConfig(){
+  if(S.modal||S.editTN||S.view==='split')return null;
+  const cfg={
+    itinerary:{manual:'手動新增地點',manualSub:'新增一個行程地點',manualIcon:'＋',ai:'AI 匯入行程',aiSub:'貼上 AI 行程一次建立',aiIcon:'✨'},
+    wishlist:{manual:'手動新增清單',manualSub:'加入想去的店家或景點',manualIcon:'＋',ai:'AI 匯入清單',aiSub:'批次加入推薦地點',aiIcon:'✨'},
+    expenses:{manual:'新增帳目',manualSub:'輸入品項、金額與分帳',manualIcon:'💰',ai:'AI 辨識收據',aiSub:'開啟帳目表單上傳收據',aiIcon:'📷'},
+    memo:{manual:'新增備忘',manualSub:'加入行前清單項目',manualIcon:'📝',ai:'AI 產生備忘',aiSub:'自動產生旅行待辦清單',aiIcon:'✨'}
+  };
+  return cfg[S.view]||null;
+}
+function globalFab(){
+  const cfg=fabConfig();
+  if(!cfg)return'';
+  const sheet=S.wlFabOpen?`<div class="app-fab-backdrop" onclick="closeWlFab()"></div><div class="app-fab-sheet">
+    <button class="app-fab-action" onclick="fabManual(this)"><span class="app-fab-action-ic">${cfg.manualIcon}</span><span><div class="app-fab-action-title">${cfg.manual}</div><div class="app-fab-action-sub">${cfg.manualSub}</div></span></button>
+    <button class="app-fab-action ai" onclick="fabAi(this)"><span class="app-fab-action-ic">${cfg.aiIcon}</span><span><div class="app-fab-action-title">${cfg.ai}</div><div class="app-fab-action-sub">${cfg.aiSub}</div></span></button>
+  </div>`:'';
+  return`<div class="app-fab-wrap${S.wlFabOpen?' open':''}">${sheet}<button class="app-fab-main" onclick="toggleWlFab(event)" aria-label="新增">＋</button></div>`;
+}
+function fabManual(el){
+  S.wlFabOpen=false;
+  if(S.view==='itinerary'){_heroOrigin=el.getBoundingClientRect();oLoc('');}
+  else if(S.view==='wishlist'){wlOpenAdd(el);}
+  else if(S.view==='expenses'){_heroOrigin=el.getBoundingClientRect();oExp('');}
+  else if(S.view==='memo'){openModal(el,{t:'memo_add'});}
+}
+function fabAi(el){
+  S.wlFabOpen=false;
+  if(S.view==='itinerary')openModal(el,{t:'import'});
+  else if(S.view==='wishlist')openModal(el,{t:'wl_import'});
+  else if(S.view==='expenses'){_heroOrigin=el.getBoundingClientRect();oExp('');}
+  else if(S.view==='memo')openModal(el,{t:'memo_import'});
 }
 function hdr(te){
   const statsStrip='';
@@ -629,7 +683,7 @@ function itin(day,si){
   }
   // Store detail for sheet
   if(weatherDetail)window['_wx_'+day.id]=weatherDetail;
-  return`<div class="day-tabs">${tabs}<button class="dtab dtab-add" onclick="FM={title:'第${nd}天',date:'',city:''};openModal(this,{t:'nd'})">+ 新增</button></div><div class="section-head"><div class="section-title" style="display:flex;align-items:center;flex-wrap:wrap;gap:4px;">${esc(day.title)}${day.date?`<span style="font-size:12px;font-weight:600;color:var(--muted);">${day.date}</span>`:''}${weatherBadge}</div><div class="section-actions"><div class="action-group primary"><button class="btn" title="跳到現在" onclick="jumpToNow()">🕐</button><div class="quick-holder"><button class="btn" style="background:#f0faf5;border-color:#9fe1cb;color:#085041;font-weight:800;white-space:nowrap;" onclick="toggleQuickMenu(this)">＋ 快速新增</button>${quickMenu}</div></div><div class="action-group manage"><button class="btn" onclick="FM={title:\'${esc(day.title)}\',date:\'${esc(day.date||'')}\',city:\'${esc(day.city||'')}\'}; openModal(this,{t:\'ed\',dayId:\'${day.id}\'})">編輯</button>${S.days.length>1?`<button class="btn br" onclick="dDay(\'${day.id}\')">刪除</button>`:''}</div></div></div>${locs}<button class="add-btn" onclick="_heroOrigin=this.getBoundingClientRect();oLoc('')">＋ 新增地點</button>`;
+  return`<div class="day-tabs">${tabs}<button class="dtab dtab-add" onclick="FM={title:'第${nd}天',date:'',city:''};openModal(this,{t:'nd'})">+ 新增</button></div><div class="section-head"><div class="section-title" style="display:flex;align-items:center;flex-wrap:wrap;gap:4px;">${esc(day.title)}${day.date?`<span style="font-size:12px;font-weight:600;color:var(--muted);">${day.date}</span>`:''}${weatherBadge}</div><div class="section-actions"><div class="action-group primary"><button class="btn" title="跳到現在" onclick="jumpToNow()">🕐</button><div class="quick-holder mobile-fab-replaced"><button class="btn" style="background:#f0faf5;border-color:#9fe1cb;color:#085041;font-weight:800;white-space:nowrap;" onclick="toggleQuickMenu(this)">＋ 快速新增</button>${quickMenu}</div></div><div class="action-group manage"><button class="btn" onclick="FM={title:\'${esc(day.title)}\',date:\'${esc(day.date||'')}\',city:\'${esc(day.city||'')}\'}; openModal(this,{t:\'ed\',dayId:\'${day.id}\'})">編輯</button>${S.days.length>1?`<button class="btn br" onclick="dDay(\'${day.id}\')">刪除</button>`:''}</div></div></div>${locs}<button class="add-btn mobile-fab-replaced" onclick="_heroOrigin=this.getBoundingClientRect();oLoc('')">＋ 新增地點</button>`;
 }
 function exps(te){
   const cs=CATS.map(c=>({c,t:S.expenses.filter(e=>e.category===c).reduce((s,e)=>s+expValue(e),0)})).filter(x=>x.t>0);
@@ -637,7 +691,7 @@ function exps(te){
   const bud=`<div class="budget-card"><div class="bar-lb"><span>旅行預算</span><span>${budget?`${fmt(te)} / ${fmt(budgetCur)}`:`${fmt(te)} · 尚未設定預算`}</span></div><div class="budget-line"><div class="budget-fill ${cls}" style="width:${budget?pct:0}%;"></div></div><div class="tip">${esc(FX.status)}${FX.date?` · ${esc(String(FX.date).slice(0,16))}`:''}</div></div>`;
   const bars=cs.length?`<div class="card" style="padding:14px;margin-bottom:10px;"><div style="font-size:13px;color:var(--muted);margin-bottom:10px;font-weight:900;">消費分類</div>${cs.map(({c,t})=>`<div class="bar-lb"><span>${CE[c]} ${c}</span><span style="font-weight:800;">${fmt(t)}</span></div><div class="bar-tr"><div style="height:100%;border-radius:999px;background:${CBr[c]};width:${te?Math.round(t/te*100):0}%;"></div></div>`).join('')}</div>`:'';
   const list=S.expenses.length?S.expenses.map(e=>`<div class="card"><div class="exp-row"><div class="cat-ic" style="background:${CB[e.category]||'#F1EFE8'}">${CE[e.category]||'📌'}</div><div class="exp-inf"><div class="exp-nm">${esc(e.item)}</div><div class="exp-mt">${esc(e.paidBy)} · ${e.shares?'自訂分擔':`${e.splitWith?.length||0}人分`} · <span style="color:${CF[e.category]||'#444'};">${e.category||'其他'}</span>${e.currency&&e.currency!=='TWD'?` · ${esc(e.currency)} ${Number(e.amount||0).toLocaleString()}`:''}</div></div><div class="exp-rt"><div class="exp-am">${fmt(expValue(e))}</div><div class="brow" style="margin-top:7px;justify-content:flex-end;"><button class="btn" style="min-height:30px;padding:4px 8px;" onclick="_heroOrigin=this.getBoundingClientRect();oExp('${e.id}')">編輯</button><button class="btn br" style="min-height:30px;padding:4px 8px;" onclick="dExp('${e.id}')">刪</button></div></div></div></div>`).join(''):`<div class="empty"><div style="font-size:30px;margin-bottom:8px;">💰</div>尚無帳目記錄</div>`;
-  return`<div class="tool-row"><button class="btn bp" onclick="_heroOrigin=this.getBoundingClientRect();oExp('')">新增帳目</button><button class="btn" onclick="setU({modal:{t:'tools'}})">預算 / 匯出</button></div><div class="stats"><div class="stat"><div class="stat-n">${fmt(te)}</div><div class="stat-l">總花費</div></div><div class="stat"><div class="stat-n">${S.travelers.length?fmt(te/S.travelers.length):'-'}</div><div class="stat-l">人均</div></div></div>${bud}${bars}${list}<button class="add-btn" onclick="oExp('')">+ 新增帳目</button>`;
+  return`<div class="tool-row"><button class="btn bp mobile-fab-replaced" onclick="_heroOrigin=this.getBoundingClientRect();oExp('')">新增帳目</button><button class="btn" onclick="setU({modal:{t:'tools'}})">預算 / 匯出</button></div><div class="stats"><div class="stat"><div class="stat-n">${fmt(te)}</div><div class="stat-l">總花費</div></div><div class="stat"><div class="stat-n">${S.travelers.length?fmt(te/S.travelers.length):'-'}</div><div class="stat-l">人均</div></div></div>${bud}${bars}${list}<button class="add-btn mobile-fab-replaced" onclick="oExp('')">+ 新增帳目</button>`;
 }
 function splt(b,tx,te){
   const br=S.travelers.map(t=>{const v=b[t]||0,paid=S.expenses.filter(e=>e.paidBy===t).reduce((s,e)=>s+expValue(e),0),pos=v>=0;return`<div class="brow2"><div><div style="font-weight:900;font-size:15px;">${esc(t)}</div><div style="font-size:12px;color:var(--muted);">已付 ${fmt(paid)}</div></div><div style="font-weight:900;font-size:14px;color:${pos?'#0F6E56':'#A32D2D'};text-align:right;">${pos?`+ ${fmt(Math.abs(v))} 應收`:`${fmt(Math.abs(v))} 應付`}</div></div>`;}).join('');
@@ -1247,7 +1301,7 @@ function showNote(locId){
   const l=S.days.flatMap(d=>d.locations).find(l=>l.id===locId);
   if(l){const el=document.querySelector(`[onclick*="showNoteSheet('${locId}'"]`);showNoteSheet(locId,l.name,el||document.body);}
 }
-function buildModal(){if(S.modal?.t==='wl_add')return buildWlAddModal();if(S.modal?.t==='wl_import')return buildWlImportModal();if(S.modal?.t==='wl_edit')return buildWlEditModal();if(S.modal?.t==='memo_import')return buildMemoImportModal();
+function buildModal(){if(S.modal?.t==='wl_add')return buildWlAddModal();if(S.modal?.t==='wl_import')return buildWlImportModal();if(S.modal?.t==='wl_edit')return buildWlEditModal();if(S.modal?.t==='memo_add')return mMemoAdd();if(S.modal?.t==='memo_import')return buildMemoImportModal();
   const m=S.modal;let c='';
   if(m.t==='tripGate')c=mTripGate();else if(m.t==='loc')c=mLoc();else if(m.t==='nd'||m.t==='ed')c=mDay();else if(m.t==='exp')c=mExp();else if(m.t==='tv')c=mTv();else if(m.t==='cover')c=mCover();else if(m.t==='tools')c=mTools();else if(m.t==='import')c=mImport();else if(m.t==='note')c=mNote();else if(m.t==='help')c=mHelp();
   const lock=m.t==='tripGate';
@@ -1272,7 +1326,20 @@ function memoView(){
   }).join('');
   const progress=items.length?`<div style="margin-bottom:14px;"><div style="display:flex;justify-content:space-between;font-size:12px;font-weight:700;color:var(--muted);margin-bottom:5px;"><span>行前清單進度</span><span>${done} / ${items.length} 完成</span></div><div class="budget-line"><div class="budget-fill" style="width:${items.length?Math.round(done/items.length*100):0}%;"></div></div></div>`:'';
   const catSel=MEMO_CATS.map(c=>`<option value="${c}">${MEMO_IC[c]} ${c}</option>`).join('');
-  return`<div class="memo-toolbar"><button class="memo-ai-btn" onclick="openModal(this,{t:'memo_import'})">✨ AI 產生備忘清單</button></div>${progress}${groups||'<div class="empty"><div style="font-size:30px;margin-bottom:8px;">📝</div>還沒有備忘項目<br><span style="font-size:12px;">在下方新增行前清單，或點上方 AI 一鍵產生</span></div>'}<div class="memo-add-row"><select class="memo-cat-sel" id="memo-cat">${catSel}</select><input type="text" id="memo-inp" placeholder="例：護照、訂飯店確認信..." style="flex:1;" onkeydown="if(event.key==='Enter'){event.preventDefault();addMemo();}"><button class="btn bp" style="padding:0 16px;flex-shrink:0;" onclick="addMemo()">新增</button></div>`;
+  return`<div class="memo-toolbar mobile-fab-replaced"><button class="memo-ai-btn" onclick="openModal(this,{t:'memo_import'})">✨ AI 產生備忘清單</button></div>${progress}${groups||'<div class="empty"><div style="font-size:30px;margin-bottom:8px;">📝</div>還沒有備忘項目<br><span style="font-size:12px;">點右下角 ＋ 新增備忘，或用 AI 一鍵產生</span></div>'}<div class="memo-add-row mobile-fab-replaced"><select class="memo-cat-sel" id="memo-cat">${catSel}</select><input type="text" id="memo-inp" placeholder="例：護照、訂飯店確認信..." style="flex:1;" onkeydown="if(event.key==='Enter'){event.preventDefault();addMemo();}"><button class="btn bp" style="padding:0 16px;flex-shrink:0;" onclick="addMemo()">新增</button></div>`;
+}
+function mMemoAdd(){
+  const catSel=MEMO_CATS.map(c=>`<option value="${c}">${MEMO_IC[c]} ${c}</option>`).join('');
+  return`<div class="mhd"><div class="mt">新增備忘</div><div class="mcl" onclick="setU({modal:null})">✕</div></div>
+<div class="fg"><label class="fl">分類</label><select id="memo-modal-cat">${catSel}</select></div>
+<div class="fg"><label class="fl">備忘內容 *</label><input id="memo-modal-inp" type="text" placeholder="例：護照、訂飯店確認信..." onkeydown="if(event.key==='Enter'){event.preventDefault();saveMemoModal();}" autofocus></div>
+<div class="ar"><button class="btn bp" style="flex:1;padding:10px;" onclick="saveMemoModal()">儲存</button><button class="btn" style="flex:1;padding:10px;" onclick="setU({modal:null})">取消</button></div>`;
+}
+function saveMemoModal(){
+  const text=document.getElementById('memo-modal-inp')?.value?.trim();
+  if(!text)return;
+  const cat=document.getElementById('memo-modal-cat')?.value||'其他';
+  setD({memo:[...(S.memo||[]),{id:uid(),text,done:false,cat}],modal:null});
 }
 function mHelp(){
   const sec=(ic,title,items)=>`<div style="margin-bottom:18px;"><div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;padding-bottom:8px;border-bottom:1px solid var(--line);"><span style="font-size:20px;">${ic}</span><span style="font-size:15px;font-weight:900;color:var(--ink);">${title}</span></div><div style="display:flex;flex-direction:column;gap:6px;">${items.map(([icon,txt])=>`<div style="display:flex;gap:10px;align-items:flex-start;"><span style="font-size:16px;flex-shrink:0;margin-top:1px;">${icon}</span><span style="font-size:13px;color:#3a4a45;line-height:1.55;">${txt}</span></div>`).join('')}</div></div>`;
@@ -1461,7 +1528,7 @@ function wishlistView(){
       body=visible.map(item=>wlCardHtml(item)).join('');
     }
   }
-  return`<div style="padding-bottom:90px;">${topbar}${body}</div><div class="wl-fab-wrap${S.wlFabOpen?' open':''}"><button class="wl-fab-action wl-fab-ai" onclick="S.wlFabOpen=false;openModal(this,{t:'wl_import'})"><span class="wl-fab-action-label">✨ AI 匯入</span><span class="wl-fab-action-ic">✨</span></button><button class="wl-fab-action wl-fab-manual" onclick="S.wlFabOpen=false;wlOpenAdd(this)"><span class="wl-fab-action-label">手動新增</span><span class="wl-fab-action-ic">＋</span></button><button class="wl-fab-main" onclick="toggleWlFab(event)" aria-label="新增"><span class="wl-fab-icon">＋</span></button><div class="wl-fab-backdrop" onclick="closeWlFab()"></div></div>`;
+  return`<div>${topbar}${body}</div>`;
 }
 
 function wlCardHtml(item){
@@ -1687,7 +1754,7 @@ function wlConfirmImport(){
 
 // ════ HERO & SHEET modal engine ════════════════════════
 // Hero modal types (large forms) — open from trigger element
-const HERO_TYPES=new Set(['loc','exp','nd','ed','wl_add','wl_import','wl_edit','import','tv','cover','tools','help','note','memo_import']);
+const HERO_TYPES=new Set(['loc','exp','nd','ed','wl_add','wl_import','wl_edit','import','tv','cover','tools','help','note','memo_add','memo_import']);
 // Sheet modal types (compact) — slide up from bottom
 const SHEET_TYPES=new Set(['tripGate']);
 
@@ -1738,6 +1805,7 @@ function _getModalContent(m){
   else if(m.t==='import')c=mImport();
   else if(m.t==='note')c=mNote();
   else if(m.t==='help')c=mHelp();
+  else if(m.t==='memo_add')c=mMemoAdd();
   else if(m.t==='memo_import')c=buildMemoImportModal();
   else if(m.t==='wl_add')c=buildWlAddModal();
   else if(m.t==='wl_import')c=buildWlImportModal();
