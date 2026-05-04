@@ -58,7 +58,10 @@ a{text-decoration:none}
 .dtab.on{background:#183b40;color:#fff;border-color:#183b40}
 .dtab-add{border-style:dashed;background:#fff8ec;color:#8b540c}
 .section-head{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;margin-bottom:10px}
-.section-title{font-weight:800;font-size:17px;line-height:1.25;min-width:0;word-break:keep-all}
+.section-title-wrap{display:flex;flex-direction:column;gap:6px;min-width:0;flex:1;}
+.section-title{font-weight:800;font-size:17px;line-height:1.25;min-width:0;word-break:keep-all;color:var(--ink);}
+.section-meta{display:flex;align-items:center;flex-wrap:wrap;gap:8px;}
+.section-meta-date{font-size:12px;font-weight:700;color:var(--muted);display:inline-flex;align-items:center;gap:3px;}
 .section-actions{display:flex;align-items:center;justify-content:flex-end;gap:6px;flex-wrap:nowrap;position:relative;flex-shrink:0}
 .action-group{display:flex;align-items:center;gap:7px;position:relative;flex-wrap:nowrap}
 .quick-holder{position:relative}
@@ -192,7 +195,7 @@ input:focus,select:focus,textarea:focus{border-color:#42a787;box-shadow:0 0 0 3p
   padding:3px 10px 3px 6px;border-radius:999px;cursor:pointer;
   font-size:12px;font-weight:800;color:#0f5e5e;
   background:rgba(15,94,94,.08);border:1px solid rgba(15,94,94,.15);
-  transition:background .15s;user-select:none;vertical-align:middle;margin-left:8px;flex-shrink:0;}
+  transition:background .15s;user-select:none;vertical-align:middle;flex-shrink:0;}
 .wx-badge:hover{background:rgba(15,94,94,.15);}
 .wx-badge-ic{font-size:16px;line-height:1;}
 .weather-loading{font-size:11px;color:var(--muted);margin-left:10px;font-weight:700;}
@@ -242,6 +245,9 @@ input:focus,select:focus,textarea:focus{border-color:#42a787;box-shadow:0 0 0 3p
   .mobile-stack input[type=time]{-webkit-appearance:none;appearance:none;text-align:left;min-height:54px}
   .section-head{display:grid;grid-template-columns:minmax(0,1fr);gap:10px;align-items:start}
   .section-title{font-size:19px;max-width:100%;word-break:keep-all;overflow-wrap:normal}
+  .section-meta{gap:6px;}
+  .section-meta-date{font-size:12px;}
+  .wx-badge{font-size:12px;padding:3px 9px 3px 5px;}
   .section-actions{justify-content:space-between;width:100%;gap:8px}
   .action-group{gap:7px}
   .action-group.primary{flex:1;justify-content:flex-start}
@@ -686,7 +692,7 @@ function itin(day,si){
   }
   // Store detail for sheet
   if(weatherDetail)window['_wx_'+day.id]=weatherDetail;
-  return`<div class="day-tabs">${tabs}<button class="dtab dtab-add" onclick="FM={title:'第${nd}天',date:'',city:''};openModal(this,{t:'nd'})">+ 新增</button></div><div class="section-head"><div class="section-title" style="display:flex;align-items:center;flex-wrap:wrap;gap:4px;">${esc(day.title)}${day.date?`<span style="font-size:12px;font-weight:600;color:var(--muted);">${day.date}</span>`:''}${weatherBadge}</div><div class="section-actions"><div class="action-group primary"><button class="btn" title="跳到現在" onclick="jumpToNow()">🕐</button><div class="quick-holder mobile-fab-replaced"><button class="btn" style="background:#f0faf5;border-color:#9fe1cb;color:#085041;font-weight:800;white-space:nowrap;" onclick="toggleQuickMenu(this)">＋ 快速新增</button>${quickMenu}</div></div><div class="action-group manage"><button class="btn" onclick="FM={title:\'${esc(day.title)}\',date:\'${esc(day.date||'')}\',city:\'${esc(day.city||'')}\'}; openModal(this,{t:\'ed\',dayId:\'${day.id}\'})">編輯</button>${S.days.length>1?`<button class="btn br" onclick="dDay(\'${day.id}\')">刪除</button>`:''}</div></div></div>${locs}<button class="add-btn mobile-fab-replaced" onclick="_heroOrigin=this.getBoundingClientRect();oLoc('')">＋ 新增地點</button>`;
+  return`<div class="day-tabs">${tabs}<button class="dtab dtab-add" onclick="FM={title:'第${nd}天',date:'',city:''};openModal(this,{t:'nd'})">+ 新增</button></div><div class="section-head"><div class="section-title-wrap"><div class="section-title">${esc(day.title)}</div>${(day.date||weatherBadge)?`<div class="section-meta">${day.date?`<span class="section-meta-date">📅 ${day.date}</span>`:''}${weatherBadge}</div>`:''}</div><div class="section-actions"><div class="action-group primary"><button class="btn" title="跳到現在" onclick="jumpToNow()">🕐</button><div class="quick-holder mobile-fab-replaced"><button class="btn" style="background:#f0faf5;border-color:#9fe1cb;color:#085041;font-weight:800;white-space:nowrap;" onclick="toggleQuickMenu(this)">＋ 快速新增</button>${quickMenu}</div></div><div class="action-group manage"><button class="btn" onclick="FM={title:\'${esc(day.title)}\',date:\'${esc(day.date||'')}\',city:\'${esc(day.city||'')}\'}; openModal(this,{t:\'ed\',dayId:\'${day.id}\'})">編輯</button>${S.days.length>1?`<button class="btn br" onclick="dDay(\'${day.id}\')">刪除</button>`:''}</div></div></div>${locs}<button class="add-btn mobile-fab-replaced" onclick="_heroOrigin=this.getBoundingClientRect();oLoc('')">＋ 新增地點</button>`;
 }
 function exps(te){
   const cs=CATS.map(c=>({c,t:S.expenses.filter(e=>e.category===c).reduce((s,e)=>s+expValue(e),0)})).filter(x=>x.t>0);
