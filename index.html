@@ -555,7 +555,11 @@ async function initCloud(){
 async function load(){
   try{
     const hasCloud=await initCloud();
-    if(hasCloud){render();return;}
+    if(hasCloud){
+      render();
+      if(S.modal)_mountModalOverlay();
+      return;
+    }
     const raw=await getSaved(SK)||await getSaved(OLD_SK2)||await getSaved(OLD_SK);
     if(raw){const sv=JSON.parse(raw);S={...S,...sv,settleCurrency:sv.settleCurrency||'TWD',travelerIcons:sv.travelerIcons||S.travelerIcons||{},budget:Number(sv.budget||0),cover:sv.cover||COVERS[0][1],view:'itinerary',dayIdx:0,modal:null,editTN:false,wishlist:sv.wishlist||[]};}
   }catch(e){}
@@ -715,10 +719,27 @@ function splt(b,tx,te){
 }
 // buildModal defined below with note support
 function mTripGate(){
-  return`<div class="mhd"><div class="mt">輸入同步代碼</div></div>
-<div class="fg"><label class="fl">同步代碼</label><input type="text" id="trip-code" placeholder="例：tokyo2026" autocomplete="off" autocapitalize="none" onkeydown="if(event.key==='Enter')switchTrip(false)" autofocus><div class="tip">同一個同步代碼會打開同一份旅程。第一次使用可以自己取一個，之後把完整連結分享給旅伴。</div></div>
-<button class="btn bp" style="width:100%;padding:11px;" onclick="switchTrip(false)">進入旅程</button>
-<div class="tip">建議只用英文、數字和短橫線，例如：japan-2026、family-trip。</div>`;
+  return`<div class="mhd"><div class="mt">🌍 開始你的旅程</div><div class="mcl" onclick="skipTripGate()" title="略過">✕</div></div>
+<div style="text-align:center;font-size:13px;color:var(--muted);line-height:1.7;margin-bottom:18px;">輸入同步代碼，可以和旅伴<br>共同編輯同一份旅程。</div>
+<div class="fg">
+  <label class="fl">同步代碼</label>
+  <input type="text" id="trip-code" placeholder="例：tokyo-2026、family-trip" autocomplete="off" autocapitalize="none" onkeydown="if(event.key==='Enter')switchTrip(false)" autofocus>
+  <div class="tip">建議使用英文、數字、短橫線。第一次使用可自己取一個。</div>
+</div>
+<button class="btn bp" style="width:100%;padding:13px;font-size:15px;" onclick="switchTrip(false)">🔗 進入旅程</button>
+<div style="display:flex;align-items:center;gap:10px;margin:16px 0;color:var(--muted);font-size:11px;">
+  <div style="flex:1;height:1px;background:var(--line);"></div>
+  <span>或</span>
+  <div style="flex:1;height:1px;background:var(--line);"></div>
+</div>
+<button class="btn" style="width:100%;padding:11px;font-size:13px;" onclick="skipTripGate()">👤 先用本機儲存（不開雲端同步）</button>
+<div class="tip" style="margin-top:10px;text-align:center;">日後也可以從右上角選單 → 旅程工具，再切換到雲端同步。</div>`;
+}
+
+// Skip gate: stay on local-only mode
+function skipTripGate(){
+  cloud={ready:false,doc:null,tripId:null,status:'本機儲存',applying:false};
+  setU({modal:null});
 }
 function mLoc(){
   const locCatOpts=[['','自動偵測'],...CATS.map(c=>[c,`${CE[c]} ${c}`])].map(([v,l])=>`<option value="${v}"${(FM.category||'')===v?' selected':''}>${l}</option>`).join('');
@@ -1776,9 +1797,9 @@ function wlConfirmImport(){
 
 // ════ HERO & SHEET modal engine ════════════════════════
 // Hero modal types (large forms) — open from trigger element
-const HERO_TYPES=new Set(['loc','exp','nd','ed','wl_add','wl_import','wl_edit','import','tv','cover','tools','help','note','memo_add','memo_import']);
+const HERO_TYPES=new Set(['loc','exp','nd','ed','wl_add','wl_import','wl_edit','import','tv','cover','tools','help','note','memo_add','memo_import','tripGate']);
 // Sheet modal types (compact) — slide up from bottom
-const SHEET_TYPES=new Set(['tripGate']);
+const SHEET_TYPES=new Set([]);
 
 let _heroOrigin=null; // {top,left,width,height} of trigger element
 
