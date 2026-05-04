@@ -258,8 +258,6 @@ input:focus,select:focus,textarea:focus{border-color:#42a787;box-shadow:0 0 0 3p
   .txn div{text-align:center!important}
   .ar{flex-direction:column}
   .cover-grid{grid-template-columns:1fr}
-  .app-fab-wrap{display:block}
-  .mobile-fab-replaced{display:none!important}
   .body{padding-bottom:calc(86px + env(safe-area-inset-bottom))}
 }
 
@@ -402,12 +400,13 @@ input:focus,select:focus,textarea:focus{border-color:#42a787;box-shadow:0 0 0 3p
 .memo-ai-btn:hover{transform:translateY(-1px);box-shadow:0 6px 18px rgba(91,63,196,.35);}
 .memo-ai-btn:active{transform:translateY(0);}
 
-/* ── Global mobile FAB + iOS action sheet ───────────── */
-.app-fab-wrap{display:none;}
+/* ── Global FAB + iOS action sheet ───────────── */
+.app-fab-wrap{display:block;}
+.mobile-fab-replaced{display:none!important;}
 .app-fab-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.24);z-index:59;-webkit-backdrop-filter:blur(5px);backdrop-filter:blur(5px);animation:fabFade .22s ease;}
 .app-fab-main{position:fixed;right:20px;bottom:calc(20px + env(safe-area-inset-bottom));z-index:62;width:58px;height:58px;border-radius:50%;border:0;background:linear-gradient(140deg,#0f5e5e,#1a8a6e);color:#fff;box-shadow:0 10px 26px rgba(15,94,94,.38),0 2px 8px rgba(0,0,0,.12);font-size:34px;font-weight:300;line-height:1;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:transform .24s ease,box-shadow .24s ease;}
 .app-fab-wrap.open .app-fab-main{transform:rotate(135deg);box-shadow:0 12px 32px rgba(15,94,94,.48);}
-.app-fab-sheet{position:fixed;left:10px;right:10px;bottom:calc(90px + env(safe-area-inset-bottom));z-index:61;display:flex;flex-direction:column;gap:8px;animation:fabSheetUp .24s cubic-bezier(.32,1.08,.58,1);}
+.app-fab-sheet{position:fixed;right:18px;bottom:calc(90px + env(safe-area-inset-bottom));z-index:61;width:min(420px,calc(100vw - 20px));display:flex;flex-direction:column;gap:8px;animation:fabSheetUp .24s cubic-bezier(.32,1.08,.58,1);}
 .app-fab-action{width:100%;min-height:56px;border:0;border-radius:16px;background:rgba(255,255,255,.96);box-shadow:0 12px 30px rgba(18,38,35,.18);display:flex;align-items:center;gap:12px;padding:10px 14px;text-align:left;color:var(--ink);font-weight:900;cursor:pointer;-webkit-backdrop-filter:blur(18px);backdrop-filter:blur(18px);}
 .app-fab-action:active{transform:scale(.985);}
 .app-fab-action-ic{width:38px;height:38px;border-radius:13px;display:flex;align-items:center;justify-content:center;background:#e4f4ed;color:#0f5e5e;font-size:19px;flex-shrink:0;}
@@ -417,7 +416,7 @@ input:focus,select:focus,textarea:focus{border-color:#42a787;box-shadow:0 0 0 3p
 @keyframes fabFade{from{opacity:0}to{opacity:1}}
 @keyframes fabSheetUp{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:translateY(0)}}
 @media (max-width:640px){
-  .app-fab-wrap{display:block}
+  .app-fab-sheet{left:10px;right:10px;width:auto}
 }
 </style>
 </head>
@@ -713,8 +712,8 @@ function mLoc(){
 <div class="fg"><label class="fl">地點名稱 *</label><input type="text" value="${esc(FM.name||'')}" placeholder="例：故宮博物院" oninput="FM.name=this.value"></div>
 <div class="fg"><label class="fl">地址（用於地圖 / 導航）</label><input type="text" value="${esc(FM.address||'')}" placeholder="例：台北市士林區至善路二段221號" oninput="FM.address=this.value"></div>
 <div class="fg"><label class="fl">電話（餐廳可用來預訂）</label><input type="tel" inputmode="tel" value="${esc(FM.phone||'')}" placeholder="例：02-2881-2021" oninput="FM.phone=this.value"></div>
-<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;"><div><label class="fl">分類</label><select onchange="FM.category=this.value">${locCatOpts}</select></div><div><label class="fl">時間</label><input type="time" value="${esc(FM.time||'')}" oninput="FM.time=this.value" style="min-height:44px;"></div></div>
-<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;"><div><label class="fl">訂位狀態</label><select onchange="FM.reservation=this.value">${resOpts}</select></div><div><label class="fl">訂位確認碼</label><input type="text" value="${esc(FM.resCode||'')}" placeholder="選填" oninput="FM.resCode=this.value"></div></div>
+<div class="mobile-stack" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;"><div><label class="fl">分類</label><select onchange="FM.category=this.value">${locCatOpts}</select></div><div><label class="fl">時間</label><input type="time" value="${esc(FM.time||'')}" oninput="FM.time=this.value" style="min-height:44px;"></div></div>
+<div class="mobile-stack" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;"><div><label class="fl">訂位狀態</label><select onchange="FM.reservation=this.value">${resOpts}</select></div><div><label class="fl">訂位確認碼</label><input type="text" value="${esc(FM.resCode||'')}" placeholder="選填" oninput="FM.resCode=this.value"></div></div>
 <div class="fg"><label class="fl">備註</label><textarea placeholder="例：需預訂、注意公休日、停車資訊..." oninput="FM.notes=this.value" style="min-height:100px;resize:vertical;">${esc(FM.notes||'')}</textarea></div>
 <div class="ar"><button class="btn bp" style="flex:1;padding:10px;" onclick="sLoc()">儲存</button><button class="btn" style="flex:1;padding:10px;" onclick="setU({modal:null})">取消</button></div>`;
 }
@@ -722,7 +721,7 @@ function mDay(){
   const isE=S.modal.t==='ed';
   return`<div class="mhd"><div class="mt">${isE?'編輯天數':'新增天數'}</div><div class="mcl" onclick="setU({modal:null})">✕</div></div>
 <div class="fg"><label class="fl">標題 *</label><input type="text" value="${esc(FM.title||'')}" placeholder="例：第一天" oninput="FM.title=this.value"></div>
-<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;"><div><label class="fl">日期</label><input type="date" value="${esc(FM.date||'')}" oninput="FM.date=this.value"></div><div><label class="fl">城市（查天氣用）</label><input type="text" value="${esc(FM.city||'')}" placeholder="例：Tokyo、大阪、台北" oninput="FM.city=this.value"></div></div>
+<div class="mobile-stack" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;"><div><label class="fl">日期</label><input type="date" value="${esc(FM.date||'')}" oninput="FM.date=this.value"></div><div><label class="fl">城市（查天氣用）</label><input type="text" value="${esc(FM.city||'')}" placeholder="例：Tokyo、大阪、台北" oninput="FM.city=this.value"></div></div>
 <div class="ar"><button class="btn bp" style="flex:1;padding:10px;" onclick="sDay()">儲存</button><button class="btn" style="flex:1;padding:10px;" onclick="setU({modal:null})">取消</button></div>`;
 }
 function mExp(){
@@ -731,13 +730,13 @@ function mExp(){
   const curOpts=Object.keys(CUR).map(c=>`<option value="${c}"${(FM.currency||'TWD')===c?' selected':''}>${c}</option>`).join('');
   const scs=S.travelers.map(t=>`<span class="sc${(FM.splitWith||[]).includes(t)?' on':''}" data-name="${esc(t)}" onclick="tgSplit('${esc(t)}')">${esc(t)}</span>`).join('');
   const custom=FM.splitMode==='custom';
-  const shareRows=S.travelers.map(t=>`<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;align-items:center;margin-bottom:8px;"><div class="mini">${esc(t)}</div><input class="share-in" data-person="${esc(t)}" type="number" inputmode="decimal" value="${FM.shares?.[t]||''}" placeholder="0" oninput="FM.shares=FM.shares||{};FM.shares['${esc(t)}']=this.value"></div>`).join('');
+  const shareRows=S.travelers.map(t=>`<div class="mobile-stack" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;align-items:center;margin-bottom:8px;"><div class="mini">${esc(t)}</div><input class="share-in" data-person="${esc(t)}" type="number" inputmode="decimal" value="${FM.shares?.[t]||''}" placeholder="0" oninput="FM.shares=FM.shares||{};FM.shares['${esc(t)}']=this.value"></div>`).join('');
   const ah=FM.item?`<div class="ah">自動偵測：${CE[ac(FM.item)]} ${ac(FM.item)}</div>`:'';
   return`<div class="mhd"><div class="mt">${S.modal.expId?'編輯帳目':'新增帳目'}</div><div class="mcl" onclick="setU({modal:null})">✕</div></div>
 <div class="receipt-box"><label class="fl">AI 辨識收據</label><input type="file" accept="image/*" onchange="readReceipt(this.files?.[0])"><div id="ocr-status" class="mini">可上傳收據照片，會嘗試辨識品項、金額並自動分類。</div></div>
 <div class="fg"><label class="fl">品項 *</label><input id="exp-item" type="text" value="${esc(FM.item||'')}" placeholder="例：車票、晚餐、飯店..." oninput="FM.item=this.value;updAH()">${ah}</div>
-<div style="display:grid;grid-template-columns:2fr 1fr;gap:8px;margin-bottom:12px;"><div><label class="fl">金額 *</label><input type="number" inputmode="decimal" value="${FM.amount||''}" placeholder="0" oninput="FM.amount=this.value"></div><div><label class="fl">幣別</label><select onchange="FM.currency=this.value">${curOpts}</select></div></div>
-<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;"><div><label class="fl">分類</label><select id="exp-cat" onchange="FM.category=this.value"><option value="">自動偵測</option>${cOpts}</select></div><div><label class="fl">誰付款</label><select onchange="FM.paidBy=this.value">${tOpts}</select></div></div>
+<div class="mobile-stack" style="display:grid;grid-template-columns:2fr 1fr;gap:8px;margin-bottom:12px;"><div><label class="fl">金額 *</label><input type="number" inputmode="decimal" value="${FM.amount||''}" placeholder="0" oninput="FM.amount=this.value"></div><div><label class="fl">幣別</label><select onchange="FM.currency=this.value">${curOpts}</select></div></div>
+<div class="mobile-stack" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;"><div><label class="fl">分類</label><select id="exp-cat" onchange="FM.category=this.value"><option value="">自動偵測</option>${cOpts}</select></div><div><label class="fl">誰付款</label><select onchange="FM.paidBy=this.value">${tOpts}</select></div></div>
 <div class="fg"><label class="fl">分帳方式</label><div class="scs"><span class="sc${!custom?' on':''}" onclick="FM.splitMode='equal';setU({modal:S.modal})">平均分</span><span class="sc${custom?' on':''}" onclick="FM.splitMode='custom';FM.shares=FM.shares||{};setU({modal:S.modal})">自訂金額</span></div></div>
 ${custom?`<div class="fg"><label class="fl">每個人負擔金額（${FM.currency||'TWD'}，加總需等於總金額）</label>${shareRows}</div>`:`<div class="fg"><label class="fl">分帳對象（點選切換）</label><div class="scs">${scs}</div></div>`}
 <div class="ar"><button class="btn bp" style="flex:1;padding:10px;" onclick="sExp()">儲存</button><button class="btn" style="flex:1;padding:10px;" onclick="setU({modal:null})">取消</button></div>`;
