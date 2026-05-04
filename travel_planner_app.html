@@ -942,7 +942,8 @@ function toggleTvExpand(name){
 function editTvProfile(name){
   const meta=(S.travelerMeta||{})[name]||{};
   FM={...FM,editTvName:name,editTvRole:meta.role||'',editTvBio:meta.bio||''};
-  setU({modal:{t:'tvEdit'}});
+  S.modal={t:'tvEdit'};
+  _refreshHeroContent();
 }
 
 function buildTvEditModal(){
@@ -967,7 +968,8 @@ function buildTvEditModal(){
 }
 
 function closeTvEdit(){
-  setU({modal:{t:'tv'}});
+  S.modal={t:'tv'};
+  _refreshHeroContent();
 }
 
 function saveTvProfile(){
@@ -975,9 +977,9 @@ function saveTvProfile(){
   if(!name)return;
   const tvMeta={...(S.travelerMeta||{})};
   tvMeta[name]={role:(FM.editTvRole||'').trim(),bio:(FM.editTvBio||'').trim()};
-  S={...S,travelerMeta:tvMeta};
+  S={...S,travelerMeta:tvMeta,modal:{t:'tv'}};
   psave();
-  setU({modal:{t:'tv'}});
+  _refreshHeroContent();
 }
 
 function mCover(){
