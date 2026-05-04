@@ -617,7 +617,7 @@ async function initCloud(){
       if(!snap.exists){psave();return;}
       const data=snap.data()||{};
       cloud.applying=true;
-      S={...S,...data,settleCurrency:data.settleCurrency||S.settleCurrency||'TWD',travelerIcons:data.travelerIcons||S.travelerIcons||{},budget:Number(data.budget||0),cover:data.cover||S.cover,coverPos:data.coverPos||S.coverPos||'30%',view:S.view,dayIdx:S.dayIdx,modal:S.modal,editTN:S.editTN,tnDraft:S.tnDraft};
+      S={...S,...data,settleCurrency:data.settleCurrency||S.settleCurrency||'TWD',travelerIcons:data.travelerIcons||S.travelerIcons||{},travelerMeta:data.travelerMeta||S.travelerMeta||{},budget:Number(data.budget||0),cover:data.cover||S.cover,coverPos:data.coverPos||S.coverPos||'30%',view:S.view,dayIdx:S.dayIdx,modal:S.modal,editTN:S.editTN,tnDraft:S.tnDraft};
       cloud.status='已同步';
       render();
       cloud.applying=false;
@@ -1538,7 +1538,7 @@ function showNote(locId){
 }
 function buildModal(){if(S.modal?.t==='wl_add')return buildWlAddModal();if(S.modal?.t==='wl_import')return buildWlImportModal();if(S.modal?.t==='wl_edit')return buildWlEditModal();if(S.modal?.t==='memo_add')return mMemoAdd();if(S.modal?.t==='memo_import')return buildMemoImportModal();
   const m=S.modal;let c='';
-  if(m.t==='tripGate')c=mTripGate();else if(m.t==='loc')c=mLoc();else if(m.t==='nd'||m.t==='ed')c=mDay();else if(m.t==='exp')c=mExp();else if(m.t==='tv')c=mTv();else if(m.t==='cover')c=mCover();else if(m.t==='tools')c=mTools();else if(m.t==='import')c=mImport();else if(m.t==='note')c=mNote();else if(m.t==='help')c=mHelp();
+  if(m.t==='tripGate')c=mTripGate();else if(m.t==='loc')c=mLoc();else if(m.t==='nd'||m.t==='ed')c=mDay();else if(m.t==='exp')c=mExp();else if(m.t==='tv')c=mTv();else if(m.t==='tvEdit')c=buildTvEditModal();else if(m.t==='cover')c=mCover();else if(m.t==='tools')c=mTools();else if(m.t==='import')c=mImport();else if(m.t==='note')c=mNote();else if(m.t==='help')c=mHelp();
   const lock=m.t==='tripGate';
   return`<div class="mol" onclick="${lock?'':'if(event.target===this)setU({modal:null})'}"><div class="msh">${c}</div></div>`;
 }
@@ -1661,11 +1661,14 @@ function pickAvatar(icon,btn){
   FM.tvIcon=icon;
   document.querySelectorAll('.avatar-btn').forEach(b=>b.classList.remove('on'));
   btn?.classList.add('on');
+  const pv=document.querySelector('.tv-preview .tv-avatar-lg');
+  if(pv)pv.textContent=icon;
 }
 function addTv(){
   const input=document.getElementById('traveler-name-input');
   const v=cleanName(input?.value||FM.newTraveler);
-  if(!v||S.travelers.includes(v))return;
+  if(!v){alert('請輸入旅伴名稱');return;}
+  if(S.travelers.includes(v)){alert('這位旅伴已經在清單裡了');return;}
   const travelerIcons={...(S.travelerIcons||{}),[v]:FM.tvIcon||'🙂'};
   FM={tvIcon:FM.tvIcon||'🙂',newTraveler:''};
   S={...S,travelers:[...S.travelers,v],travelerIcons};
@@ -1673,9 +1676,12 @@ function addTv(){
   _refreshHeroContent();
 }
 function rmTv(name){
+  if(!confirm(`確定要移除「${name}」嗎？`))return;
   const travelerIcons={...(S.travelerIcons||{})};
+  const travelerMeta={...(S.travelerMeta||{})};
   delete travelerIcons[name];
-  S={...S,travelers:S.travelers.filter(t=>t!==name),travelerIcons};
+  delete travelerMeta[name];
+  S={...S,travelers:S.travelers.filter(t=>t!==name),travelerIcons,travelerMeta,tvExpanded:S.tvExpanded===name?'':S.tvExpanded};
   psave();
   _refreshHeroContent();
 }
@@ -2432,8 +2438,8 @@ function _refreshHeroContent(){
   if(content){
     heroBody.querySelector('.msh').innerHTML=content;
   }
-  // Also update main page (for live cover preview)
-  render();
+  // Only the cover editor needs the underlying page to update immediately for preview.
+  if(S.modal?.t==='cover')render();
 }
 
 
