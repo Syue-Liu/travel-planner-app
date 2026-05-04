@@ -357,6 +357,47 @@ input:focus,select:focus,textarea:focus{border-color:#42a787;box-shadow:0 0 0 3p
 .loc-action-item.danger{color:#c0392b;}
 .loc-action-item.danger:hover{background:#fdf0ee;}
 .loc-action-sep{height:1px;background:var(--line);margin:4px 16px;}
+
+/* ── Wishlist FAB ────────────────────────────── */
+.wl-fab-wrap{position:fixed;right:20px;bottom:calc(20px + env(safe-area-inset-bottom));z-index:50;display:flex;flex-direction:column;align-items:flex-end;gap:0;pointer-events:none;}
+.wl-fab-wrap > *{pointer-events:auto;}
+.wl-fab-backdrop{position:fixed;inset:0;background:rgba(0,0,0,0);z-index:-1;pointer-events:none;transition:background .28s ease;}
+.wl-fab-wrap.open .wl-fab-backdrop{background:rgba(0,0,0,.18);pointer-events:auto;-webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px);}
+.wl-fab-main{width:58px;height:58px;border-radius:50%;background:linear-gradient(140deg,#0f5e5e,#1a8a6e);color:#fff;border:none;cursor:pointer;
+  box-shadow:0 6px 18px rgba(15,94,94,.4),0 2px 6px rgba(0,0,0,.1);
+  display:flex;align-items:center;justify-content:center;
+  transition:transform .35s cubic-bezier(.32,1.12,.6,1),box-shadow .25s ease;
+  position:relative;z-index:2;}
+.wl-fab-main:active{transform:scale(.94);}
+.wl-fab-wrap.open .wl-fab-main{transform:rotate(135deg);box-shadow:0 8px 24px rgba(15,94,94,.5);}
+.wl-fab-icon{font-size:32px;font-weight:300;line-height:1;}
+.wl-fab-action{display:flex;align-items:center;gap:10px;
+  background:#fff;border:1px solid var(--line);border-radius:999px;
+  padding:0 6px 0 18px;height:46px;cursor:pointer;
+  box-shadow:0 4px 14px rgba(0,0,0,.12);font-weight:800;font-size:14px;color:var(--ink);
+  margin-bottom:12px;
+  opacity:0;transform:translateY(20px) scale(.9);
+  transition:opacity .25s ease,transform .35s cubic-bezier(.32,1.12,.6,1);
+  pointer-events:none;}
+.wl-fab-wrap.open .wl-fab-action{opacity:1;transform:translateY(0) scale(1);pointer-events:auto;}
+.wl-fab-wrap.open .wl-fab-manual{transition-delay:.04s;}
+.wl-fab-wrap.open .wl-fab-ai{transition-delay:.10s;}
+.wl-fab-action-label{white-space:nowrap;}
+.wl-fab-action-ic{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;}
+.wl-fab-manual .wl-fab-action-ic{background:#e4f4ed;color:#0f5e5e;}
+.wl-fab-ai{background:linear-gradient(140deg,#5b3fc4,#7d5cd9);color:#fff;border-color:transparent;}
+.wl-fab-ai .wl-fab-action-ic{background:rgba(255,255,255,.22);color:#fff;}
+
+/* ── Memo AI button ──────────────────── */
+.memo-toolbar{margin-bottom:14px;}
+.memo-ai-btn{width:100%;padding:11px 18px;border-radius:14px;
+  background:linear-gradient(140deg,#5b3fc4,#7d5cd9);color:#fff;border:none;cursor:pointer;
+  font-size:14px;font-weight:800;
+  box-shadow:0 4px 14px rgba(91,63,196,.25);
+  display:flex;align-items:center;justify-content:center;gap:6px;
+  transition:transform .15s ease,box-shadow .2s ease;}
+.memo-ai-btn:hover{transform:translateY(-1px);box-shadow:0 6px 18px rgba(91,63,196,.35);}
+.memo-ai-btn:active{transform:translateY(0);}
 </style>
 </head>
 <body>
@@ -442,7 +483,7 @@ function settle(exps,tvls){
   while(cr.length&&de.length){const c=cr[0],d=de[0],am=Math.min(c.v,d.v);if(am>0.01)tx.push({from:d.n,to:c.n,amount:Math.round(am)});c.v-=am;d.v-=am;if(c.v<0.01)cr.shift();if(d.v<0.01)de.shift();}
   return{b,tx};
 }
-let S={tripName:'2026 旅遊計畫',cover:COVERS[0][1],coverPos:'30%',budget:0,settleCurrency:'TWD',days:[{id:'d1',title:'第一天',date:'',locations:[]}],travelers:['旅伴A','旅伴B'],travelerIcons:{旅伴A:'🙂',旅伴B:'😎'},expenses:[],memo:[],view:'itinerary',dayIdx:0,modal:null,editTN:false,tnDraft:'',wishlist:[]};
+let S={tripName:'2026 旅遊計畫',cover:COVERS[0][1],coverPos:'30%',budget:0,settleCurrency:'TWD',days:[{id:'d1',title:'第一天',date:'',locations:[]}],travelers:['旅伴A','旅伴B'],travelerIcons:{旅伴A:'🙂',旅伴B:'😎'},expenses:[],memo:[],view:'itinerary',dayIdx:0,modal:null,editTN:false,tnDraft:'',wishlist:[],wlFabOpen:false};
 let FM={};
 let cloud={ready:false,doc:null,tripId:null,applying:false,status:'單機儲存'};
 function loadScript(src){
@@ -519,7 +560,7 @@ function render(){
   const ad=S.days[si];
   const te=S.expenses.reduce((s,e)=>s+expValue(e),0);
   const {b,tx}=settle(S.expenses,S.travelers);
-  root.innerHTML=`<div class="app">${hdr(te)}${gnav()}<main class="body">${S.view==='memo'?memoView():''}${S.view==='itinerary'?itin(ad,si):''}${S.view==='wishlist'?wishlistView():''}${S.view==='expenses'?exps(te):''}${S.view==='split'?splt(b,tx,te):''}</main></div>${S.modal&&(S.modal.t==='wl_add'||S.modal.t==='wl_import'||S.modal.t==='wl_edit')?buildModal():''}`;
+  root.innerHTML=`<div class="app">${hdr(te)}${gnav()}<main class="body">${S.view==='memo'?memoView():''}${S.view==='itinerary'?itin(ad,si):''}${S.view==='wishlist'?wishlistView():''}${S.view==='expenses'?exps(te):''}${S.view==='split'?splt(b,tx,te):''}</main></div>`;
 
   setTimeout(()=>{
     const t=document.querySelector('.day-tabs .dtab.on');
@@ -1206,7 +1247,7 @@ function showNote(locId){
   const l=S.days.flatMap(d=>d.locations).find(l=>l.id===locId);
   if(l){const el=document.querySelector(`[onclick*="showNoteSheet('${locId}'"]`);showNoteSheet(locId,l.name,el||document.body);}
 }
-function buildModal(){if(S.modal?.t==='wl_add')return buildWlAddModal();if(S.modal?.t==='wl_import')return buildWlImportModal();if(S.modal?.t==='wl_edit')return buildWlEditModal();
+function buildModal(){if(S.modal?.t==='wl_add')return buildWlAddModal();if(S.modal?.t==='wl_import')return buildWlImportModal();if(S.modal?.t==='wl_edit')return buildWlEditModal();if(S.modal?.t==='memo_import')return buildMemoImportModal();
   const m=S.modal;let c='';
   if(m.t==='tripGate')c=mTripGate();else if(m.t==='loc')c=mLoc();else if(m.t==='nd'||m.t==='ed')c=mDay();else if(m.t==='exp')c=mExp();else if(m.t==='tv')c=mTv();else if(m.t==='cover')c=mCover();else if(m.t==='tools')c=mTools();else if(m.t==='import')c=mImport();else if(m.t==='note')c=mNote();else if(m.t==='help')c=mHelp();
   const lock=m.t==='tripGate';
@@ -1231,7 +1272,7 @@ function memoView(){
   }).join('');
   const progress=items.length?`<div style="margin-bottom:14px;"><div style="display:flex;justify-content:space-between;font-size:12px;font-weight:700;color:var(--muted);margin-bottom:5px;"><span>行前清單進度</span><span>${done} / ${items.length} 完成</span></div><div class="budget-line"><div class="budget-fill" style="width:${items.length?Math.round(done/items.length*100):0}%;"></div></div></div>`:'';
   const catSel=MEMO_CATS.map(c=>`<option value="${c}">${MEMO_IC[c]} ${c}</option>`).join('');
-  return`${progress}${groups||'<div class="empty"><div style="font-size:30px;margin-bottom:8px;">📝</div>還沒有備忘項目<br><span style="font-size:12px;">在下方新增行前清單</span></div>'}<div class="memo-add-row"><select class="memo-cat-sel" id="memo-cat">${catSel}</select><input type="text" id="memo-inp" placeholder="例：護照、訂飯店確認信..." style="flex:1;" onkeydown="if(event.key==='Enter'){event.preventDefault();addMemo();}"><button class="btn bp" style="padding:0 16px;flex-shrink:0;" onclick="addMemo()">新增</button></div>`;
+  return`<div class="memo-toolbar"><button class="memo-ai-btn" onclick="openModal(this,{t:'memo_import'})">✨ AI 產生備忘清單</button></div>${progress}${groups||'<div class="empty"><div style="font-size:30px;margin-bottom:8px;">📝</div>還沒有備忘項目<br><span style="font-size:12px;">在下方新增行前清單，或點上方 AI 一鍵產生</span></div>'}<div class="memo-add-row"><select class="memo-cat-sel" id="memo-cat">${catSel}</select><input type="text" id="memo-inp" placeholder="例：護照、訂飯店確認信..." style="flex:1;" onkeydown="if(event.key==='Enter'){event.preventDefault();addMemo();}"><button class="btn bp" style="padding:0 16px;flex-shrink:0;" onclick="addMemo()">新增</button></div>`;
 }
 function mHelp(){
   const sec=(ic,title,items)=>`<div style="margin-bottom:18px;"><div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;padding-bottom:8px;border-bottom:1px solid var(--line);"><span style="font-size:20px;">${ic}</span><span style="font-size:15px;font-weight:900;color:var(--ink);">${title}</span></div><div style="display:flex;flex-direction:column;gap:6px;">${items.map(([icon,txt])=>`<div style="display:flex;gap:10px;align-items:flex-start;"><span style="font-size:16px;flex-shrink:0;margin-top:1px;">${icon}</span><span style="font-size:13px;color:#3a4a45;line-height:1.55;">${txt}</span></div>`).join('')}</div></div>`;
@@ -1401,7 +1442,7 @@ function wishlistView(){
     const cnt=c.id==='all'?items.length:items.filter(i=>i.cat===c.id).length;
     return`<button class="wl-filter-btn${filter===c.id?' on':''}" onclick="_wlFilter='${c.id}';setU({})">${c.emoji} ${c.label}${cnt?` <span style="opacity:.6;font-size:10px;">${cnt}</span>`:''}</button>`;
   }).join('');
-  const topbar=`<div class="wl-topbar"><div class="wl-filter-row">${catBtns}</div><div class="wl-action-row"><button class="wl-add-btn" onclick="wlOpenAdd(this)">＋ 新增地點</button><button class="wl-ai-btn" onclick="openModal(this,{t:'wl_import'})">✨ AI 匯入清單</button></div></div>`;
+  const topbar=`<div class="wl-topbar"><div class="wl-filter-row">${catBtns}</div></div>`;
 
   const visible=filter==='all'?items:items.filter(i=>i.cat===filter);
   let body='';
@@ -1420,7 +1461,7 @@ function wishlistView(){
       body=visible.map(item=>wlCardHtml(item)).join('');
     }
   }
-  return`<div>${topbar}${body}</div>`;
+  return`<div style="padding-bottom:90px;">${topbar}${body}</div><div class="wl-fab-wrap${S.wlFabOpen?' open':''}"><button class="wl-fab-action wl-fab-ai" onclick="S.wlFabOpen=false;openModal(this,{t:'wl_import'})"><span class="wl-fab-action-label">✨ AI 匯入</span><span class="wl-fab-action-ic">✨</span></button><button class="wl-fab-action wl-fab-manual" onclick="S.wlFabOpen=false;wlOpenAdd(this)"><span class="wl-fab-action-label">手動新增</span><span class="wl-fab-action-ic">＋</span></button><button class="wl-fab-main" onclick="toggleWlFab(event)" aria-label="新增"><span class="wl-fab-icon">＋</span></button><div class="wl-fab-backdrop" onclick="closeWlFab()"></div></div>`;
 }
 
 function wlCardHtml(item){
@@ -1646,7 +1687,7 @@ function wlConfirmImport(){
 
 // ════ HERO & SHEET modal engine ════════════════════════
 // Hero modal types (large forms) — open from trigger element
-const HERO_TYPES=new Set(['loc','exp','nd','ed','wl_add','wl_import','import','tv','cover','tools','help','note']);
+const HERO_TYPES=new Set(['loc','exp','nd','ed','wl_add','wl_import','wl_edit','import','tv','cover','tools','help','note','memo_import']);
 // Sheet modal types (compact) — slide up from bottom
 const SHEET_TYPES=new Set(['tripGate']);
 
@@ -1697,8 +1738,10 @@ function _getModalContent(m){
   else if(m.t==='import')c=mImport();
   else if(m.t==='note')c=mNote();
   else if(m.t==='help')c=mHelp();
-  else if(m.t==='wl_add')return null; // handled separately (buildWlAddModal)
-  else if(m.t==='wl_import')return null;
+  else if(m.t==='memo_import')c=buildMemoImportModal();
+  else if(m.t==='wl_add')c=buildWlAddModal();
+  else if(m.t==='wl_import')c=buildWlImportModal();
+  else if(m.t==='wl_edit')c=buildWlEditModal();
   return c||null;
 }
 
@@ -1803,6 +1846,7 @@ function setU(u){
     document.getElementById('_wxSheet')?.remove();
     document.getElementById('_wxBackdrop')?.remove();
     S.quickOpen=false;
+    S.wlFabOpen=false;
     u={...u,modal:null}; // clear modal state on tab switch
   }
 
@@ -2082,6 +2126,112 @@ function _refreshHeroContent(){
   }
   // Also update main page (for live cover preview)
   render();
+}
+
+
+function toggleWlFab(e){
+  if(e)e.stopPropagation();
+  setU({wlFabOpen:!S.wlFabOpen});
+}
+function closeWlFab(){
+  if(S.wlFabOpen)setU({wlFabOpen:false});
+}
+// Close FAB when switching tabs (handled in setU override, but also via Escape)
+document.addEventListener('keydown',e=>{
+  if(e.key==='Escape'&&S.wlFabOpen)closeWlFab();
+});
+
+// ── Memo AI Import ─────────────────────────────
+const MEMO_IMPORT_PROMPT=`請幫我列出 [目的地] 旅遊的行前備忘清單，包含證件、行李、預訂、其他事項，請嚴格按照以下格式輸出，不要加任何 Markdown、粗體、標題符號：
+
+分類|項目
+
+分類只能從以下選一個，完全照填：
+證件、行李、預訂、其他
+
+格式說明：
+- 每行固定用「|」分成兩段：分類 | 項目
+- 項目要具體實用，不要太籠統（例如「防曬乳 SPF50」比「防曬」好）
+- 證件類包括護照、簽證、駕照、保險、機票等
+- 行李類包括衣物、盥洗、藥品、3C 配件、雨具等
+- 預訂類包括機票、飯店、租車、門票、餐廳訂位等
+- 其他類包括手機網路、提款、緊急聯絡、行程確認等
+- 不要加粗體 ** 不要加 # 不要加項目符號 - 不要加編號
+
+範例輸出（以日本為例）：
+證件|護照（6個月以上效期）
+證件|機票電子檔
+證件|海外旅平險
+行李|薄外套（早晚溫差大）
+行李|轉接頭（A型插座）
+行李|常備藥品（感冒藥、腸胃藥）
+預訂|機場接送
+預訂|JR Pass 兌換券
+預訂|餐廳訂位確認信
+其他|海外漫遊或當地 SIM 卡
+其他|提領少量日幣現金
+其他|Google Maps 離線地圖`;
+
+const MEMO_CAT_TEXT_MAP={'證件':'證件','行李':'行李','預訂':'預訂','預定':'預訂','其他':'其他'};
+
+function _parseMemoImport(text){
+  const lines=text.split('\n').map(l=>l.trim()).filter(l=>l&&l.includes('|'));
+  const items=[];
+  for(const line of lines){
+    const parts=line.split('|').map(p=>p.trim());
+    if(parts.length<2)continue;
+    const [catText,...rest]=parts;
+    const txt=rest.join(' ').trim();
+    if(!txt)continue;
+    const cat=MEMO_CAT_TEXT_MAP[catText]||'其他';
+    items.push({id:uid(),text:txt,cat,done:false});
+  }
+  return items;
+}
+
+function buildMemoImportModal(){
+  window._memoGeminiPrompt=MEMO_IMPORT_PROMPT;
+  return`<div class="mhd"><div class="mt">✨ AI 產生備忘清單</div><div class="mcl" onclick="setU({modal:null})">✕</div></div>
+<div style="background:#f0f0fc;border:1px solid #c8b8f0;border-radius:var(--r);padding:12px;margin-bottom:14px;">
+  <div style="font-size:12px;font-weight:900;color:#3d1fa8;margin-bottom:8px;">步驟一：複製提示詞給 Gemini / ChatGPT</div>
+  <pre style="font-size:11px;line-height:1.65;color:#2d1a6e;background:#e8e4f8;border-radius:8px;padding:10px;overflow-x:auto;white-space:pre-wrap;word-break:break-all;max-height:160px;overflow-y:auto;margin-bottom:10px;">${esc(MEMO_IMPORT_PROMPT)}</pre>
+  <button class="btn bp" style="width:100%;padding:9px;font-size:13px;background:#5b3fc4;border-color:#5b3fc4;" id="memo-copy-prompt-btn" onclick="memoCopyPrompt()">📋 複製提示詞</button>
+</div>
+<div style="font-size:12px;font-weight:900;color:#3d1fa8;margin-bottom:6px;">步驟二：貼入 AI 的回覆</div>
+<textarea class="import-area" id="memo-import-box" placeholder="貼入 AI 輸出的備忘清單，例如：\n證件|護照（6個月以上效期）\n行李|薄外套\n預訂|機票電子檔..." oninput="memoPreviewImport()" style="height:140px;"></textarea>
+<div id="memo-import-preview" style="font-size:12px;color:#0f5e5e;margin:6px 0;font-weight:700;min-height:18px;"></div>
+<div class="ar"><button class="btn" onclick="setU({modal:null})">取消</button><button class="btn bp" style="background:#5b3fc4;border-color:#5b3fc4;" onclick="memoConfirmImport()">匯入備忘</button></div>`;
+}
+
+function memoCopyPrompt(){
+  const text=window._memoGeminiPrompt||'';
+  const btn=document.getElementById('memo-copy-prompt-btn');
+  const done=()=>{if(btn){btn.textContent='✅ 已複製！';setTimeout(()=>{if(btn)btn.textContent='📋 複製提示詞';},2000);}};
+  if(navigator.clipboard?.writeText){navigator.clipboard.writeText(text).then(done).catch(()=>{_memoCopyFallback(text);done();});}
+  else{_memoCopyFallback(text);done();}
+}
+function _memoCopyFallback(text){
+  const ta=document.createElement('textarea');ta.value=text;ta.style.cssText='position:fixed;opacity:0;top:0;left:0;';
+  document.body.appendChild(ta);ta.focus();ta.select();try{document.execCommand('copy');}catch{}document.body.removeChild(ta);
+}
+
+function memoPreviewImport(){
+  const text=document.getElementById('memo-import-box')?.value||'';
+  const items=_parseMemoImport(text);
+  const prev=document.getElementById('memo-import-preview');
+  if(prev)prev.textContent=items.length?`✅ 偵測到 ${items.length} 個備忘項目可匯入`:'';
+}
+
+function memoConfirmImport(){
+  const text=document.getElementById('memo-import-box')?.value||'';
+  const newItems=_parseMemoImport(text);
+  if(!newItems.length){alert('未偵測到有效格式，請確認貼上的格式正確。');return;}
+  const memo=[...(S.memo||[]),...newItems];
+  setD({memo,modal:null});
+  const t=document.createElement('div');
+  t.className='wl-toast';
+  t.textContent=`✅ 已匯入 ${newItems.length} 個備忘項目`;
+  document.body.appendChild(t);setTimeout(()=>t.remove(),2100);
 }
 
 load();
