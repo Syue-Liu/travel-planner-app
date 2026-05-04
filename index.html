@@ -188,11 +188,23 @@ input:focus,select:focus,textarea:focus{border-color:#42a787;box-shadow:0 0 0 3p
 @keyframes now-pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.78;transform:scale(.97)}}
 .loc-card-wrap.loc-now>.card{background:linear-gradient(160deg,var(--now-bg,#f4fcf8) 0%,#fff 55%)!important}
 .loc-now-bar{display:flex;align-items:center;gap:8px;padding:6px 12px;font-size:12px;font-weight:900;letter-spacing:.04em}
-.weather-bar{display:flex;align-items:center;gap:10px;padding:10px 14px;background:#f0f8ff;border-radius:12px;font-size:13px;font-weight:700;margin-bottom:12px;border:1px solid #cde4f5;flex-wrap:wrap;color:#1a3a5c}
-.weather-ic{font-size:22px;line-height:1;flex-shrink:0}
-.weather-val{font-size:17px;font-weight:900;color:#0f5e5e}
-.weather-sub{font-size:11px;color:var(--muted);font-weight:700}
-.weather-city{font-size:11px;color:var(--muted);margin-left:auto}
+.wx-badge{display:inline-flex;align-items:center;gap:5px;
+  padding:3px 10px 3px 6px;border-radius:999px;cursor:pointer;
+  font-size:12px;font-weight:800;color:#0f5e5e;
+  background:rgba(15,94,94,.08);border:1px solid rgba(15,94,94,.15);
+  transition:background .15s;user-select:none;vertical-align:middle;margin-left:8px;flex-shrink:0;}
+.wx-badge:hover{background:rgba(15,94,94,.15);}
+.wx-badge-ic{font-size:16px;line-height:1;}
+.weather-loading{font-size:11px;color:var(--muted);margin-left:10px;font-weight:700;}
+/* ── Weather detail sheet ── */
+.wx-sheet-bd{padding:20px;}
+.wx-sheet-city{font-size:13px;color:var(--muted);font-weight:700;margin-bottom:4px;}
+.wx-sheet-temp{font-size:48px;font-weight:900;color:var(--ink);line-height:1;margin-bottom:2px;}
+.wx-sheet-desc{font-size:16px;color:var(--muted);font-weight:700;margin-bottom:20px;}
+.wx-sheet-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.wx-sheet-item{background:#f5f8f6;border-radius:12px;padding:12px 14px;}
+.wx-sheet-label{font-size:11px;color:var(--muted);font-weight:800;margin-bottom:4px;letter-spacing:.05em;}
+.wx-sheet-value{font-size:20px;font-weight:900;color:var(--ink);}
 .import-area{width:100%;min-height:160px;border:1px solid var(--line);border-radius:var(--r);padding:10px 12px;font-size:13px;font-family:var(--font,sans-serif);resize:vertical;background:var(--color-background-secondary,#f8fafa);line-height:1.6}
 .import-preview{background:#f0f8f4;border:1px solid #b6e0cc;border-radius:var(--r);padding:12px;margin-top:10px;font-size:12px;max-height:220px;overflow-y:auto}
 .import-day-hd{font-weight:900;font-size:13px;color:#085041;margin-bottom:4px;margin-top:10px}
@@ -544,15 +556,21 @@ function itin(day,si){
   const quickItems=[...TMPL.map((t,i)=>`<button class="quick-item" onclick="S.quickOpen=false;_heroOrigin=this.getBoundingClientRect();oLoc('',${i})"><span style="background:${CB[t.cat]};color:${CF[t.cat]};border-radius:8px;padding:2px 7px;font-size:12px;font-weight:800;">${CE[t.cat]} ${t.cat}</span> ${esc(t.name)}</button>`),`<hr style="border:none;border-top:1px solid var(--line);margin:3px 0;"><button class="quick-item" style="color:#5b3fc4;font-weight:900;" onclick="S.quickOpen=false;openModal(this,{t:'import'})">✨ AI 匯入行程</button>`].join('');
   const quickMenu=S.quickOpen?`<div class="quick-menu">${quickItems}</div>`:'';
   const wx=getWx(day.city);
-  let weatherBar='';
+  let weatherBadge='';
+  let weatherDetail=null;
   if(day.city){
-    if(!wx||wx.loading){weatherBar=`<div class="weather-loading">⏳ 載入 ${esc(day.city)} 天氣中...</div>`;}
-    else if(wx.data){
+    if(!wx||wx.loading){
+      weatherBadge=`<span class="weather-loading">⏳ ${esc(day.city)}</span>`;
+    } else if(wx.data){
       const wi=wxInfo(wx.data.code);
-      weatherBar=`<div class="weather-bar"><span class="weather-ic">${wi.e}</span><div><div class="weather-val">${wx.data.temp}°C <span style="font-size:13px;font-weight:700;color:#888;">體感 ${wx.data.feels}°C</span></div><div class="weather-sub">${wi.d}</div></div><div style="display:flex;flex-direction:column;gap:2px;"><div style="font-size:13px;font-weight:700;">💧 ${wx.data.humidity}%</div><div class="weather-sub">濕度</div></div><div class="weather-city">📍 ${esc(day.city)}</div></div>`;
+      weatherDetail=wx.data;
+      weatherDetail._wi=wi;
+      weatherBadge=`<button class="wx-badge" onclick="showWxSheet('${day.id}')" title="點擊查看完整天氣"><span class="wx-badge-ic">${wi.e}</span>${wx.data.temp}°C ${esc(day.city)}</button>`;
     }
   }
-  return`<div class="day-tabs">${tabs}<button class="dtab dtab-add" onclick="FM={title:'第${nd}天',date:'',city:''};openModal(this,{t:'nd'})">+ 新增</button></div>${weatherBar}<div class="section-head"><div class="section-title">${esc(day.title)}${day.date?`<span style="font-size:12px;font-weight:600;color:var(--muted);margin-left:6px;">${day.date}</span>`:''}</div><div class="section-actions"><div class="action-group primary"><button class="btn" title="跳到現在" onclick="jumpToNow()">🕐</button><div class="quick-holder"><button class="btn" style="background:#f0faf5;border-color:#9fe1cb;color:#085041;font-weight:800;white-space:nowrap;" onclick="toggleQuickMenu(this)">＋ 快速新增</button>${quickMenu}</div></div><div class="action-group manage"><button class="btn" onclick="FM={title:\'${esc(day.title)}\',date:\'${esc(day.date||'')}\',city:\'${esc(day.city||'')}\'}; openModal(this,{t:\'ed\',dayId:\'${day.id}\'})">編輯</button>${S.days.length>1?`<button class="btn br" onclick="dDay(\'${day.id}\')">刪除</button>`:''}</div></div></div>${locs}<button class="add-btn" onclick="_heroOrigin=this.getBoundingClientRect();oLoc('')">＋ 新增地點</button>`;
+  // Store detail for sheet
+  if(weatherDetail)window['_wx_'+day.id]=weatherDetail;
+  return`<div class="day-tabs">${tabs}<button class="dtab dtab-add" onclick="FM={title:'第${nd}天',date:'',city:''};openModal(this,{t:'nd'})">+ 新增</button></div><div class="section-head"><div class="section-title" style="display:flex;align-items:center;flex-wrap:wrap;gap:4px;">${esc(day.title)}${day.date?`<span style="font-size:12px;font-weight:600;color:var(--muted);">${day.date}</span>`:''}${weatherBadge}</div><div class="section-actions"><div class="action-group primary"><button class="btn" title="跳到現在" onclick="jumpToNow()">🕐</button><div class="quick-holder"><button class="btn" style="background:#f0faf5;border-color:#9fe1cb;color:#085041;font-weight:800;white-space:nowrap;" onclick="toggleQuickMenu(this)">＋ 快速新增</button>${quickMenu}</div></div><div class="action-group manage"><button class="btn" onclick="FM={title:\'${esc(day.title)}\',date:\'${esc(day.date||'')}\',city:\'${esc(day.city||'')}\'}; openModal(this,{t:\'ed\',dayId:\'${day.id}\'})">編輯</button>${S.days.length>1?`<button class="btn br" onclick="dDay(\'${day.id}\')">刪除</button>`:''}</div></div></div>${locs}<button class="add-btn" onclick="_heroOrigin=this.getBoundingClientRect();oLoc('')">＋ 新增地點</button>`;
 }
 function exps(te){
   const cs=CATS.map(c=>({c,t:S.expenses.filter(e=>e.category===c).reduce((s,e)=>s+expValue(e),0)})).filter(x=>x.t>0);
@@ -1789,6 +1807,77 @@ function toggleQuickMenu(btn){
       menu.style.top=(r.bottom+6)+'px';
     });
   }
+}
+
+
+function showWxSheet(dayId){
+  const wx=window['_wx_'+dayId];
+  const day=S.days.find(d=>d.id===dayId);
+  if(!wx||!day)return;
+  const wi=wx._wi||{e:'🌤',d:'天氣'};
+
+  document.getElementById('_wxBackdrop')?.remove();
+  document.getElementById('_wxSheet')?.remove();
+
+  const bd=document.createElement('div');
+  bd.id='_wxBackdrop'; bd.className='sheet-backdrop';
+  bd.onclick=closeWxSheet;
+  document.body.appendChild(bd);
+
+  const wrap=document.createElement('div');
+  wrap.id='_wxSheet'; wrap.className='sheet-wrap';
+  wrap.innerHTML=`
+    <div class="sheet-handle"></div>
+    <div class="wx-sheet-bd">
+      <div class="wx-sheet-city">📍 ${esc(day.city)} 目前天氣</div>
+      <div class="wx-sheet-temp">${wi.e} ${wx.temp}°C</div>
+      <div class="wx-sheet-desc">${wi.d}</div>
+      <div class="wx-sheet-grid">
+        <div class="wx-sheet-item">
+          <div class="wx-sheet-label">體感溫度</div>
+          <div class="wx-sheet-value">${wx.feels}°C</div>
+        </div>
+        <div class="wx-sheet-item">
+          <div class="wx-sheet-label">濕度</div>
+          <div class="wx-sheet-value">💧 ${wx.humidity}%</div>
+        </div>
+        ${wx.wind!=null?`<div class="wx-sheet-item">
+          <div class="wx-sheet-label">風速</div>
+          <div class="wx-sheet-value">💨 ${wx.wind} m/s</div>
+        </div>`:''}
+        ${wx.uv!=null?`<div class="wx-sheet-item">
+          <div class="wx-sheet-label">紫外線</div>
+          <div class="wx-sheet-value">☀️ ${wx.uv}</div>
+        </div>`:''}
+      </div>
+      <div style="margin-top:16px;font-size:12px;color:var(--muted);text-align:center;">資料來源：OpenWeather</div>
+    </div>`;
+  document.body.appendChild(wrap);
+
+  // Swipe down
+  let sy=0,cy=0;
+  wrap.addEventListener('touchstart',e=>{sy=e.touches[0].clientY;},{passive:true});
+  wrap.addEventListener('touchmove',e=>{
+    cy=e.touches[0].clientY;
+    const dy=Math.max(0,cy-sy);
+    if(dy>0){wrap.style.transition='none';wrap.style.transform=`translateY(${dy}px)`;bd.style.opacity=String(Math.max(0,1-dy/200));}
+  },{passive:true});
+  wrap.addEventListener('touchend',()=>{
+    wrap.style.transform='';bd.style.opacity='';
+    if(cy-sy>60)closeWxSheet();else{wrap.style.transition='';wrap.classList.add('open');}
+    sy=0;cy=0;
+  });
+
+  requestAnimationFrame(()=>requestAnimationFrame(()=>{
+    bd.classList.add('open'); wrap.classList.add('open');
+  }));
+}
+
+function closeWxSheet(){
+  const wrap=document.getElementById('_wxSheet');
+  const bd=document.getElementById('_wxBackdrop');
+  wrap?.classList.remove('open'); bd?.classList.remove('open');
+  setTimeout(()=>{wrap?.remove();bd?.remove();},360);
 }
 
 load();
