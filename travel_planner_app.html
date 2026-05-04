@@ -69,9 +69,19 @@ a{text-decoration:none}
 .loc-addr,.loc-phone{font-size:13px;color:var(--muted);margin-bottom:6px;word-break:break-word}
 .loc-phone{display:flex;align-items:center;gap:6px}
 .loc-phone a{color:#0c447c;font-weight:800}
-.loc-note-pill{font-size:12px;color:#56635f;background:#f3f7f5;padding:5px 10px;border-left:3px solid #8ad5b6;margin-bottom:8px;cursor:pointer;border-radius:0 6px 6px 0;display:flex;align-items:center;gap:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.loc-note-pill:hover{background:#e8f4f0}
-.loc-note-pill-hint{font-size:10px;color:#42a787;font-weight:900;flex-shrink:0}
+.loc-note-wrap{margin-bottom:8px;}
+.loc-note-pill{font-size:12px;color:#56635f;background:#f3f7f5;padding:6px 10px;
+border-left:3px solid #8ad5b6;cursor:pointer;border-radius:0 6px 6px 0;
+display:flex;align-items:center;gap:6px;user-select:none;transition:background .15s;}
+.loc-note-pill:hover{background:#e6f4ed;}
+.loc-note-pill-text{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;transition:white-space .2s;}
+.loc-note-pill.expanded .loc-note-pill-text{white-space:normal;}
+.loc-note-pill-hint{font-size:11px;font-weight:800;color:#42a787;flex-shrink:0;transition:transform .25s;}
+.loc-note-pill.expanded .loc-note-pill-hint{transform:rotate(90deg);}
+.loc-note-body{max-height:0;overflow:hidden;transition:max-height .3s cubic-bezier(.4,0,.2,1),opacity .25s;opacity:0;
+font-size:12px;color:#3d5449;background:#f3f7f5;border-left:3px solid #8ad5b6;
+border-radius:0 0 6px 6px;padding:0 10px;line-height:1.65;}
+.loc-note-body.open{max-height:400px;opacity:1;padding:8px 10px;}
 .loc-sort-col{display:contents}
 .sort-btn{width:30px;height:30px;border-radius:8px;display:inline-flex;align-items:center;justify-content:center;font-size:13px;cursor:pointer;border:1px solid var(--line);background:var(--card);color:var(--ink);padding:0;user-select:none;-webkit-user-select:none;flex-shrink:0}
 .sort-btn:disabled{opacity:.2;cursor:not-allowed}
@@ -478,7 +488,7 @@ function itin(day,si){
     const nowBadge=isNow?`<span class="loc-now-badge" style="background:${catBg};color:#fff;">🕐 現在</span>`:'';
     const nowBar=isNow?`<div class="loc-now-bar" style="background:${catBg};color:#fff;">🕐 目前最近的行程 <span style="opacity:.85;font-size:11px;">${CE[cat]||''} ${cat}</span></div>`:'';
     // Notes: always show as pill → modal on click
-    const notesEl=l.notes?`<div class="loc-note-pill" onclick="showNote('${l.id}')"><span style="flex:1;overflow:hidden;text-overflow:ellipsis;">${esc(l.notes)}</span><span class="loc-note-pill-hint">展開 ›</span></div>`:'';
+    const notesEl=l.notes?`<div class="loc-note-wrap"><div class="loc-note-pill" id="note-pill-${l.id}" onclick="toggleNote('${l.id}')"><span class="loc-note-pill-text">${esc(l.notes)}</span><span class="loc-note-pill-hint">›</span></div><div class="loc-note-body" id="note-body-${l.id}">${esc(l.notes)}</div></div>`:'';
     // Phone inline with call button
     const phoneEl=l.phone?`<div class="loc-phone"><a href="tel:${esc(l.phone)}">${esc(l.phone)}</a><a href="tel:${esc(l.phone)}"><button class="btn-ic" style="width:28px;height:28px;font-size:13px;" title="打電話">📞</button></a></div>`:'';
     // Map uses name + address for better Google Maps accuracy
@@ -1011,11 +1021,15 @@ function mvLoc(dayId,locId,dir){
   _preserveScroll=true;
   setD({days});
 }
-function showNote(locId){
-  const l=S.days.flatMap(d=>d.locations).find(l=>l.id===locId);
-  if(!l)return;
-  setU({modal:{t:'note',locId,name:l.name,notes:l.notes}});
+function toggleNote(locId){
+  const pill=document.getElementById('note-pill-'+locId);
+  const body=document.getElementById('note-body-'+locId);
+  if(!pill||!body)return;
+  const isOpen=body.classList.contains('open');
+  pill.classList.toggle('expanded',!isOpen);
+  body.classList.toggle('open',!isOpen);
 }
+function showNote(locId){toggleNote(locId);}
 function buildModal(){if(S.modal?.t==='wl_add')return buildWlAddModal();if(S.modal?.t==='wl_import')return buildWlImportModal();
   const m=S.modal;let c='';
   if(m.t==='tripGate')c=mTripGate();else if(m.t==='loc')c=mLoc();else if(m.t==='nd'||m.t==='ed')c=mDay();else if(m.t==='exp')c=mExp();else if(m.t==='tv')c=mTv();else if(m.t==='cover')c=mCover();else if(m.t==='tools')c=mTools();else if(m.t==='import')c=mImport();else if(m.t==='note')c=mNote();else if(m.t==='help')c=mHelp();
