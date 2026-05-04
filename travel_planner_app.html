@@ -99,7 +99,7 @@ a{text-decoration:none}
 .sort-btn:disabled{opacity:.2;cursor:not-allowed}
 .sort-grip{cursor:grab;color:#b0bdb9;touch-action:none}
 .sort-grip:active{cursor:grabbing;color:#42a787}
-.quick-menu{position:absolute;right:0;left:auto;top:calc(100% + 4px);width:max-content;max-width:min(88vw,260px);background:#fff;border:1px solid var(--line);border-radius:var(--r);box-shadow:0 8px 28px rgba(0,0,0,.18);z-index:30;padding:5px;display:flex;flex-direction:column;gap:1px}
+.quick-menu{position:fixed;top:auto;left:auto;width:min(88vw,260px);background:#fff;border:1px solid var(--line);border-radius:var(--r);box-shadow:0 8px 28px rgba(0,0,0,.18);z-index:100;padding:5px;display:flex;flex-direction:column;gap:1px}
 .quick-item{width:100%;text-align:left;background:none;border:none;padding:9px 11px;font-size:13px;font-weight:700;color:var(--ink);cursor:pointer;border-radius:8px;display:flex;align-items:center;gap:8px;white-space:nowrap}
 .quick-item:hover,.quick-item:active{background:#f0faf5}
 .brow{display:flex;gap:7px;flex-wrap:wrap}
@@ -235,7 +235,7 @@ input:focus,select:focus,textarea:focus{border-color:#42a787;box-shadow:0 0 0 3p
   .action-group.primary{flex:1;justify-content:flex-start}
   .action-group.manage{justify-content:flex-end}
   .section-actions .btn{min-height:42px;padding:8px 12px}
-  .quick-menu{left:auto;right:0;min-width:min(78vw,260px)}
+  .quick-menu{width:min(90vw,260px)}
   .loc-wrap{grid-template-columns:58px minmax(0,1fr);gap:9px;padding:13px 12px;padding-right:12px}
   .loc-time{width:58px;min-width:58px;font-size:15px;line-height:1.2;text-align:left}
   .loc-name{padding-right:108px}
@@ -291,7 +291,10 @@ input:focus,select:focus,textarea:focus{border-color:#42a787;box-shadow:0 0 0 3p
 .wl-day-btn{font-size:11px;padding:4px 10px;border-radius:999px;border:1px solid var(--line);background:#f8fbf9;color:#0f5e5e;font-weight:800;cursor:pointer;white-space:nowrap;}
 .wl-day-btn:active,.wl-day-btn:hover{background:#e4f4ec;border-color:#42a787;}
 .wl-done-btn{font-size:11px;padding:4px 10px;border-radius:999px;border:1px solid #ccc;background:#f5f5f5;color:#888;font-weight:700;cursor:pointer;}
-.wl-del-btn{position:absolute;top:10px;right:10px;width:24px;height:24px;border-radius:50%;border:none;background:none;color:#ccc;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;line-height:1;}
+.wl-edit-btn{width:26px;height:26px;border-radius:50%;border:1px solid var(--line);background:#f5f5f5;color:#555;font-size:13px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background .15s;}
+.wl-edit-btn:hover{background:#e4f4ec;}
+.wl-del-btn{width:26px;height:26px;border-radius:50%;border:none;background:none;color:#ccc;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;line-height:1;transition:color .15s;}
+.wl-del-btn:hover{color:#c00;}
 .wl-del-btn:hover{background:#fee;color:#c00;}
 .wl-badge{display:inline-flex;align-items:center;gap:3px;font-size:10px;padding:2px 8px;border-radius:999px;font-weight:800;margin-bottom:7px;}
 .wl-empty{text-align:center;padding:40px 12px;color:var(--muted);}
@@ -486,7 +489,7 @@ function render(){
   const ad=S.days[si];
   const te=S.expenses.reduce((s,e)=>s+expValue(e),0);
   const {b,tx}=settle(S.expenses,S.travelers);
-  root.innerHTML=`<div class="app">${hdr(te)}${gnav()}<main class="body">${S.view==='memo'?memoView():''}${S.view==='itinerary'?itin(ad,si):''}${S.view==='wishlist'?wishlistView():''}${S.view==='expenses'?exps(te):''}${S.view==='split'?splt(b,tx,te):''}</main></div>${S.modal&&(S.modal.t==='wl_add'||S.modal.t==='wl_import')?buildModal():''}`;
+  root.innerHTML=`<div class="app">${hdr(te)}${gnav()}<main class="body">${S.view==='memo'?memoView():''}${S.view==='itinerary'?itin(ad,si):''}${S.view==='wishlist'?wishlistView():''}${S.view==='expenses'?exps(te):''}${S.view==='split'?splt(b,tx,te):''}</main></div>${S.modal&&(S.modal.t==='wl_add'||S.modal.t==='wl_import'||S.modal.t==='wl_edit')?buildModal():''}`;
 
   setTimeout(()=>{
     const t=document.querySelector('.day-tabs .dtab.on');
@@ -549,7 +552,7 @@ function itin(day,si){
       weatherBar=`<div class="weather-bar"><span class="weather-ic">${wi.e}</span><div><div class="weather-val">${wx.data.temp}°C <span style="font-size:13px;font-weight:700;color:#888;">體感 ${wx.data.feels}°C</span></div><div class="weather-sub">${wi.d}</div></div><div style="display:flex;flex-direction:column;gap:2px;"><div style="font-size:13px;font-weight:700;">💧 ${wx.data.humidity}%</div><div class="weather-sub">濕度</div></div><div class="weather-city">📍 ${esc(day.city)}</div></div>`;
     }
   }
-  return`<div class="day-tabs">${tabs}<button class="dtab dtab-add" onclick="FM={title:'第${nd}天',date:'',city:''};openModal(this,{t:'nd'})">+ 新增</button></div>${weatherBar}<div class="section-head"><div class="section-title">${esc(day.title)}${day.date?`<span style="font-size:12px;font-weight:600;color:var(--muted);margin-left:6px;">${day.date}</span>`:''}</div><div class="section-actions"><div class="action-group primary"><button class="btn" title="跳到現在" onclick="jumpToNow()">🕐</button><div class="quick-holder"><button class="btn" style="background:#f0faf5;border-color:#9fe1cb;color:#085041;font-weight:800;white-space:nowrap;" onclick="setU({quickOpen:!S.quickOpen})">＋ 快速新增</button>${quickMenu}</div></div><div class="action-group manage"><button class="btn" onclick="FM={title:\'${esc(day.title)}\',date:\'${esc(day.date||'')}\',city:\'${esc(day.city||'')}\'}; openModal(this,{t:\'ed\',dayId:\'${day.id}\'})">編輯</button>${S.days.length>1?`<button class="btn br" onclick="dDay(\'${day.id}\')">刪除</button>`:''}</div></div></div>${locs}<button class="add-btn" onclick="_heroOrigin=this.getBoundingClientRect();oLoc('')">＋ 新增地點</button>`;
+  return`<div class="day-tabs">${tabs}<button class="dtab dtab-add" onclick="FM={title:'第${nd}天',date:'',city:''};openModal(this,{t:'nd'})">+ 新增</button></div>${weatherBar}<div class="section-head"><div class="section-title">${esc(day.title)}${day.date?`<span style="font-size:12px;font-weight:600;color:var(--muted);margin-left:6px;">${day.date}</span>`:''}</div><div class="section-actions"><div class="action-group primary"><button class="btn" title="跳到現在" onclick="jumpToNow()">🕐</button><div class="quick-holder"><button class="btn" style="background:#f0faf5;border-color:#9fe1cb;color:#085041;font-weight:800;white-space:nowrap;" onclick="toggleQuickMenu(this)">＋ 快速新增</button>${quickMenu}</div></div><div class="action-group manage"><button class="btn" onclick="FM={title:\'${esc(day.title)}\',date:\'${esc(day.date||'')}\',city:\'${esc(day.city||'')}\'}; openModal(this,{t:\'ed\',dayId:\'${day.id}\'})">編輯</button>${S.days.length>1?`<button class="btn br" onclick="dDay(\'${day.id}\')">刪除</button>`:''}</div></div></div>${locs}<button class="add-btn" onclick="_heroOrigin=this.getBoundingClientRect();oLoc('')">＋ 新增地點</button>`;
 }
 function exps(te){
   const cs=CATS.map(c=>({c,t:S.expenses.filter(e=>e.category===c).reduce((s,e)=>s+expValue(e),0)})).filter(x=>x.t>0);
@@ -1167,7 +1170,7 @@ function showNote(locId){
   const l=S.days.flatMap(d=>d.locations).find(l=>l.id===locId);
   if(l){const el=document.querySelector(`[onclick*="showNoteSheet('${locId}'"]`);showNoteSheet(locId,l.name,el||document.body);}
 }
-function buildModal(){if(S.modal?.t==='wl_add')return buildWlAddModal();if(S.modal?.t==='wl_import')return buildWlImportModal();
+function buildModal(){if(S.modal?.t==='wl_add')return buildWlAddModal();if(S.modal?.t==='wl_import')return buildWlImportModal();if(S.modal?.t==='wl_edit')return buildWlEditModal();
   const m=S.modal;let c='';
   if(m.t==='tripGate')c=mTripGate();else if(m.t==='loc')c=mLoc();else if(m.t==='nd'||m.t==='ed')c=mDay();else if(m.t==='exp')c=mExp();else if(m.t==='tv')c=mTv();else if(m.t==='cover')c=mCover();else if(m.t==='tools')c=mTools();else if(m.t==='import')c=mImport();else if(m.t==='note')c=mNote();else if(m.t==='help')c=mHelp();
   const lock=m.t==='tripGate';
@@ -1384,11 +1387,24 @@ function wlCardHtml(item){
   const badge=`<span class="wl-badge" style="background:${bg};color:${fg};">${catMeta.emoji} ${catMeta.label}</span>`;
   const dayBtns=S.days.map((d,i)=>`<button class="wl-day-btn" onclick="wlAddToDay('${item.id}',${i})">➕ ${esc(d.title)}</button>`).join('');
   const done=item.added?`<span style="font-size:11px;color:#aaa;padding:4px 0;">✅ 已加入行程</span>`:'';
+  const gmQ=encodeURIComponent((item.address||item.name).trim());
+  const gmUrl=`https://www.google.com/maps/search/?api=1&query=${gmQ}`;
+  const addrEl=item.address?`<div class="wl-card-note" style="display:flex;align-items:center;gap:6px;">
+    <span style="color:#1a5fa8;flex:1;">📍 ${esc(item.address)}</span>
+    <a href="${gmUrl}" target="_blank" rel="noopener"
+      style="flex-shrink:0;display:inline-flex;align-items:center;gap:3px;font-size:11px;font-weight:800;
+             background:#e8f0fe;color:#1a5fa8;border-radius:6px;padding:3px 8px;text-decoration:none;border:1px solid #c5d8fb;">
+      🗺️ Maps
+    </a>
+  </div>`:'';
   return`<div class="wl-card" id="wlc-${item.id}">
-    <button class="wl-del-btn" onclick="wlDelete('${item.id}')" title="刪除">×</button>
+    <div style="position:absolute;top:10px;right:10px;display:flex;gap:5px;align-items:center;">
+      <button class="wl-edit-btn" onclick="wlOpenEdit('${item.id}',this)" title="編輯">✏️</button>
+      <button class="wl-del-btn" style="position:static;" onclick="wlDelete('${item.id}')" title="刪除">×</button>
+    </div>
     ${badge}
     <div class="wl-card-name">${esc(item.name)}</div>
-    ${item.address?`<div class="wl-card-note" style="color:#1a5fa8;">📍 ${esc(item.address)}</div>`:''}
+    ${addrEl}
     ${item.phone?`<div class="wl-card-note">📞 <a href="tel:${esc(item.phone)}" style="color:#1a5fa8;font-weight:700;">${esc(item.phone)}</a></div>`:''}
     ${item.note?`<div class="wl-card-note">${esc(item.note)}</div>`:''}
     <div class="wl-card-actions">${dayBtns}${done}</div>
@@ -1409,6 +1425,47 @@ function wlSaveAdd(){
   const note=(document.getElementById('wl-note-inp')?.value||'').trim();
   const items=[...wlItems(),{id:uid(),name,cat,address,phone,note,added:false}];
   setD({wishlist:items,modal:null});
+}
+
+function wlOpenEdit(id, el){
+  const item=wlItems().find(i=>i.id===id);
+  if(!item)return;
+  if(el)_heroOrigin=el.getBoundingClientRect();
+  setU({modal:{t:'wl_edit', itemId:id}});
+}
+
+function buildWlEditModal(){
+  const m=S.modal;
+  const item=wlItems().find(i=>i.id===m.itemId);
+  if(!item)return buildWlAddModal();
+  const catOpts=WL_CATS.filter(c=>c.id!=='all').map(c=>`<option value="${c.id}"${item.cat===c.id?' selected':''}>${c.emoji} ${c.label}</option>`).join('');
+  return`<div class="mol" onclick="if(event.target===this)setU({modal:null})">
+    <div class="msh">
+      <div class="mhd"><div class="mt">✏️ 編輯清單地點</div><div class="mcl" onclick="setU({modal:null})">✕</div></div>
+      <div class="fg"><label class="fl">名稱 *</label><input id="wl-edit-name" class="inp" value="${esc(item.name)}"></div>
+      <div class="fg"><label class="fl">分類</label>
+        <select id="wl-edit-cat" class="inp" style="appearance:auto;">${catOpts}</select>
+      </div>
+      <div class="fg"><label class="fl">地址</label><input id="wl-edit-addr" class="inp" value="${esc(item.address||'')}"></div>
+      <div class="fg"><label class="fl">電話</label><input id="wl-edit-phone" class="inp" type="tel" value="${esc(item.phone||'')}"></div>
+      <div class="fg"><label class="fl">備註</label><input id="wl-edit-note" class="inp" value="${esc(item.note||'')}"></div>
+      <div class="ar">
+        <button class="btn" onclick="setU({modal:null})">取消</button>
+        <button class="btn bp" onclick="wlSaveEdit('${item.id}')">儲存</button>
+      </div>
+    </div>
+  </div>`;
+}
+
+function wlSaveEdit(id){
+  const name=(document.getElementById('wl-edit-name')?.value||'').trim();
+  if(!name)return;
+  const cat=document.getElementById('wl-edit-cat')?.value||'other';
+  const address=(document.getElementById('wl-edit-addr')?.value||'').trim();
+  const phone=(document.getElementById('wl-edit-phone')?.value||'').trim();
+  const note=(document.getElementById('wl-edit-note')?.value||'').trim();
+  const wishlist=wlItems().map(i=>i.id===id?{...i,name,cat,address,phone,note}:i);
+  setD({wishlist,modal:null});
 }
 
 function wlDelete(id){
@@ -1712,6 +1769,26 @@ function setU(u){
   S={...S,...u};
   render();
   if(S.modal)_mountModalOverlay();
+}
+
+
+function toggleQuickMenu(btn){
+  const willOpen=!S.quickOpen;
+  setU({quickOpen:willOpen});
+  if(willOpen){
+    requestAnimationFrame(()=>{
+      const menu=document.querySelector('.quick-menu');
+      if(!menu||!btn)return;
+      const r=btn.getBoundingClientRect();
+      const mw=menu.offsetWidth||260;
+      const vw=window.innerWidth;
+      // Prefer left-aligned with button; clamp to viewport
+      let left=r.left;
+      if(left+mw>vw-8) left=Math.max(8,vw-mw-8);
+      menu.style.left=left+'px';
+      menu.style.top=(r.bottom+6)+'px';
+    });
+  }
 }
 
 load();
