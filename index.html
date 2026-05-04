@@ -304,6 +304,35 @@ input:focus,select:focus,textarea:focus{border-color:#42a787;box-shadow:0 0 0 3p
 .sync-quick input::placeholder{color:rgba(255,255,255,.6);}
 .sync-quick-btn{flex-shrink:0;background:rgba(255,255,255,.22);border:none;border-radius:8px;color:#fff;font-size:13px;font-weight:800;padding:5px 12px;cursor:pointer;white-space:nowrap;}
 .sync-quick-btn:hover{background:rgba(255,255,255,.35);}
+
+/* ════ HERO modal (App Store expand) ════ */
+.hero-backdrop{position:fixed;inset:0;z-index:80;pointer-events:none;
+  background:rgba(0,0,0,0);
+  -webkit-backdrop-filter:blur(0px);backdrop-filter:blur(0px);
+  transition:background .36s ease,-webkit-backdrop-filter .36s ease,backdrop-filter .36s ease;}
+.hero-backdrop.open{background:rgba(0,0,0,.28);pointer-events:auto;
+  -webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);}
+.hero-card{position:fixed;z-index:81;background:#fff;overflow:hidden;
+  display:flex;flex-direction:column;will-change:top,left,width,height,border-radius;
+  box-shadow:0 4px 20px rgba(0,0,0,.10);}
+.hero-card.animating{transition:top .42s cubic-bezier(.32,1.12,.58,1),left .42s cubic-bezier(.32,1.12,.58,1),width .42s cubic-bezier(.32,1.12,.58,1),height .42s cubic-bezier(.32,1.12,.58,1),border-radius .42s cubic-bezier(.32,1.12,.58,1),box-shadow .42s ease;}
+.hero-card.closing{transition:top .34s cubic-bezier(.4,0,.2,1),left .34s cubic-bezier(.4,0,.2,1),width .34s cubic-bezier(.4,0,.2,1),height .34s cubic-bezier(.4,0,.2,1),border-radius .34s cubic-bezier(.4,0,.2,1),box-shadow .34s ease;}
+.hero-body{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:20px 16px calc(18px + env(safe-area-inset-bottom));opacity:0;transition:opacity .18s ease .14s;}
+.hero-card.animating .hero-body{opacity:1;}
+.hero-card.closing .hero-body{opacity:0;transition:opacity .12s ease;}
+/* ════ SHEET modal (bottom slide-up) ════ */
+.sheet-backdrop{position:fixed;inset:0;z-index:80;pointer-events:none;
+  background:rgba(0,0,0,0);transition:background .28s ease;}
+.sheet-backdrop.open{background:rgba(0,0,0,.35);pointer-events:auto;}
+.sheet-wrap{position:fixed;left:0;right:0;bottom:0;z-index:81;
+  background:#fff;border-radius:22px 22px 0 0;
+  padding:0 16px calc(18px + env(safe-area-inset-bottom));
+  max-height:min(82vh,680px);overflow-y:auto;-webkit-overflow-scrolling:touch;
+  box-shadow:0 -6px 32px rgba(0,0,0,.15);
+  transform:translateY(110%);will-change:transform;
+  transition:transform .36s cubic-bezier(.32,1.08,.58,1);}
+.sheet-wrap.open{transform:translateY(0);}
+.sheet-handle{width:36px;height:4px;background:#d1d9d6;border-radius:999px;margin:10px auto 14px;}
 </style>
 </head>
 <body>
@@ -457,7 +486,7 @@ function render(){
   const ad=S.days[si];
   const te=S.expenses.reduce((s,e)=>s+expValue(e),0);
   const {b,tx}=settle(S.expenses,S.travelers);
-  root.innerHTML=`<div class="app">${hdr(te)}${gnav()}<main class="body">${S.view==='memo'?memoView():''}${S.view==='itinerary'?itin(ad,si):''}${S.view==='wishlist'?wishlistView():''}${S.view==='expenses'?exps(te):''}${S.view==='split'?splt(b,tx,te):''}</main></div>${S.modal?buildModal():''}`;
+  root.innerHTML=`<div class="app">${hdr(te)}${gnav()}<main class="body">${S.view==='memo'?memoView():''}${S.view==='itinerary'?itin(ad,si):''}${S.view==='wishlist'?wishlistView():''}${S.view==='expenses'?exps(te):''}${S.view==='split'?splt(b,tx,te):''}</main></div>${S.modal&&(S.modal.t==='wl_add'||S.modal.t==='wl_import')?buildModal():''}`;
 
   setTimeout(()=>{
     const t=document.querySelector('.day-tabs .dtab.on');
@@ -470,7 +499,7 @@ function hdr(te){
   if(S.editTN)return`<header class="cover" style="--cover:url('${esc(S.cover)}')"><div class="topbar"></div><div class="cover-bottom"><div class="title-edit"><input class="tni" id="tn-in" value="${esc(S.tnDraft)}" placeholder="行程名稱" oninput="S.tnDraft=this.value" onkeydown="if(event.key==='Enter')saveTN()" autofocus><button class="btn glass" onclick="saveTN()">完成</button></div></div></header>${statsStrip}`;
   const coverStyle=`--cover:url('${esc(S.cover)}');--cover-pos:${S.coverPos||'30%'}`;
   if(S.editTN)return`<header class="cover" style="${coverStyle}"><div class="topbar"></div><div class="cover-bottom"><div class="title-edit"><input class="tni" id="tn-in" value="${esc(S.tnDraft)}" placeholder="行程名稱" oninput="S.tnDraft=this.value" onkeydown="if(event.key==='Enter')saveTN()" autofocus><button class="btn glass" onclick="saveTN()">完成</button></div></div></header>${statsStrip}`;
-  const menu=S.menuOpen?`<div class="cover-menu"><button onclick="copyShareLink();setU({menuOpen:false})"><span class="mi">🔗</span>分享連結</button><button onclick="setU({modal:{t:'tools'},menuOpen:false})"><span class="mi">☰</span>旅程工具</button><button onclick="setU({modal:{t:'cover'},menuOpen:false})"><span class="mi">📷</span>更換封面</button><button onclick="setU({modal:{t:'tv'},menuOpen:false})"><span class="mi">👥</span>旅伴管理</button><button onclick="setU({modal:{t:'help'},menuOpen:false})"><span class="mi">📖</span>使用說明</button></div>`:'';
+  const menu=S.menuOpen?`<div class="cover-menu"><button onclick="copyShareLink();setU({menuOpen:false})"><span class="mi">🔗</span>分享連結</button><button onclick="openModal(this,{t:'tools'});S.menuOpen=false;"><span class="mi">☰</span>旅程工具</button><button onclick="openModal(this,{t:'cover'});S.menuOpen=false;"><span class="mi">📷</span>更換封面</button><button onclick="openModal(this,{t:'tv'});S.menuOpen=false;"><span class="mi">👥</span>旅伴管理</button><button onclick="openModal(this,{t:'help'});S.menuOpen=false;"><span class="mi">📖</span>使用說明</button></div>`:'';
   const syncChip=cloud.tripId?`<span class="hdr-sub-chip">🔗 ${esc(cloud.tripId)}</span>`:'';
   return`<header class="cover" style="${coverStyle}"><div class="topbar"><div></div><div class="cover-menu-wrap"><button class="hamb" aria-label="開啟選單" onclick="setU({menuOpen:!S.menuOpen})"><span></span><span></span><span></span></button>${menu}</div></div><div class="cover-bottom"><div class="hdr-title" onclick="setU({editTN:true,tnDraft:'${esc(S.tripName)}'})"><span>${esc(S.tripName)}</span><span class="hdr-title-edit-icon">✏️</span></div><div class="hdr-sub"><span>${esc(cloud.status||'本機儲存')}</span>${syncChip}</div>${!cloud.ready?`<div class="sync-quick"><span style="font-size:14px;">🔗</span><input id="hdr-sync-inp" type="text" placeholder="輸入同步代碼，Enter 跳轉" autocomplete="off" autocapitalize="none" spellcheck="false" onkeydown="if(event.key==='Enter'){var v=this.value.trim();if(v){var el=document.getElementById('trip-code');if(el)el.value=v;else{S._quickCode=v;}switchTrip(false);}}"><button class="sync-quick-btn" onclick="var v=document.getElementById('hdr-sync-inp').value.trim();if(v){var el=document.getElementById('trip-code');if(el)el.value=v;switchTrip(false);}">跳轉</button></div>`:''}</div></header>${statsStrip}`;
 }
@@ -507,9 +536,9 @@ function itin(day,si){
     const mapQuery=l.address?`${l.name} ${l.address}`:l.name;
     const mapBtns=l.address||l.name?`<a href="${mu(mapQuery)}" target="_blank" rel="noopener"><button class="btn bp" style="font-size:12px;min-height:30px;padding:5px 10px;">地圖</button></a><a href="${nu(l.address||l.name)}" target="_blank" rel="noopener"><button class="btn ba" style="font-size:12px;min-height:30px;padding:5px 10px;">導航</button></a>`:'';
     const sortBtns=`<div class="loc-sort-ctrl${isNow?' sort-below':''}"><button class="sort-btn sort-grip" title="拖曳" onpointerdown="startTouchDrag(event,'${day.id}','${l.id}')">⠿</button><button class="sort-btn" title="上移" onclick="mvLoc('${day.id}','${l.id}',-1)" ${i===0?'disabled':''}>↑</button><button class="sort-btn" title="下移" onclick="mvLoc('${day.id}','${l.id}',1)" ${i===day.locations.length-1?'disabled':''}>↓</button></div>`;
-    return`<div class="loc-card-wrap${isNow?' loc-now':''}" data-locid="${l.id}" data-dayid="${day.id}" ondragover="dragOver(event)" ondragleave="dragLeave(event)" ondrop="dragDrop(event,'${day.id}','${l.id}')" ondragend="dragEnd()"><div class="card" style="border-left-color:${isNow?catBg:borderColor};border-left-width:${isNow?'5':'3'}px;${isNow?`--now-bg:${catLight};`:''}">${sortBtns}${nowBar}<div class="loc-wrap"><div class="loc-time" style="${isNow?`color:${catDark};font-weight:900;`:''}">${esc(l.time||'--:--')}</div><div class="loc-body"><div class="loc-name">${esc(l.name)} ${badge}${resBadge}${nowBadge}</div>${l.address?`<div class="loc-addr">${esc(l.address)}</div>`:''}${phoneEl}${notesEl}<div class="act-row">${mapBtns}<button class="btn-ic" title="編輯" onclick="oLoc('${l.id}')">✏️</button><button class="btn-ic br" title="刪除" onclick="dLoc('${day.id}','${l.id}')">🗑️</button></div></div></div></div></div>`;
+    return`<div class="loc-card-wrap${isNow?' loc-now':''}" data-locid="${l.id}" data-dayid="${day.id}" ondragover="dragOver(event)" ondragleave="dragLeave(event)" ondrop="dragDrop(event,'${day.id}','${l.id}')" ondragend="dragEnd()"><div class="card" style="border-left-color:${isNow?catBg:borderColor};border-left-width:${isNow?'5':'3'}px;${isNow?`--now-bg:${catLight};`:''}">${sortBtns}${nowBar}<div class="loc-wrap"><div class="loc-time" style="${isNow?`color:${catDark};font-weight:900;`:''}">${esc(l.time||'--:--')}</div><div class="loc-body"><div class="loc-name">${esc(l.name)} ${badge}${resBadge}${nowBadge}</div>${l.address?`<div class="loc-addr">${esc(l.address)}</div>`:''}${phoneEl}${notesEl}<div class="act-row">${mapBtns}<button class="btn-ic" title="編輯" onclick="_heroOrigin=this.getBoundingClientRect();oLoc('${l.id}')">✏️</button><button class="btn-ic br" title="刪除" onclick="dLoc('${day.id}','${l.id}')">🗑️</button></div></div></div></div></div>`;
   }).join('');
-  const quickItems=[...TMPL.map((t,i)=>`<button class="quick-item" onclick="setU({quickOpen:false});oLoc('',${i})"><span style="background:${CB[t.cat]};color:${CF[t.cat]};border-radius:8px;padding:2px 7px;font-size:12px;font-weight:800;">${CE[t.cat]} ${t.cat}</span> ${esc(t.name)}</button>`),`<hr style="border:none;border-top:1px solid var(--line);margin:3px 0;"><button class="quick-item" style="color:#5b3fc4;font-weight:900;" onclick="setU({quickOpen:false,modal:{t:'import'}})">✨ AI 匯入行程</button>`].join('');
+  const quickItems=[...TMPL.map((t,i)=>`<button class="quick-item" onclick="S.quickOpen=false;_heroOrigin=this.getBoundingClientRect();oLoc('',${i})"><span style="background:${CB[t.cat]};color:${CF[t.cat]};border-radius:8px;padding:2px 7px;font-size:12px;font-weight:800;">${CE[t.cat]} ${t.cat}</span> ${esc(t.name)}</button>`),`<hr style="border:none;border-top:1px solid var(--line);margin:3px 0;"><button class="quick-item" style="color:#5b3fc4;font-weight:900;" onclick="S.quickOpen=false;openModal(this,{t:'import'})">✨ AI 匯入行程</button>`].join('');
   const quickMenu=S.quickOpen?`<div class="quick-menu">${quickItems}</div>`:'';
   const wx=getWx(day.city);
   let weatherBar='';
@@ -520,15 +549,15 @@ function itin(day,si){
       weatherBar=`<div class="weather-bar"><span class="weather-ic">${wi.e}</span><div><div class="weather-val">${wx.data.temp}°C <span style="font-size:13px;font-weight:700;color:#888;">體感 ${wx.data.feels}°C</span></div><div class="weather-sub">${wi.d}</div></div><div style="display:flex;flex-direction:column;gap:2px;"><div style="font-size:13px;font-weight:700;">💧 ${wx.data.humidity}%</div><div class="weather-sub">濕度</div></div><div class="weather-city">📍 ${esc(day.city)}</div></div>`;
     }
   }
-  return`<div class="day-tabs">${tabs}<button class="dtab dtab-add" onclick="FM={title:'第${nd}天',date:'',city:''};setU({modal:{t:'nd'}})">+ 新增</button></div>${weatherBar}<div class="section-head"><div class="section-title">${esc(day.title)}${day.date?`<span style="font-size:12px;font-weight:600;color:var(--muted);margin-left:6px;">${day.date}</span>`:''}</div><div class="section-actions"><div class="action-group primary"><button class="btn" title="跳到現在" onclick="jumpToNow()">🕐</button><div class="quick-holder"><button class="btn" style="background:#f0faf5;border-color:#9fe1cb;color:#085041;font-weight:800;white-space:nowrap;" onclick="setU({quickOpen:!S.quickOpen})">＋ 快速新增</button>${quickMenu}</div></div><div class="action-group manage"><button class="btn" onclick="FM={title:\'${esc(day.title)}\',date:\'${esc(day.date||'')}\',city:\'${esc(day.city||'')}\'}; setU({modal:{t:\'ed\',dayId:\'${day.id}\'}})">編輯</button>${S.days.length>1?`<button class="btn br" onclick="dDay(\'${day.id}\')">刪除</button>`:''}</div></div></div>${locs}<button class="add-btn" onclick="oLoc('')">＋ 新增地點</button>`;
+  return`<div class="day-tabs">${tabs}<button class="dtab dtab-add" onclick="FM={title:'第${nd}天',date:'',city:''};openModal(this,{t:'nd'})">+ 新增</button></div>${weatherBar}<div class="section-head"><div class="section-title">${esc(day.title)}${day.date?`<span style="font-size:12px;font-weight:600;color:var(--muted);margin-left:6px;">${day.date}</span>`:''}</div><div class="section-actions"><div class="action-group primary"><button class="btn" title="跳到現在" onclick="jumpToNow()">🕐</button><div class="quick-holder"><button class="btn" style="background:#f0faf5;border-color:#9fe1cb;color:#085041;font-weight:800;white-space:nowrap;" onclick="setU({quickOpen:!S.quickOpen})">＋ 快速新增</button>${quickMenu}</div></div><div class="action-group manage"><button class="btn" onclick="FM={title:\'${esc(day.title)}\',date:\'${esc(day.date||'')}\',city:\'${esc(day.city||'')}\'}; openModal(this,{t:\'ed\',dayId:\'${day.id}\'})">編輯</button>${S.days.length>1?`<button class="btn br" onclick="dDay(\'${day.id}\')">刪除</button>`:''}</div></div></div>${locs}<button class="add-btn" onclick="_heroOrigin=this.getBoundingClientRect();oLoc('')">＋ 新增地點</button>`;
 }
 function exps(te){
   const cs=CATS.map(c=>({c,t:S.expenses.filter(e=>e.category===c).reduce((s,e)=>s+expValue(e),0)})).filter(x=>x.t>0);
   const budget=Number(S.budget||0), budgetCur=convertAmount(budget,'TWD',S.settleCurrency||'TWD'), pct=budgetCur?Math.min(100,Math.round(te/budgetCur*100)):0, cls=pct>=100?'over':pct>=80?'warn':'';
   const bud=`<div class="budget-card"><div class="bar-lb"><span>旅行預算</span><span>${budget?`${fmt(te)} / ${fmt(budgetCur)}`:`${fmt(te)} · 尚未設定預算`}</span></div><div class="budget-line"><div class="budget-fill ${cls}" style="width:${budget?pct:0}%;"></div></div><div class="tip">${esc(FX.status)}${FX.date?` · ${esc(String(FX.date).slice(0,16))}`:''}</div></div>`;
   const bars=cs.length?`<div class="card" style="padding:14px;margin-bottom:10px;"><div style="font-size:13px;color:var(--muted);margin-bottom:10px;font-weight:900;">消費分類</div>${cs.map(({c,t})=>`<div class="bar-lb"><span>${CE[c]} ${c}</span><span style="font-weight:800;">${fmt(t)}</span></div><div class="bar-tr"><div style="height:100%;border-radius:999px;background:${CBr[c]};width:${te?Math.round(t/te*100):0}%;"></div></div>`).join('')}</div>`:'';
-  const list=S.expenses.length?S.expenses.map(e=>`<div class="card"><div class="exp-row"><div class="cat-ic" style="background:${CB[e.category]||'#F1EFE8'}">${CE[e.category]||'📌'}</div><div class="exp-inf"><div class="exp-nm">${esc(e.item)}</div><div class="exp-mt">${esc(e.paidBy)} · ${e.shares?'自訂分擔':`${e.splitWith?.length||0}人分`} · <span style="color:${CF[e.category]||'#444'};">${e.category||'其他'}</span>${e.currency&&e.currency!=='TWD'?` · ${esc(e.currency)} ${Number(e.amount||0).toLocaleString()}`:''}</div></div><div class="exp-rt"><div class="exp-am">${fmt(expValue(e))}</div><div class="brow" style="margin-top:7px;justify-content:flex-end;"><button class="btn" style="min-height:30px;padding:4px 8px;" onclick="oExp('${e.id}')">編輯</button><button class="btn br" style="min-height:30px;padding:4px 8px;" onclick="dExp('${e.id}')">刪</button></div></div></div></div>`).join(''):`<div class="empty"><div style="font-size:30px;margin-bottom:8px;">💰</div>尚無帳目記錄</div>`;
-  return`<div class="tool-row"><button class="btn bp" onclick="oExp('')">新增帳目</button><button class="btn" onclick="setU({modal:{t:'tools'}})">預算 / 匯出</button></div><div class="stats"><div class="stat"><div class="stat-n">${fmt(te)}</div><div class="stat-l">總花費</div></div><div class="stat"><div class="stat-n">${S.travelers.length?fmt(te/S.travelers.length):'-'}</div><div class="stat-l">人均</div></div></div>${bud}${bars}${list}<button class="add-btn" onclick="oExp('')">+ 新增帳目</button>`;
+  const list=S.expenses.length?S.expenses.map(e=>`<div class="card"><div class="exp-row"><div class="cat-ic" style="background:${CB[e.category]||'#F1EFE8'}">${CE[e.category]||'📌'}</div><div class="exp-inf"><div class="exp-nm">${esc(e.item)}</div><div class="exp-mt">${esc(e.paidBy)} · ${e.shares?'自訂分擔':`${e.splitWith?.length||0}人分`} · <span style="color:${CF[e.category]||'#444'};">${e.category||'其他'}</span>${e.currency&&e.currency!=='TWD'?` · ${esc(e.currency)} ${Number(e.amount||0).toLocaleString()}`:''}</div></div><div class="exp-rt"><div class="exp-am">${fmt(expValue(e))}</div><div class="brow" style="margin-top:7px;justify-content:flex-end;"><button class="btn" style="min-height:30px;padding:4px 8px;" onclick="_heroOrigin=this.getBoundingClientRect();oExp('${e.id}')">編輯</button><button class="btn br" style="min-height:30px;padding:4px 8px;" onclick="dExp('${e.id}')">刪</button></div></div></div></div>`).join(''):`<div class="empty"><div style="font-size:30px;margin-bottom:8px;">💰</div>尚無帳目記錄</div>`;
+  return`<div class="tool-row"><button class="btn bp" onclick="_heroOrigin=this.getBoundingClientRect();oExp('')">新增帳目</button><button class="btn" onclick="setU({modal:{t:'tools'}})">預算 / 匯出</button></div><div class="stats"><div class="stat"><div class="stat-n">${fmt(te)}</div><div class="stat-l">總花費</div></div><div class="stat"><div class="stat-n">${S.travelers.length?fmt(te/S.travelers.length):'-'}</div><div class="stat-l">人均</div></div></div>${bud}${bars}${list}<button class="add-btn" onclick="oExp('')">+ 新增帳目</button>`;
 }
 function splt(b,tx,te){
   const br=S.travelers.map(t=>{const v=b[t]||0,paid=S.expenses.filter(e=>e.paidBy===t).reduce((s,e)=>s+expValue(e),0),pos=v>=0;return`<div class="brow2"><div><div style="font-weight:900;font-size:15px;">${esc(t)}</div><div style="font-size:12px;color:var(--muted);">已付 ${fmt(paid)}</div></div><div style="font-weight:900;font-size:14px;color:${pos?'#0F6E56':'#A32D2D'};text-align:right;">${pos?`+ ${fmt(Math.abs(v))} 應收`:`${fmt(Math.abs(v))} 應付`}</div></div>`;}).join('');
@@ -1073,7 +1102,7 @@ function showNoteSheet(locId, _name, triggerEl){
       </div>
       <div class="note-hero-body">${esc(l.notes)}</div>
       <div class="note-hero-actions">
-        <button class="btn bp" style="width:100%;padding:13px;font-size:14px;" onclick="closeNoteSheet();setTimeout(()=>oLoc('${l.id}'),320)">✏️ 編輯備註</button>
+        <button class="btn bp" style="width:100%;padding:13px;font-size:14px;" onclick="closeNoteSheet();_heroOrigin=null;setTimeout(()=>oLoc('${l.id}'),320)">✏️ 編輯備註</button>
       </div>
     </div>`;
   document.body.appendChild(card);
@@ -1324,7 +1353,7 @@ function wishlistView(){
     const cnt=c.id==='all'?items.length:items.filter(i=>i.cat===c.id).length;
     return`<button class="wl-filter-btn${filter===c.id?' on':''}" onclick="_wlFilter='${c.id}';setU({})">${c.emoji} ${c.label}${cnt?` <span style="opacity:.6;font-size:10px;">${cnt}</span>`:''}</button>`;
   }).join('');
-  const topbar=`<div class="wl-topbar"><div class="wl-filter-row">${catBtns}</div><div class="wl-action-row"><button class="wl-add-btn" onclick="wlOpenAdd()">＋ 新增地點</button><button class="wl-ai-btn" onclick="setU({modal:{t:'wl_import'}})">✨ AI 匯入清單</button></div></div>`;
+  const topbar=`<div class="wl-topbar"><div class="wl-filter-row">${catBtns}</div><div class="wl-action-row"><button class="wl-add-btn" onclick="wlOpenAdd(this)">＋ 新增地點</button><button class="wl-ai-btn" onclick="openModal(this,{t:'wl_import'})">✨ AI 匯入清單</button></div></div>`;
 
   const visible=filter==='all'?items:items.filter(i=>i.cat===filter);
   let body='';
@@ -1366,7 +1395,8 @@ function wlCardHtml(item){
   </div>`;
 }
 
-function wlOpenAdd(){
+function wlOpenAdd(el){
+  if(el)_heroOrigin=(typeof el.getBoundingClientRect==='function'?el:null)?.getBoundingClientRect()||null;
   setU({modal:{t:'wl_add'}});
 }
 
@@ -1509,6 +1539,179 @@ function wlConfirmImport(){
   t.className='wl-toast';
   t.textContent=`✅ 已匯入 ${newItems.length} 個地點到清單`;
   document.body.appendChild(t);setTimeout(()=>t.remove(),2100);
+}
+
+
+// ════ HERO & SHEET modal engine ════════════════════════
+// Hero modal types (large forms) — open from trigger element
+const HERO_TYPES=new Set(['loc','exp','nd','ed','wl_add','wl_import','import','tv','cover','tools','help','note']);
+// Sheet modal types (compact) — slide up from bottom
+const SHEET_TYPES=new Set(['tripGate']);
+
+let _heroOrigin=null; // {top,left,width,height} of trigger element
+
+// Call this instead of direct setU for modals to capture trigger position
+function openModal(el, modalObj){
+  if(el && HERO_TYPES.has(modalObj.t)){
+    const r=el.getBoundingClientRect();
+    _heroOrigin={top:r.top,left:r.left,width:r.width,height:r.height};
+  } else {
+    _heroOrigin=null;
+  }
+  setU({modal:modalObj});
+}
+
+// Override render() to mount hero/sheet after innerHTML swap
+const _origRender=render;
+
+function _mountModalOverlay(){
+  const m=S.modal;
+  if(!m)return;
+  // Remove old overlays
+  document.getElementById('_heroBackdrop')?.remove();
+  document.getElementById('_heroCard')?.remove();
+  document.getElementById('_sheetBackdrop')?.remove();
+  document.getElementById('_sheetWrap')?.remove();
+
+  const content=_getModalContent(m);
+  if(!content)return;
+
+  if(HERO_TYPES.has(m.t)){
+    _mountHero(content, m);
+  } else {
+    _mountSheet(content, m);
+  }
+}
+
+function _getModalContent(m){
+  let c='';
+  if(m.t==='tripGate')c=mTripGate();
+  else if(m.t==='loc')c=mLoc();
+  else if(m.t==='nd'||m.t==='ed')c=mDay();
+  else if(m.t==='exp')c=mExp();
+  else if(m.t==='tv')c=mTv();
+  else if(m.t==='cover')c=mCover();
+  else if(m.t==='tools')c=mTools();
+  else if(m.t==='import')c=mImport();
+  else if(m.t==='note')c=mNote();
+  else if(m.t==='help')c=mHelp();
+  else if(m.t==='wl_add')return null; // handled separately (buildWlAddModal)
+  else if(m.t==='wl_import')return null;
+  return c||null;
+}
+
+function _mountHero(content, m){
+  const vw=window.innerWidth, vh=window.innerHeight;
+  const tw=Math.min(vw*0.94,600);
+  const th=Math.min(vh*0.90,760);
+  const tx=(vw-tw)/2, ty=Math.max(16,(vh-th)/2);
+  const o=_heroOrigin||{top:vh/2,left:vw/2,width:40,height:40};
+
+  const bd=document.createElement('div');
+  bd.id='_heroBackdrop'; bd.className='hero-backdrop';
+  bd.onclick=_closeHero;
+  document.body.appendChild(bd);
+
+  const card=document.createElement('div');
+  card.id='_heroCard'; card.className='hero-card';
+  card.style.cssText=`top:${o.top}px;left:${o.left}px;width:${o.width}px;height:${o.height}px;border-radius:10px;`;
+  // Wrap existing msh-style content in hero-body
+  card.innerHTML=`<div class="hero-body"><div class="msh" style="border-radius:0;padding:0;max-height:none;box-shadow:none;overflow:visible;">${content}</div></div>`;
+  document.body.appendChild(card);
+
+  // Swipe down gesture
+  let ty0=0,cy0=0;
+  card.addEventListener('touchstart',e=>{ty0=e.touches[0].clientY;},{passive:true});
+  card.addEventListener('touchmove',e=>{
+    cy0=e.touches[0].clientY;
+    const dy=Math.max(0,cy0-ty0);
+    if(dy>0){card.style.transition='none';card.style.transform=`translateY(${dy*.4}px) scale(${1-dy*.0006})`;bd.style.opacity=String(Math.max(0,1-dy/220));}
+  },{passive:true});
+  card.addEventListener('touchend',()=>{
+    card.style.transform=''; bd.style.opacity='';
+    if(cy0-ty0>75)_closeHero(); else{card.style.transition='';card.classList.add('animating');}
+    ty0=0;cy0=0;
+  });
+
+  card._origin=o;
+  requestAnimationFrame(()=>requestAnimationFrame(()=>{
+    bd.classList.add('open');
+    card.classList.add('animating');
+    card.style.top=`${ty}px`; card.style.left=`${tx}px`;
+    card.style.width=`${tw}px`; card.style.height=`${th}px`;
+    card.style.borderRadius='20px';
+    card.style.boxShadow='0 24px 64px rgba(0,0,0,.22)';
+  }));
+}
+
+function _closeHero(cb){
+  const card=document.getElementById('_heroCard');
+  const bd=document.getElementById('_heroBackdrop');
+  if(!card)return;
+  const o=card._origin||{top:window.innerHeight,left:0,width:0,height:0};
+  card.classList.remove('animating'); card.classList.add('closing');
+  card.style.top=`${o.top}px`; card.style.left=`${o.left}px`;
+  card.style.width=`${o.width}px`; card.style.height=`${o.height}px`;
+  card.style.borderRadius='10px'; card.style.boxShadow='none';
+  bd?.classList.remove('open');
+  setTimeout(()=>{card.remove();bd?.remove();if(cb)cb();},360);
+}
+
+function _mountSheet(content, m){
+  const lock=m.t==='tripGate';
+  const bd=document.createElement('div');
+  bd.id='_sheetBackdrop'; bd.className='sheet-backdrop';
+  if(!lock)bd.onclick=()=>setU({modal:null});
+  document.body.appendChild(bd);
+
+  const wrap=document.createElement('div');
+  wrap.id='_sheetWrap'; wrap.className='sheet-wrap';
+  wrap.innerHTML=`<div class="sheet-handle"></div>${content}`;
+  document.body.appendChild(wrap);
+
+  // Swipe down
+  let sy=0,cy=0;
+  wrap.addEventListener('touchstart',e=>{sy=e.touches[0].clientY;},{passive:true});
+  wrap.addEventListener('touchmove',e=>{
+    cy=e.touches[0].clientY;
+    const dy=Math.max(0,cy-sy);
+    if(dy>0){wrap.style.transition='none';wrap.style.transform=`translateY(${dy}px)`;bd.style.opacity=String(Math.max(0,1-dy/180));}
+  },{passive:true});
+  wrap.addEventListener('touchend',()=>{
+    wrap.style.transform=''; bd.style.opacity='';
+    if(!lock&&cy-sy>60)setU({modal:null}); else{wrap.style.transition='';wrap.classList.add('open');}
+    sy=0;cy=0;
+  });
+
+  requestAnimationFrame(()=>requestAnimationFrame(()=>{
+    bd.classList.add('open'); wrap.classList.add('open');
+  }));
+}
+
+// Patch setU so modal changes always trigger overlay mount
+const _origSetU=setU;
+function setU(u){
+  const hadModal=!!S.modal;
+  const hasModal=u.modal!==undefined?!!u.modal:hadModal;
+  // If closing modal, animate close then clear
+  if(hadModal&&!hasModal){
+    const heroCard=document.getElementById('_heroCard');
+    const sheetWrap=document.getElementById('_sheetWrap');
+    if(heroCard){
+      _closeHero(()=>{ S={...S,...u}; });
+      S={...S,...u,modal:S.modal}; // keep modal during animation
+      return;
+    }
+    if(sheetWrap){
+      sheetWrap.classList.remove('open');
+      document.getElementById('_sheetBackdrop')?.classList.remove('open');
+      sheetWrap.style.transition='';
+      setTimeout(()=>{sheetWrap.remove();document.getElementById('_sheetBackdrop')?.remove();},360);
+    }
+  }
+  S={...S,...u};
+  render();
+  if(S.modal)_mountModalOverlay();
 }
 
 load();
