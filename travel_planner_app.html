@@ -70,18 +70,21 @@ a{text-decoration:none}
 .loc-phone{display:flex;align-items:center;gap:6px}
 .loc-phone a{color:#0c447c;font-weight:800}
 .loc-note-wrap{margin-bottom:8px;}
-.loc-note-pill{font-size:12px;color:#56635f;background:#f3f7f5;padding:6px 10px;
-border-left:3px solid #8ad5b6;cursor:pointer;border-radius:0 6px 6px 0;
-display:flex;align-items:center;gap:6px;user-select:none;transition:background .15s;}
+.loc-note-pill{font-size:12px;color:#56635f;background:#f3f7f5;padding:6px 10px;border-left:3px solid #8ad5b6;cursor:pointer;border-radius:0 6px 6px 0;display:flex;align-items:center;gap:6px;user-select:none;transition:background .15s;}
 .loc-note-pill:hover{background:#e6f4ed;}
-.loc-note-pill-text{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;transition:white-space .2s;}
-.loc-note-pill.expanded .loc-note-pill-text{white-space:normal;}
-.loc-note-pill-hint{font-size:11px;font-weight:800;color:#42a787;flex-shrink:0;transition:transform .25s;}
-.loc-note-pill.expanded .loc-note-pill-hint{transform:rotate(90deg);}
-.loc-note-body{max-height:0;overflow:hidden;transition:max-height .3s cubic-bezier(.4,0,.2,1),opacity .25s;opacity:0;
-font-size:12px;color:#3d5449;background:#f3f7f5;border-left:3px solid #8ad5b6;
-border-radius:0 0 6px 6px;padding:0 10px;line-height:1.65;}
-.loc-note-body.open{max-height:400px;opacity:1;padding:8px 10px;}
+.loc-note-pill-text{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.loc-note-pill-hint{font-size:11px;font-weight:800;color:#42a787;flex-shrink:0;}
+/* ── iOS bottom sheet ── */
+.note-sheet-backdrop{position:fixed;inset:0;background:rgba(0,0,0,0);z-index:80;transition:background .28s ease;pointer-events:none;}
+.note-sheet-backdrop.open{background:rgba(0,0,0,.38);pointer-events:auto;}
+.note-sheet{position:fixed;left:0;right:0;bottom:0;z-index:81;background:#fff;border-radius:22px 22px 0 0;padding:0 0 env(safe-area-inset-bottom,0);box-shadow:0 -8px 40px rgba(0,0,0,.18);transform:translateY(110%);transition:transform .38s cubic-bezier(.32,1.06,.6,1);will-change:transform;max-height:82vh;display:flex;flex-direction:column;}
+.note-sheet.open{transform:translateY(0);}
+.note-sheet-handle{width:36px;height:4px;background:#d1d9d6;border-radius:999px;margin:10px auto 0;flex-shrink:0;}
+.note-sheet-hd{display:flex;align-items:center;justify-content:space-between;padding:14px 20px 6px;flex-shrink:0;}
+.note-sheet-title{font-weight:900;font-size:16px;color:var(--ink);flex:1;margin-right:10px;}
+.note-sheet-close{width:30px;height:30px;border-radius:50%;background:#f2f2f7;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:15px;color:#666;flex-shrink:0;}
+.note-sheet-close:active{background:#e0e0e8;}
+.note-sheet-body{overflow-y:auto;padding:10px 20px 28px;font-size:14px;line-height:1.8;color:#2d4a3e;white-space:pre-wrap;word-break:break-word;flex:1;-webkit-overflow-scrolling:touch;}
 .loc-sort-col{display:contents}
 .sort-btn{width:30px;height:30px;border-radius:8px;display:inline-flex;align-items:center;justify-content:center;font-size:13px;cursor:pointer;border:1px solid var(--line);background:var(--card);color:var(--ink);padding:0;user-select:none;-webkit-user-select:none;flex-shrink:0}
 .sort-btn:disabled{opacity:.2;cursor:not-allowed}
@@ -488,7 +491,7 @@ function itin(day,si){
     const nowBadge=isNow?`<span class="loc-now-badge" style="background:${catBg};color:#fff;">🕐 現在</span>`:'';
     const nowBar=isNow?`<div class="loc-now-bar" style="background:${catBg};color:#fff;">🕐 目前最近的行程 <span style="opacity:.85;font-size:11px;">${CE[cat]||''} ${cat}</span></div>`:'';
     // Notes: always show as pill → modal on click
-    const notesEl=l.notes?`<div class="loc-note-wrap"><div class="loc-note-pill" id="note-pill-${l.id}" onclick="toggleNote('${l.id}')"><span class="loc-note-pill-text">${esc(l.notes)}</span><span class="loc-note-pill-hint">›</span></div><div class="loc-note-body" id="note-body-${l.id}">${esc(l.notes)}</div></div>`:'';
+    const notesEl=l.notes?`<div class="loc-note-wrap"><div class="loc-note-pill" onclick="showNoteSheet('${l.id}','${esc(l.name)}',this)"><span class="loc-note-pill-text">${esc(l.notes)}</span><span class="loc-note-pill-hint">展開 ›</span></div></div>`:'';
     // Phone inline with call button
     const phoneEl=l.phone?`<div class="loc-phone"><a href="tel:${esc(l.phone)}">${esc(l.phone)}</a><a href="tel:${esc(l.phone)}"><button class="btn-ic" style="width:28px;height:28px;font-size:13px;" title="打電話">📞</button></a></div>`:'';
     // Map uses name + address for better Google Maps accuracy
@@ -1021,15 +1024,78 @@ function mvLoc(dayId,locId,dir){
   _preserveScroll=true;
   setD({days});
 }
-function toggleNote(locId){
-  const pill=document.getElementById('note-pill-'+locId);
-  const body=document.getElementById('note-body-'+locId);
-  if(!pill||!body)return;
-  const isOpen=body.classList.contains('open');
-  pill.classList.toggle('expanded',!isOpen);
-  body.classList.toggle('open',!isOpen);
+function showNoteSheet(locId, name, triggerEl){
+  const l=S.days.flatMap(d=>d.locations).find(l=>l.id===locId);
+  if(!l)return;
+
+  // Remove any existing sheet
+  const old=document.getElementById('_noteSheet');
+  if(old)old.remove();
+  document.getElementById('_noteBackdrop')?.remove();
+
+  // Backdrop
+  const bd=document.createElement('div');
+  bd.id='_noteBackdrop';
+  bd.className='note-sheet-backdrop';
+  bd.onclick=closeNoteSheet;
+  document.body.appendChild(bd);
+
+  // Sheet
+  const sheet=document.createElement('div');
+  sheet.id='_noteSheet';
+  sheet.className='note-sheet';
+  sheet.innerHTML=`
+    <div class="note-sheet-handle"></div>
+    <div class="note-sheet-hd">
+      <div class="note-sheet-title">${esc(l.name)}</div>
+      <button class="note-sheet-close" onclick="closeNoteSheet()">✕</button>
+    </div>
+    <div class="note-sheet-body">${esc(l.notes)}</div>
+    <div style="padding:0 20px 16px;flex-shrink:0;">
+      <button class="btn bp" style="width:100%;padding:12px;font-size:14px;" onclick="closeNoteSheet();oLoc('${l.id}')">✏️ 編輯備註</button>
+    </div>`;
+  document.body.appendChild(sheet);
+
+  // Swipe-down to close
+  let startY=0,curY=0;
+  sheet.addEventListener('touchstart',e=>{startY=e.touches[0].clientY;},{ passive:true });
+  sheet.addEventListener('touchmove',e=>{
+    curY=e.touches[0].clientY;
+    const dy=Math.max(0,curY-startY);
+    sheet.style.transform=`translateY(${dy}px)`;
+    bd.style.opacity=String(Math.max(0,1-dy/300));
+  },{ passive:true });
+  sheet.addEventListener('touchend',()=>{
+    const dy=curY-startY;
+    sheet.style.transform='';
+    bd.style.opacity='';
+    if(dy>90)closeNoteSheet();
+  });
+
+  // Animate in (next frame)
+  requestAnimationFrame(()=>{
+    requestAnimationFrame(()=>{
+      bd.classList.add('open');
+      sheet.classList.add('open');
+    });
+  });
 }
-function showNote(locId){toggleNote(locId);}
+
+function closeNoteSheet(){
+  const sheet=document.getElementById('_noteSheet');
+  const bd=document.getElementById('_noteBackdrop');
+  if(sheet){sheet.classList.remove('open');}
+  if(bd){bd.classList.remove('open');}
+  setTimeout(()=>{
+    sheet?.remove();
+    bd?.remove();
+  },400);
+}
+
+function showNote(locId){
+  const l=S.days.flatMap(d=>d.locations).find(l=>l.id===locId);
+  if(l)showNoteSheet(locId,l.name,null);
+}
 function buildModal(){if(S.modal?.t==='wl_add')return buildWlAddModal();if(S.modal?.t==='wl_import')return buildWlImportModal();
   const m=S.modal;let c='';
   if(m.t==='tripGate')c=mTripGate();else if(m.t==='loc')c=mLoc();else if(m.t==='nd'||m.t==='ed')c=mDay();else if(m.t==='exp')c=mExp();else if(m.t==='tv')c=mTv();else if(m.t==='cover')c=mCover();else if(m.t==='tools')c=mTools();else if(m.t==='import')c=mImport();else if(m.t==='note')c=mNote();else if(m.t==='help')c=mHelp();
