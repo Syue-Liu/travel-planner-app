@@ -183,8 +183,12 @@ input:focus,select:focus,textarea:focus{border-color:#42a787;box-shadow:0 0 0 3p
 .memo-item.done .memo-text{text-decoration:line-through;color:var(--muted);opacity:.55}
 .memo-cb{width:22px;height:22px;border-radius:7px;border:2px solid #aebcb7;background:var(--card);cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px;transition:all .12s;font-size:13px}
 .memo-cb.on{background:#0f5e5e;border-color:#0f5e5e;color:#fff}
-.memo-text{font-size:14px;flex:1;min-width:0;word-break:break-word;line-height:1.5}
-.memo-del{color:var(--muted);font-size:20px;cursor:pointer;opacity:.35;flex-shrink:0;line-height:1;padding:0 2px;margin-top:-1px}
+.memo-text{font-size:14px;flex:1;min-width:0;word-break:break-word;line-height:1.5;cursor:pointer;padding:1px 2px;border-radius:4px;transition:background .15s;}
+.memo-text:hover{background:rgba(15,94,94,.06);}
+.memo-actions{display:flex;align-items:center;gap:2px;flex-shrink:0;margin-top:-1px;}
+.memo-edit{background:none;border:none;font-size:13px;cursor:pointer;padding:4px 6px;border-radius:6px;line-height:1;opacity:.45;transition:opacity .15s,background .15s;}
+.memo-edit:hover{opacity:1;background:rgba(15,94,94,.1);}
+.memo-del{background:none;border:none;color:var(--muted);font-size:20px;cursor:pointer;opacity:.35;line-height:1;padding:2px 6px;border-radius:6px;transition:opacity .15s,background .15s,color .15s;}
 .memo-del:hover,.memo-del:active{opacity:.9}
 .loc-cat-badge{display:inline-flex;align-items:center;gap:3px;padding:3px 8px;border-radius:999px;font-size:11px;font-weight:800;vertical-align:middle;white-space:nowrap}
 .loc-now-badge{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:999px;font-size:11px;font-weight:900;border:none;animation:now-pulse 1.8s ease-in-out infinite;letter-spacing:.02em}
@@ -1557,7 +1561,7 @@ function memoView(){
   const groups=MEMO_CATS.map(cat=>{
     const its=items.filter(m=>m.cat===cat);
     if(!its.length)return'';
-    return`<div class="memo-cat-hd">${MEMO_IC[cat]} ${cat}</div>${its.map(m=>`<div class="memo-item${m.done?' done':''}"><div class="memo-cb${m.done?' on':''}" onclick="toggleMemo('${m.id}')">${m.done?'✓':''}</div><div class="memo-text">${esc(m.text)}</div><span class="memo-del" onclick="delMemo('${m.id}')">×</span></div>`).join('')}`;
+    return`<div class="memo-cat-hd">${MEMO_IC[cat]} ${cat}</div>${its.map(m=>`<div class="memo-item${m.done?' done':''}" id="memo-${m.id}"><div class="memo-cb${m.done?' on':''}" onclick="toggleMemo('${m.id}')">${m.done?'✓':''}</div><div class="memo-text" onclick="editMemo('${m.id}')">${esc(m.text)}</div><div class="memo-actions"><button class="memo-edit" onclick="editMemo('${m.id}')" title="編輯">✏️</button><button class="memo-del" onclick="delMemo('${m.id}')" title="刪除">×</button></div></div>`).join('')}`;
   }).join('');
   const progress=items.length?`<div style="margin-bottom:14px;"><div style="display:flex;justify-content:space-between;font-size:12px;font-weight:700;color:var(--muted);margin-bottom:5px;"><span>行前清單進度</span><span>${done} / ${items.length} 完成</span></div><div class="budget-line"><div class="budget-fill" style="width:${items.length?Math.round(done/items.length*100):0}%;"></div></div></div>`:'';
   const catSel=MEMO_CATS.map(c=>`<option value="${c}">${MEMO_IC[c]} ${c}</option>`).join('');
@@ -1646,6 +1650,48 @@ function toggleMemo(id){
   const memo=(S.memo||[]).map(m=>m.id===id?{...m,done:!m.done}:m);
   setD({memo});
 }
+
+function editMemo(id){
+  const item=(S.memo||[]).find(m=>m.id===id);
+  if(!item)return;
+  const wrap=document.getElementById('memo-'+id);
+  if(!wrap)return;
+  const cat=item.cat||'其他';
+  const catOpts=MEMO_CATS.map(c=>`<option value="${c}"${c===cat?' selected':''}>${MEMO_IC[c]} ${c}</option>`).join('');
+  wrap.innerHTML=`<div class="memo-cb${item.done?' on':''}" onclick="toggleMemo('${id}')" style="margin-top:8px;">${item.done?'✓':''}</div>
+    <div style="flex:1;display:flex;flex-direction:column;gap:6px;min-width:0;">
+      <div style="display:flex;gap:6px;">
+        <select class="memo-cat-sel" id="memo-edit-cat-${id}" style="flex:0 0 auto;">${catOpts}</select>
+        <input type="text" id="memo-edit-inp-${id}" value="${esc(item.text).replace(/"/g,'&quot;')}" style="flex:1;min-width:0;padding:7px 10px;border:1px solid var(--line);border-radius:8px;font-size:14px;font-family:inherit;color:var(--ink);outline:2px solid #0f5e5e;background:#fff;" onkeydown="if(event.key==='Enter'){event.preventDefault();saveEditMemo('${id}')}else if(event.key==='Escape'){cancelEditMemo()}">
+      </div>
+      <div style="display:flex;gap:6px;">
+        <button class="btn bp" style="flex:1;padding:7px;font-size:13px;" onclick="saveEditMemo('${id}')">儲存</button>
+        <button class="btn" style="flex:1;padding:7px;font-size:13px;" onclick="cancelEditMemo()">取消</button>
+      </div>
+    </div>`;
+  // focus + place cursor at end
+  setTimeout(()=>{
+    const inp=document.getElementById('memo-edit-inp-'+id);
+    if(inp){inp.focus();inp.setSelectionRange(inp.value.length,inp.value.length);}
+  },50);
+}
+
+function saveEditMemo(id){
+  const inp=document.getElementById('memo-edit-inp-'+id);
+  const sel=document.getElementById('memo-edit-cat-'+id);
+  if(!inp)return;
+  const text=inp.value.trim();
+  if(!text)return;
+  const cat=sel?.value||'其他';
+  const memo=(S.memo||[]).map(m=>m.id===id?{...m,text,cat}:m);
+  setD({memo});
+}
+
+function cancelEditMemo(){
+  // Just re-render to restore
+  render();
+}
+
 function delMemo(id){
   setD({memo:(S.memo||[]).filter(m=>m.id!==id)});
 }
