@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#0f5e5e">
+<title>旅遊備忘與行程修改</title>
+<style>
+:root{--teal:#0f5e5e;--bg:#edf4f0;--paper:#fff;--line:#d9e2df;--muted:#66736f;--ink:#18211f;--warn:#d85d7b;--r:16px;--shadow:0 14px 34px rgba(20,45,40,.12)}
+*{box-sizing:border-box}body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans TC","PingFang TC",Arial,sans-serif;background:linear-gradient(180deg,var(--bg),#fff7eb);color:var(--ink);font-size:15px;line-height:1.5}.app{max-width:920px;margin:0 auto;min-height:100vh}.hero{padding:28px 18px 20px;background:linear-gradient(135deg,#0f5e5e,#153f44);color:#fff;border-radius:0 0 28px 28px;box-shadow:var(--shadow)}.hero h1{margin:0 0 6px;font-size:28px;letter-spacing:-.5px}.hero p{margin:0;color:rgba(255,255,255,.78)}.body{padding:16px}.toolbar{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 14px}.btn{border:1px solid var(--line);background:#fff;color:var(--ink);border-radius:999px;padding:9px 14px;font-weight:800;cursor:pointer}.btn.primary{background:var(--teal);color:#fff;border-color:var(--teal)}.btn.danger{background:#fff0f2;color:#a52f49;border-color:#ffd0d8}.grid{display:grid;grid-template-columns:1.1fr .9fr;gap:14px}.card{background:rgba(255,255,255,.92);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow);overflow:hidden}.card-hd{padding:14px 16px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;gap:10px;align-items:center}.card-hd h2{margin:0;font-size:17px}.card-bd{padding:14px 16px}.tabs{display:flex;gap:8px;overflow-x:auto;padding-bottom:10px}.tab{white-space:nowrap}.tab.on{background:#183b40;color:#fff;border-color:#183b40}.day-title{display:flex;justify-content:space-between;align-items:center;gap:10px;margin:2px 0 12px}.day-title h3{margin:0;font-size:18px}.item{border:1px solid var(--line);border-radius:14px;padding:12px;margin-bottom:9px;background:#fff}.item-top{display:flex;justify-content:space-between;gap:10px}.time{font-weight:900;color:var(--teal);min-width:52px}.name{font-weight:900}.meta{font-size:13px;color:var(--muted);white-space:pre-wrap;margin-top:4px}.actions{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}.mini{font-size:12px;padding:6px 10px}.memo-item.done .memo-text{text-decoration:line-through;color:var(--muted);opacity:.62}.memo-top{display:flex;gap:10px;align-items:flex-start}.check{width:24px;height:24px;border-radius:8px;border:2px solid #aebcb7;display:flex;align-items:center;justify-content:center;cursor:pointer;flex:0 0 auto}.check.on{background:var(--teal);border-color:var(--teal);color:#fff}.memo-text{font-weight:800;white-space:pre-wrap;word-break:break-word}.tag{display:inline-flex;align-items:center;border-radius:999px;padding:2px 8px;font-size:11px;font-weight:900;background:#e7f6f0;color:#085041;margin-bottom:6px}.empty{color:var(--muted);text-align:center;padding:26px 8px}input,textarea,select{width:100%;border:1px solid var(--line);border-radius:12px;padding:11px 12px;font:inherit;background:#fff}textarea{min-height:96px;resize:vertical}.field{margin-bottom:12px}.field label{display:block;font-size:13px;font-weight:900;color:#53615d;margin-bottom:6px}.row{display:grid;grid-template-columns:1fr 1fr;gap:10px}.modal{position:fixed;inset:0;background:rgba(10,18,17,.48);display:flex;align-items:flex-end;z-index:20}.sheet{width:100%;max-width:680px;margin:0 auto;background:#fff;border-radius:24px 24px 0 0;padding:18px;max-height:88vh;overflow:auto}.sheet-hd{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}.sheet-hd h2{font-size:19px;margin:0}.close{border:0;background:transparent;font-size:26px;cursor:pointer;color:var(--muted)}.hint{font-size:12px;color:var(--muted);margin-top:10px}.jsonbox{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px;min-height:170px}@media(max-width:760px){.grid{grid-template-columns:1fr}.hero h1{font-size:24px}.body{padding:12px}.row{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div id="app" class="app"></div>
+<script>
+const KEY='travelPlannerMemoV1';
+const seed={title:'我的旅遊規劃',days:[{id:uid(),title:'Day 1',date:'',items:[{id:uid(),time:'09:00',name:'出發',addr:'',note:'可以在這裡記錄交通、訂位或提醒事項'}]}],memos:[{id:uid(),cat:'行前',text:'確認護照、網卡、信用卡與充電器',done:false,updatedAt:Date.now()}],active:0,modal:null};
+let S=load();
+function uid(){return Math.random().toString(36).slice(2,10)}
+function load(){try{return JSON.parse(localStorage.getItem(KEY))||seed}catch(e){return seed}}
+function save(){localStorage.setItem(KEY,JSON.stringify(S))}
+function esc(s=''){return String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}
+function set(p){S={...S,...p};save();render()}
+function day(){return S.days[S.active]||S.days[0]}
+function render(){document.getElementById('app').innerHTML=`
+  <section class="hero"><h1 contenteditable="true" onblur="renameTrip(this.textContent)">${esc(S.title)}</h1><p>可新增備忘、勾選完成、編輯內容，也可修改每天行程地點。</p></section>
+  <main class="body">
+    <div class="toolbar"><button class="btn primary" onclick="openMemo()">＋ 新增備忘</button><button class="btn" onclick="openPlace()">＋ 新增行程</button><button class="btn" onclick="addDay()">＋ 新增天數</button><button class="btn" onclick="openExport()">匯出/匯入</button></div>
+    <section class="grid">
+      <div class="card"><div class="card-hd"><h2>行程</h2><button class="btn mini" onclick="editDay()">修改日期/標題</button></div><div class="card-bd">${tabs()}${places()}</div></div>
+      <div class="card"><div class="card-hd"><h2>備忘</h2><span class="hint">${S.memos.filter(x=>!x.done).length} 項未完成</span></div><div class="card-bd">${memos()}</div></div>
+    </section>
+  </main>${modal()}`}
+function tabs(){return `<div class="tabs">${S.days.map((d,i)=>`<button class="btn tab ${i===S.active?'on':''}" onclick="set({active:${i}})">${esc(d.title||('Day '+(i+1)))}</button>`).join('')}</div>`}
+function places(){const d=day();if(!d)return '<div class="empty">尚未建立天數</div>';return `<div class="day-title"><h3>${esc(d.title)} ${d.date?`<span class="hint">${esc(d.date)}</span>`:''}</h3></div>${d.items.length?d.items.map((it,idx)=>`<div class="item"><div class="item-top"><div class="time">${esc(it.time||'--:--')}</div><div style="flex:1"><div class="name">${esc(it.name)}</div>${it.addr?`<div class="meta">📍 ${esc(it.addr)}</div>`:''}${it.note?`<div class="meta">📝 ${esc(it.note)}</div>`:''}</div></div><div class="actions"><button class="btn mini" onclick="openPlace('${it.id}')">修改</button><button class="btn mini" onclick="movePlace(${idx},-1)">上移</button><button class="btn mini" onclick="movePlace(${idx},1)">下移</button><button class="btn mini danger" onclick="delPlace('${it.id}')">刪除</button></div></div>`).join(''):'<div class="empty">這天還沒有行程，按「新增行程」開始。</div>'}`}
+function memos(){if(!S.memos.length)return '<div class="empty">還沒有備忘，按「新增備忘」開始。</div>';const cats=[...new Set(S.memos.map(m=>m.cat||'備忘'))];return cats.map(cat=>`<div style="margin-bottom:14px"><div class="tag">${esc(cat)}</div>${S.memos.filter(m=>(m.cat||'備忘')===cat).map(m=>`<div class="item memo-item ${m.done?'done':''}"><div class="memo-top"><div class="check ${m.done?'on':''}" onclick="toggleMemo('${m.id}')">${m.done?'✓':''}</div><div style="flex:1"><div class="memo-text">${esc(m.text)}</div><div class="hint">更新：${new Date(m.updatedAt||Date.now()).toLocaleString('zh-TW')}</div></div></div><div class="actions"><button class="btn mini" onclick="openMemo('${m.id}')">修改</button><button class="btn mini danger" onclick="delMemo('${m.id}')">刪除</button></div></div>`).join('')}</div>`).join('')}
+function modal(){if(!S.modal)return '';const m=S.modal;if(m.t==='memo'){const old=S.memos.find(x=>x.id===m.id)||{};return sheet(m.id?'修改備忘':'新增備忘',`<div class="field"><label>分類</label><select id="memoCat"><option>行前</option><option>購物</option><option>交通</option><option>住宿</option><option>美食</option><option>其他</option></select></div><div class="field"><label>備忘內容</label><textarea id="memoText" placeholder="例如：買藥妝、確認餐廳訂位、帶護照...">${esc(old.text||'')}</textarea></div><button class="btn primary" onclick="saveMemo('${m.id||''}')">儲存備忘</button>`)}
+if(m.t==='place'){const old=(day().items||[]).find(x=>x.id===m.id)||{};return sheet(m.id?'修改行程':'新增行程',`<div class="row"><div class="field"><label>時間</label><input id="pTime" type="time" value="${esc(old.time||'')}"></div><div class="field"><label>地點名稱</label><input id="pName" value="${esc(old.name||'')}"></div></div><div class="field"><label>地址</label><input id="pAddr" value="${esc(old.addr||'')}"></div><div class="field"><label>備註</label><textarea id="pNote">${esc(old.note||'')}</textarea></div><button class="btn primary" onclick="savePlace('${m.id||''}')">儲存行程</button>`)}
+if(m.t==='day'){const d=day();return sheet('修改天數',`<div class="field"><label>標題</label><input id="dTitle" value="${esc(d.title)}"></div><div class="field"><label>日期</label><input id="dDate" type="date" value="${esc(d.date||'')}"></div><button class="btn primary" onclick="saveDay()">儲存</button><button class="btn danger" onclick="delDay()" style="margin-left:8px">刪除此天</button>`)}
+if(m.t==='export'){return sheet('匯出 / 匯入資料',`<div class="field"><label>JSON 資料</label><textarea id="jsonData" class="jsonbox">${esc(JSON.stringify(S,null,2))}</textarea></div><button class="btn primary" onclick="importData()">匯入覆蓋</button><button class="btn" onclick="copyData()">複製資料</button><p class="hint">資料預設存在此瀏覽器 localStorage。換手機或清除瀏覽器資料前，建議先匯出 JSON。</p>`)}return ''}
+function sheet(title,body){return `<div class="modal"><div class="sheet"><div class="sheet-hd"><h2>${title}</h2><button class="close" onclick="set({modal:null})">×</button></div>${body}</div></div>`}
+function renameTrip(v){set({title:(v||'我的旅遊規劃').trim()})}
+function openMemo(id=''){set({modal:{t:'memo',id}});setTimeout(()=>{const m=S.memos.find(x=>x.id===id);if(m)document.getElementById('memoCat').value=m.cat||'其他'},0)}
+function saveMemo(id){const text=document.getElementById('memoText').value.trim();if(!text)return alert('請輸入備忘內容');const cat=document.getElementById('memoCat').value;if(id){S.memos=S.memos.map(m=>m.id===id?{...m,cat,text,updatedAt:Date.now()}:m)}else{S.memos.unshift({id:uid(),cat,text,done:false,updatedAt:Date.now()})}set({modal:null})}
+function toggleMemo(id){S.memos=S.memos.map(m=>m.id===id?{...m,done:!m.done,updatedAt:Date.now()}:m);set({})}
+function delMemo(id){if(confirm('確定刪除此備忘？')){S.memos=S.memos.filter(m=>m.id!==id);set({})}}
+function openPlace(id=''){set({modal:{t:'place',id}})}
+function savePlace(id){const item={id:id||uid(),time:val('pTime'),name:val('pName')||'未命名地點',addr:val('pAddr'),note:val('pNote')};const d=day();d.items=id?d.items.map(x=>x.id===id?item:x):[...d.items,item];d.items.sort((a,b)=>(a.time||'99:99').localeCompare(b.time||'99:99'));set({modal:null})}
+function delPlace(id){if(confirm('確定刪除此行程？')){day().items=day().items.filter(x=>x.id!==id);set({})}}
+function movePlace(i,dir){const a=day().items,j=i+dir;if(j<0||j>=a.length)return;[a[i],a[j]]=[a[j],a[i]];set({})}
+function addDay(){S.days.push({id:uid(),title:'Day '+(S.days.length+1),date:'',items:[]});set({active:S.days.length-1})}
+function editDay(){set({modal:{t:'day'}})}
+function saveDay(){const d=day();d.title=val('dTitle')||d.title;d.date=val('dDate');set({modal:null})}
+function delDay(){if(S.days.length<2)return alert('至少要保留一天');if(confirm('確定刪除此天與其中行程？')){S.days.splice(S.active,1);S.active=Math.max(0,S.active-1);set({modal:null})}}
+function openExport(){set({modal:{t:'export'}})}
+function importData(){try{const data=JSON.parse(document.getElementById('jsonData').value);S=data;save();render()}catch(e){alert('JSON 格式錯誤')}}
+function copyData(){navigator.clipboard.writeText(document.getElementById('jsonData').value);alert('已複製')}
+function val(id){return document.getElementById(id).value.trim()}
+render();
+</script>
+</body>
+</html>
