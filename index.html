@@ -163,15 +163,15 @@ input:focus,select:focus,textarea:focus{border-color:#42a787;box-shadow:0 0 0 3p
 .tmpl-btn{padding:8px 13px;border-radius:12px;font-size:13px;font-weight:700;cursor:pointer;border:1px solid rgba(0,0,0,.06);display:inline-flex;align-items:center;gap:6px;white-space:nowrap;transition:opacity .15s,transform .1s}
 .tmpl-btn:active{transform:scale(.97)}
 /* sort controls in the left time column */
-.loc-sort-ctrl{display:inline-flex;gap:0;align-items:center;z-index:2;background:rgba(15,94,94,.06);border:1px solid rgba(15,94,94,.12);border-radius:999px;overflow:hidden;transition:background .15s,border-color .15s;box-shadow:0 3px 10px rgba(31,59,53,.05);}
-.loc-sort-ctrl:hover{background:rgba(15,94,94,.1);border-color:rgba(15,94,94,.18);}
+.loc-sort-ctrl{display:inline-flex;align-items:center;justify-content:center;z-index:2;width:26px;height:26px;background:rgba(15,94,94,.07);border:1px solid rgba(15,94,94,.14);border-radius:999px;overflow:hidden;transition:background .15s,border-color .15s,transform .12s;box-shadow:0 3px 10px rgba(31,59,53,.05);}
+.loc-sort-ctrl:hover{background:rgba(15,94,94,.12);border-color:rgba(15,94,94,.22);transform:translateY(-1px);}
 .loc-sort-ctrl.sort-below{margin-top:0;}
-.sort-btn{width:24px;height:24px;border-radius:0;display:flex;align-items:center;justify-content:center;font-size:12px;cursor:pointer;border:none;background:transparent;color:#8ea09b;padding:0;user-select:none;-webkit-user-select:none;flex-shrink:0;transition:background .12s,color .12s;}
+.sort-btn{width:24px;height:24px;border-radius:999px;display:flex;align-items:center;justify-content:center;font-size:12px;cursor:pointer;border:none;background:transparent;color:#8ea09b;padding:0;user-select:none;-webkit-user-select:none;flex-shrink:0;transition:background .12s,color .12s;}
 .sort-btn:hover:not([disabled]){background:rgba(15,94,94,.13);color:#0f5e5e;}
 .sort-btn:active:not([disabled]){background:rgba(15,94,94,.22);}
 .sort-btn[disabled]{opacity:.25;cursor:not-allowed;}
 .sort-btn:disabled{opacity:.2;cursor:not-allowed}
-.sort-grip{cursor:grab;color:#7f928d;letter-spacing:-.5px;touch-action:none;font-size:16px}
+.sort-grip{cursor:grab;color:#6f8580;letter-spacing:-.5px;touch-action:none;font-size:16px}
 .sort-grip:active{cursor:grabbing;color:#42a787}
 /* icon action buttons */
 .act-row{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-top:8px}
@@ -594,7 +594,7 @@ function settle(exps,tvls){
   while(cr.length&&de.length){const c=cr[0],d=de[0],am=Math.min(c.v,d.v);if(am>0.01)tx.push({from:d.n,to:c.n,amount:Math.round(am)});c.v-=am;d.v-=am;if(c.v<0.01)cr.shift();if(d.v<0.01)de.shift();}
   return{b,tx};
 }
-let S={tripName:'2026 旅遊計畫',cover:COVERS[0][1],coverPos:'30%',budget:0,settleCurrency:'TWD',days:[{id:'d1',title:'第一天',date:'',locations:[]}],travelers:['旅伴A','旅伴B'],travelerIcons:{旅伴A:'🙂',旅伴B:'😎'},expenses:[],memo:[],view:'itinerary',dayIdx:0,modal:null,editTN:false,tnDraft:'',wishlist:[],wlFabOpen:false,travelerMeta:{},tvExpanded:''};
+let S={tripName:'2026 旅遊計畫',cover:COVERS[0][1],coverPos:'30%',budget:0,settleCurrency:'TWD',days:[{id:'d1',title:'第一天',date:'',locations:[]}],travelers:['旅伴A','旅伴B'],travelerIcons:{旅伴A:'🙂',旅伴B:'😎'},expenses:[],memo:[],view:'itinerary',dayIdx:0,modal:null,editTN:false,tnDraft:'',wishlist:[],wlFabOpen:false,travelerMeta:{},tvExpanded:'',sortMode:false};
 let FM={};
 let cloud={ready:false,doc:null,tripId:null,applying:false,status:'單機儲存'};
 function loadScript(src){
@@ -757,7 +757,7 @@ function itin(day,si){
     // Map uses name + address for better Google Maps accuracy
     const mapQuery=l.address?`${l.name} ${l.address}`:l.name;
     const mapBtns=l.address||l.name?`<a href="${mu(mapQuery)}" target="_blank" rel="noopener"><button class="btn bp" style="font-size:12px;min-height:30px;padding:5px 10px;">地圖</button></a><a href="${nu(l.address||l.name)}" target="_blank" rel="noopener"><button class="btn ba" style="font-size:12px;min-height:30px;padding:5px 10px;">導航</button></a>`:'';
-    const sortBtns=`<div class="loc-sort-ctrl${isNow?' sort-below':''}"><button class="sort-btn sort-grip" title="拖曳" onpointerdown="startTouchDrag(event,'${day.id}','${l.id}')">⠿</button><button class="sort-btn" title="上移" onclick="mvLoc('${day.id}','${l.id}',-1)" ${i===0?'disabled':''}>↑</button><button class="sort-btn" title="下移" onclick="mvLoc('${day.id}','${l.id}',1)" ${i===day.locations.length-1?'disabled':''}>↓</button></div>`;
+    const sortBtns=S.sortMode?`<div class="loc-sort-ctrl${isNow?' sort-below':''}"><button class="sort-btn sort-grip" title="拖曳排序" aria-label="拖曳排序" onpointerdown="startTouchDrag(event,'${day.id}','${l.id}')">⠿</button></div>`:'';
     return`<div class="loc-card-wrap${isNow?' loc-now':''}" data-locid="${l.id}" data-dayid="${day.id}" ondragover="dragOver(event)" ondragleave="dragLeave(event)" ondrop="dragDrop(event,'${day.id}','${l.id}')" ondragend="dragEnd()" oncontextmenu="locActionSheet(event,'${day.id}','${l.id}');return false;" data-lpress-t="" ontouchstart="_lpStart(event,'${day.id}','${l.id}')" ontouchend="_lpCancel()" ontouchmove="_lpCancel()"><div class="card" style="border-left-color:${isNow?catBg:borderColor};border-left-width:${isNow?'5':'3'}px;${isNow?`--now-bg:${catLight};`:''}">${nowBar}<div class="loc-wrap"><div class="loc-time">${sortBtns}<span class="loc-time-text" style="${isNow?`color:${catDark};font-weight:900;`:''}">${esc(l.time||'--:--')}</span></div><div class="loc-body"><div class="loc-name">${esc(l.name)} ${badge}${resBadge}${nowBadge}</div>${l.address?`<div class="loc-addr">${esc(l.address)}</div>`:''}${phoneEl}${notesEl}<div class="act-row">${mapBtns}<button class="btn-ic" title="編輯" onclick="_heroOrigin=this.getBoundingClientRect();oLoc('${l.id}')">✏️</button><button class="btn-ic br" title="刪除" onclick="locDeleteConfirm('${day.id}','${l.id}')">🗑️</button></div></div></div></div></div>`;
   }).join('');
   const quickItems=[...TMPL.map((t,i)=>`<button class="quick-item" onclick="S.quickOpen=false;_heroOrigin=this.getBoundingClientRect();oLoc('',${i})"><span style="background:${CB[t.cat]};color:${CF[t.cat]};border-radius:8px;padding:2px 7px;font-size:12px;font-weight:800;">${CE[t.cat]} ${t.cat}</span> ${esc(t.name)}</button>`),`<hr style="border:none;border-top:1px solid var(--line);margin:3px 0;"><button class="quick-item" style="color:#5b3fc4;font-weight:900;" onclick="S.quickOpen=false;openModal(this,{t:'import'})">✨ AI 匯入行程</button>`].join('');
@@ -777,7 +777,7 @@ function itin(day,si){
   }
   // Store detail for sheet
   if(weatherDetail)window['_wx_'+day.id]=weatherDetail;
-  return`<div class="day-tabs">${tabs}<button class="dtab dtab-add" onclick="FM={title:'第${nd}天',date:'',city:''};openModal(this,{t:'nd'})">+ 新增</button></div><div class="section-head"><div class="section-title-wrap"><div class="section-title">${esc(day.title)}</div>${(day.date||weatherBadge)?`<div class="section-meta">${day.date?`<span class="section-meta-date">📅 ${day.date}</span>`:''}${weatherBadge}</div>`:''}</div><div class="section-actions"><div class="action-group primary"><button class="btn" title="跳到現在" onclick="jumpToNow()">🕐</button><div class="quick-holder mobile-fab-replaced"><button class="btn" style="background:#f0faf5;border-color:#9fe1cb;color:#085041;font-weight:800;white-space:nowrap;" onclick="toggleQuickMenu(this)">＋ 快速新增</button>${quickMenu}</div></div><div class="action-group manage"><button class="btn" onclick="FM={title:\'${esc(day.title)}\',date:\'${esc(day.date||'')}\',city:\'${esc(day.city||'')}\'}; openModal(this,{t:\'ed\',dayId:\'${day.id}\'})">編輯</button>${S.days.length>1?`<button class="btn br" onclick="dDay(\'${day.id}\')">刪除</button>`:''}</div></div></div>${locs}<button class="add-btn mobile-fab-replaced" onclick="_heroOrigin=this.getBoundingClientRect();oLoc('')">＋ 新增地點</button>`;
+  return`<div class="day-tabs">${tabs}<button class="dtab dtab-add" onclick="FM={title:'第${nd}天',date:'',city:''};openModal(this,{t:'nd'})">+ 新增</button></div><div class="section-head"><div class="section-title-wrap"><div class="section-title">${esc(day.title)}</div>${(day.date||weatherBadge)?`<div class="section-meta">${day.date?`<span class="section-meta-date">📅 ${day.date}</span>`:''}${weatherBadge}</div>`:''}</div><div class="section-actions"><div class="action-group primary"><button class="btn" title="跳到現在" onclick="jumpToNow()">🕐</button><button class="btn" title="排序行程" style="${S.sortMode?'background:#183b40;border-color:#183b40;color:#fff;':''}" onclick="setU({sortMode:!S.sortMode})">${S.sortMode?'完成':'排序'}</button><div class="quick-holder mobile-fab-replaced"><button class="btn" style="background:#f0faf5;border-color:#9fe1cb;color:#085041;font-weight:800;white-space:nowrap;" onclick="toggleQuickMenu(this)">＋ 快速新增</button>${quickMenu}</div></div><div class="action-group manage"><button class="btn" onclick="FM={title:\'${esc(day.title)}\',date:\'${esc(day.date||'')}\',city:\'${esc(day.city||'')}\'}; openModal(this,{t:\'ed\',dayId:\'${day.id}\'})">編輯</button>${S.days.length>1?`<button class="btn br" onclick="dDay(\'${day.id}\')">刪除</button>`:''}</div></div></div>${locs}<button class="add-btn mobile-fab-replaced" onclick="_heroOrigin=this.getBoundingClientRect();oLoc('')">＋ 新增地點</button>`;
 }
 function exps(te){
   const cs=CATS.map(c=>({c,t:S.expenses.filter(e=>e.category===c).reduce((s,e)=>s+expValue(e),0)})).filter(x=>x.t>0);
@@ -2211,6 +2211,7 @@ function setU(u){
     document.getElementById('_wxBackdrop')?.remove();
     S.quickOpen=false;
     S.wlFabOpen=false;
+    S.sortMode=false;
     u={...u,modal:null}; // clear modal state on tab switch
   }
 
