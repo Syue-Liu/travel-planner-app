@@ -727,7 +727,7 @@ function hdr(te){
 function saveTN(){const v=document.getElementById('tn-in')?.value?.trim()||S.tnDraft.trim()||'未命名旅程';setD({tripName:v,editTN:false});}
 function gnav(){
   const ts=[['memo','📝 備忘'],['itinerary','🗺 行程'],['wishlist','🌟 清單'],['expenses','💰 記帳'],['split','⚖ 分帳']];
-  return`<nav class="nav">${ts.map(([k,l])=>`<button class="nav-btn${S.view===k?' on':''}" onclick="setU({view:'${k}'})">${l}</button>`).join('')}</nav>`;
+  return`<nav class="nav">${ts.map(([k,l])=>`<button class="nav-btn${S.view===k?' on':''}" onclick="switchTab('${k}')">${l}</button>`).join('')}</nav>`;
 }
 function itin(day,si){
   if(!day)return'';
@@ -2243,6 +2243,14 @@ function setU(u){
   if(S.modal && !document.getElementById('_heroCard') && !document.getElementById('_sheetWrap')){
     _mountModalOverlay();
   }
+}
+
+function switchTab(view){
+  if(view==='itinerary'){
+    jumpToNow();
+    return;
+  }
+  setU({view});
 }
 
 
