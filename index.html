@@ -1045,11 +1045,31 @@ function oExp(expId,opts={}){
   else FM={item:'',amount:'',currency:'TWD',category:'',paidBy:'',expenseMode:'personal',splitMode:'equal',shares:{},splitWith:[]};
   setU({modal:{t:'exp',expId:expId||null,ocr:!!opts.ocr}});
 }
+function locTimeMins(loc){
+  const t=String(loc?.time||'').trim();
+  const m=t.match(/^(\d{1,2}):(\d{2})$/);
+  if(!m)return null;
+  const h=Number(m[1]),mi=Number(m[2]);
+  if(h<0||h>23||mi<0||mi>59)return null;
+  return h*60+mi;
+}
+function sortLocationsByTime(locs){
+  return [...(locs||[])]
+    .map((loc,idx)=>({loc,idx,mins:locTimeMins(loc)}))
+    .sort((a,b)=>{
+      if(a.mins==null&&b.mins==null)return a.idx-b.idx;
+      if(a.mins==null)return 1;
+      if(b.mins==null)return -1;
+      return a.mins-b.mins||a.idx-b.idx;
+    })
+    .map(x=>x.loc);
+}
 function sLoc(){
   if(!FM.name?.trim()){alert('請輸入地點名稱');return;}
   const si=Math.min(S.dayIdx,S.days.length-1),days=JSON.parse(JSON.stringify(S.days)),day=days[si];
   if(S.modal.locId){const i=day.locations.findIndex(l=>l.id===S.modal.locId);day.locations[i]={...day.locations[i],...FM};}
   else day.locations.push({id:uid(),...FM});
+  if(FM.time)day.locations=sortLocationsByTime(day.locations);
   setD({days,modal:null});
 }
 function sDay(){
@@ -1266,7 +1286,7 @@ function parseAI(text){
     const cat=category||ac(`${name} ${notes} ${address}`);
     cur.locations.push({id:uid(),name,time,address,phone,notes,category:cat,reservation:''});
   }
-  return days.filter(d=>d.locations.length>0||days.length===1);
+  return days.map(d=>({...d,locations:sortLocationsByTime(d.locations)})).filter(d=>d.locations.length>0||days.length===1);
 }
 let _importDays=null;
 function onImportInput(){
