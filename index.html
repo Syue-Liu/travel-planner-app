@@ -163,7 +163,7 @@ input:focus,select:focus,textarea:focus{border-color:#42a787;box-shadow:0 0 0 3p
 .tmpl-btn{padding:8px 13px;border-radius:12px;font-size:13px;font-weight:700;cursor:pointer;border:1px solid rgba(0,0,0,.06);display:inline-flex;align-items:center;gap:6px;white-space:nowrap;transition:opacity .15s,transform .1s}
 .tmpl-btn:active{transform:scale(.97)}
 /* sort controls in the left time column */
-.loc-sort-ctrl{display:inline-flex;align-items:center;justify-content:center;z-index:2;width:26px;height:26px;background:rgba(15,94,94,.07);border:1px solid rgba(15,94,94,.14);border-radius:999px;overflow:hidden;transition:background .15s,border-color .15s,transform .12s;box-shadow:0 3px 10px rgba(31,59,53,.05);}
+.loc-sort-ctrl{display:inline-flex;align-items:center;justify-content:center;z-index:2;width:auto;height:26px;background:rgba(15,94,94,.07);border:1px solid rgba(15,94,94,.14);border-radius:999px;overflow:hidden;transition:background .15s,border-color .15s,transform .12s;box-shadow:0 3px 10px rgba(31,59,53,.05);}
 .loc-sort-ctrl:hover{background:rgba(15,94,94,.12);border-color:rgba(15,94,94,.22);transform:translateY(-1px);}
 .loc-sort-ctrl.sort-below{margin-top:0;}
 .sort-btn{width:24px;height:24px;border-radius:999px;display:flex;align-items:center;justify-content:center;font-size:12px;cursor:pointer;border:none;background:transparent;color:#8ea09b;padding:0;user-select:none;-webkit-user-select:none;flex-shrink:0;transition:background .12s,color .12s;}
@@ -757,7 +757,7 @@ function itin(day,si){
     // Map uses name + address for better Google Maps accuracy
     const mapQuery=l.address?`${l.name} ${l.address}`:l.name;
     const mapBtns=l.address||l.name?`<a href="${mu(mapQuery)}" target="_blank" rel="noopener"><button class="btn bp" style="font-size:12px;min-height:30px;padding:5px 10px;">地圖</button></a><a href="${nu(l.address||l.name)}" target="_blank" rel="noopener"><button class="btn ba" style="font-size:12px;min-height:30px;padding:5px 10px;">導航</button></a>`:'';
-    const sortBtns=S.sortMode?`<div class="loc-sort-ctrl${isNow?' sort-below':''}"><button class="sort-btn sort-grip" title="拖曳排序" aria-label="拖曳排序" onpointerdown="startTouchDrag(event,'${day.id}','${l.id}')">⠿</button></div>`:'';
+    const sortBtns=S.sortMode?`<div class="loc-sort-ctrl${isNow?' sort-below':''}"><button class="sort-btn sort-grip" title="拖曳排序" aria-label="拖曳排序" onpointerdown="event.stopPropagation();startTouchDrag(event,'${day.id}','${l.id}')">⠿</button><button class="sort-btn" title="上移" aria-label="上移" onclick="event.stopPropagation();mvLoc('${day.id}','${l.id}',-1)" ${i===0?'disabled':''}>↑</button><button class="sort-btn" title="下移" aria-label="下移" onclick="event.stopPropagation();mvLoc('${day.id}','${l.id}',1)" ${i===day.locations.length-1?'disabled':''}>↓</button></div>`:'';
     return`<div class="loc-card-wrap${isNow?' loc-now':''}" data-locid="${l.id}" data-dayid="${day.id}" ondragover="dragOver(event)" ondragleave="dragLeave(event)" ondrop="dragDrop(event,'${day.id}','${l.id}')" ondragend="dragEnd()" oncontextmenu="locActionSheet(event,'${day.id}','${l.id}');return false;" data-lpress-t="" ontouchstart="_lpStart(event,'${day.id}','${l.id}')" ontouchend="_lpCancel()" ontouchmove="_lpCancel()"><div class="card" style="border-left-color:${isNow?catBg:borderColor};border-left-width:${isNow?'5':'3'}px;${isNow?`--now-bg:${catLight};`:''}">${nowBar}<div class="loc-wrap"><div class="loc-time">${sortBtns}<span class="loc-time-text" style="${isNow?`color:${catDark};font-weight:900;`:''}">${esc(l.time||'--:--')}</span></div><div class="loc-body"><div class="loc-name">${esc(l.name)} ${badge}${resBadge}${nowBadge}</div>${l.address?`<div class="loc-addr">${esc(l.address)}</div>`:''}${phoneEl}${notesEl}<div class="act-row">${mapBtns}<button class="btn-ic" title="編輯" onclick="_heroOrigin=this.getBoundingClientRect();oLoc('${l.id}')">✏️</button><button class="btn-ic br" title="刪除" onclick="locDeleteConfirm('${day.id}','${l.id}')">🗑️</button></div></div></div></div></div>`;
   }).join('');
   const quickItems=[...TMPL.map((t,i)=>`<button class="quick-item" onclick="S.quickOpen=false;_heroOrigin=this.getBoundingClientRect();oLoc('',${i})"><span style="background:${CB[t.cat]};color:${CF[t.cat]};border-radius:8px;padding:2px 7px;font-size:12px;font-weight:800;">${CE[t.cat]} ${t.cat}</span> ${esc(t.name)}</button>`),`<hr style="border:none;border-top:1px solid var(--line);margin:3px 0;"><button class="quick-item" style="color:#5b3fc4;font-weight:900;" onclick="S.quickOpen=false;openModal(this,{t:'import'})">✨ AI 匯入行程</button>`].join('');
@@ -1386,6 +1386,13 @@ function startTouchDrag(e,dayId,locId){
 function _onTouchMove(e){
   if(!_touchDrag.active)return;
   e.preventDefault();
+  const edge=86;
+  const maxStep=18;
+  if(e.clientY<edge){
+    window.scrollBy({top:-Math.max(4,Math.round((edge-e.clientY)/edge*maxStep)),behavior:'instant'});
+  }else if(e.clientY>window.innerHeight-edge){
+    window.scrollBy({top:Math.max(4,Math.round((e.clientY-(window.innerHeight-edge))/edge*maxStep)),behavior:'instant'});
+  }
   if(_touchDrag.ghost){_touchDrag.ghost.style.top=(e.clientY-40)+'px';_touchDrag.ghost.style.left=(e.clientX-80)+'px';}
   const el=document.elementFromPoint(e.clientX,e.clientY);
   const wrap=el?.closest?.('.loc-card-wrap');
