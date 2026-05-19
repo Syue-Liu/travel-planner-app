@@ -147,6 +147,8 @@ a{text-decoration:none}
 .split-person-head{display:flex;align-items:center;gap:10px}
 .split-avatar{width:44px;height:44px;border-radius:15px;background:#fff;display:flex;align-items:center;justify-content:center;font-size:24px;border:1px solid rgba(255,255,255,.8);box-shadow:0 4px 12px rgba(0,0,0,.06);flex-shrink:0}
 .split-name{font-size:15px;font-weight:900;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.split-name-row{display:flex;align-items:center;gap:6px;min-width:0}
+.split-bio-inline{font-size:11px;color:#596763;font-weight:800;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;opacity:.82}
 .split-role{font-size:11px;font-weight:900;color:var(--tv-fg,#0f5e5e);background:rgba(255,255,255,.72);border-radius:999px;padding:2px 8px;display:inline-flex;margin-top:3px;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .split-bio{font-size:12px;color:#596763;line-height:1.45;margin:8px 0 10px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 .split-metrics{display:grid;grid-template-columns:1fr 1fr;gap:7px}
@@ -877,7 +879,7 @@ function splt(b,tx,te){
       return`<div class="split-exp-mini"><div class="split-exp-line"><div class="split-exp-name">${CE[e.category]||'📌'} ${esc(e.item)}</div><div style="font-weight:900;">${fmt(expValue(e))}</div></div><div class="split-exp-meta">${isPayer?'我先付款':'我有分擔'}${share?` · 負擔 ${fmt(convertAmount(share,e.currency||'TWD',S.settleCurrency||'TWD'))}`:''}${e.paidBy?` · 付款人 ${esc(S.travelerIcons?.[e.paidBy]||'')} ${esc(e.paidBy)}`:''}</div></div>`;
     }).join('')}`:`<div class="split-detail-title">相關分帳明細</div><div class="mini">目前沒有共同分帳明細</div>`;
     return`<div class="split-person${open?' open':''}" style="--tv-bg:${c.bg};--tv-fg:${c.fg};--tv-ac:${c.accent};" onclick="toggleSplitPerson('${esc(t)}')">
-      <div class="split-person-head"><div class="split-avatar">${ic}</div><div style="min-width:0;flex:1;"><div class="split-name">${esc(t)}</div>${meta.role?`<div class="split-role">${esc(meta.role)}</div>`:''}</div><div class="split-toggle">⌄</div></div>
+      <div class="split-person-head"><div class="split-avatar">${ic}</div><div style="min-width:0;flex:1;"><div class="split-name-row"><div class="split-name">${esc(t)}</div>${meta.bio?`<div class="split-bio-inline">· ${esc(meta.bio)}</div>`:''}</div>${meta.role?`<div class="split-role">${esc(meta.role)}</div>`:''}</div><div class="split-toggle">⌄</div></div>
       <div class="split-balance ${pos?'receive':'pay'}">${pos?`+ ${fmt(Math.abs(v))} 應收`:`${fmt(Math.abs(v))} 應付`}</div>
       ${open?`<div class="split-detail">${meta.bio?`<div class="split-bio">💬 ${esc(meta.bio)}</div>`:''}<div class="split-metrics"><div class="split-metric"><div class="split-metric-n">${fmt(paid)}</div><div class="split-metric-l">共同分帳已付</div></div><div class="split-metric"><div class="split-metric-n">${count} / ${shared}</div><div class="split-metric-l">付款 / 分擔筆數</div></div></div>${detail}</div>`:''}
     </div>`;
