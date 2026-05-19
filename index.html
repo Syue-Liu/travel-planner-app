@@ -155,7 +155,10 @@ a{text-decoration:none}
 .mcl{cursor:pointer;color:var(--muted);font-size:22px;line-height:1;padding:4px 8px}
 .fg{margin-bottom:13px}
 .fl{font-size:13px;color:#53615d;margin-bottom:6px;display:block;font-weight:800}
-input,select,textarea{width:100%;border:1px solid var(--line);background:#fff;border-radius:12px;padding:11px 12px;color:var(--ink);outline:none}
+input,select,textarea{display:block;width:100%;max-width:100%;min-width:0;border:1px solid var(--line);background:#fff;border-radius:12px;padding:11px 12px;color:var(--ink);outline:none}
+select{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding-right:34px}
+input[type=date],input[type=time]{max-width:100%;min-width:0;line-height:1.2}
+input[type=date]::-webkit-date-and-time-value,input[type=time]::-webkit-date-and-time-value{text-align:left}
 input:focus,select:focus,textarea:focus{border-color:#42a787;box-shadow:0 0 0 3px rgba(66,167,135,.15)}
 .sc{padding:8px 12px;border-radius:999px;font-size:13px;font-weight:800;cursor:pointer;border:1px solid var(--line);background:#fff;color:var(--muted);user-select:none}
 .sc.on{background:#0f5e5e;color:#fff;border-color:#0f5e5e}
@@ -252,14 +255,14 @@ input:focus,select:focus,textarea:focus{border-color:#42a787;box-shadow:0 0 0 3p
 }
 @media (max-width:640px){
   body{font-size:14px}
-  input,select,textarea{font-size:16px;min-width:0}
-  input[type=date],input[type=time]{text-align:left;min-height:54px}
+  input,select,textarea{font-size:16px;min-width:0;max-width:100%;width:100%}
+  input[type=date],input[type=time]{-webkit-appearance:none;appearance:none;text-align:left;min-height:54px;padding-left:12px;padding-right:12px}
   .cover{aspect-ratio:16/9;min-height:180px;max-height:280px}
   .hdr-title{font-size:22px}
   .topbar{display:flex;align-items:flex-start}
   .cover-menu{right:12px;top:54px;left:auto;max-height:calc(100vh - 80px);overflow-y:auto}
   .mobile-stack{grid-template-columns:1fr!important}
-  .mobile-stack > div{min-width:0}
+  .mobile-stack > div{min-width:0;max-width:100%;overflow:hidden}
   .mobile-stack input[type=time]{-webkit-appearance:none;appearance:none;text-align:left;min-height:54px}
   .section-head{display:grid;grid-template-columns:minmax(0,1fr);gap:10px;align-items:start}
   .section-title{font-size:19px;max-width:100%;word-break:keep-all;overflow-wrap:normal}
@@ -2057,10 +2060,11 @@ function wlOpenAddToDay(itemId, dayIdx, el){
 function mWlDay(){
   const item=wlItems().find(i=>i.id===S.modal.itemId);
   if(!item)return`<div class="mhd"><div class="mt">加入行程</div><div class="mcl" onclick="setU({modal:null})">✕</div></div><div class="empty">找不到清單項目</div>`;
-  const dayOpts=S.days.map((d,i)=>`<option value="${i}"${Number(FM.dayIdx)===i?' selected':''}>Day ${i+1} · ${esc(d.title)}</option>`).join('');
+  const dayOpts=S.days.map((d,i)=>`<option value="${i}"${Number(FM.dayIdx)===i?' selected':''}>Day ${i+1}</option>`).join('');
+  const selDay=S.days[Number(FM.dayIdx)||0]||S.days[0]||{};
   return`<div class="mhd"><div class="mt">加入行程</div><div class="mcl" onclick="setU({modal:null})">✕</div></div>
 <div class="fg"><label class="fl">清單地點</label><div class="mini" style="font-size:15px;color:var(--ink);font-weight:900;">${esc(item.name)}</div></div>
-<div class="fg"><label class="fl">加入哪一天</label><select onchange="FM.dayIdx=Number(this.value);FM.date=S.days[FM.dayIdx]?.date||FM.date;_refreshHeroContent()">${dayOpts}</select></div>
+<div class="fg"><label class="fl">加入哪一天</label><select onchange="FM.dayIdx=Number(this.value);FM.date=S.days[FM.dayIdx]?.date||FM.date;_refreshHeroContent()">${dayOpts}</select><div class="tip" style="margin-top:6px;">${esc(selDay.title||'')}</div></div>
 <div class="mobile-stack" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;"><div><label class="fl">日期</label><input type="date" value="${esc(FM.date||localDate())}" oninput="FM.date=this.value"></div><div><label class="fl">時間（選填）</label><input type="time" value="${esc(FM.time||'')}" oninput="FM.time=this.value"></div></div>
 <div class="tip">儲存後會自動加入 Day ${Number(FM.dayIdx)+1}，有填時間會依時間排序。</div>
 <div class="ar"><button class="btn bp" style="flex:1;padding:10px;" onclick="wlConfirmAddToDay()">加入行程</button><button class="btn" style="flex:1;padding:10px;" onclick="setU({modal:null})">取消</button></div>`;
