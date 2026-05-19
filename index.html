@@ -141,8 +141,10 @@ a{text-decoration:none}
 .brow2:last-child{border-bottom:none}
 .txn{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:8px;padding:13px;background:#fff8e8;border-radius:var(--r);margin-bottom:8px;border:1px solid #f4ce84}
 .split-people{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-bottom:10px}
-.split-person{background:linear-gradient(135deg,var(--tv-bg,#f7faf8),#fff);border:1.5px solid var(--tv-ac,#d9e2df);border-radius:16px;padding:12px;box-shadow:0 8px 24px rgba(31,59,53,.05)}
-.split-person-head{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.split-person{background:linear-gradient(135deg,var(--tv-bg,#f7faf8),#fff);border:1.5px solid var(--tv-ac,#d9e2df);border-radius:16px;padding:12px;box-shadow:0 8px 24px rgba(31,59,53,.05);cursor:pointer;transition:transform .12s,box-shadow .15s}
+.split-person:active{transform:scale(.99)}
+.split-person.open{box-shadow:0 12px 30px rgba(31,59,53,.1)}
+.split-person-head{display:flex;align-items:center;gap:10px}
 .split-avatar{width:44px;height:44px;border-radius:15px;background:#fff;display:flex;align-items:center;justify-content:center;font-size:24px;border:1px solid rgba(255,255,255,.8);box-shadow:0 4px 12px rgba(0,0,0,.06);flex-shrink:0}
 .split-name{font-size:15px;font-weight:900;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .split-role{font-size:11px;font-weight:900;color:var(--tv-fg,#0f5e5e);background:rgba(255,255,255,.72);border-radius:999px;padding:2px 8px;display:inline-flex;margin-top:3px;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -151,8 +153,16 @@ a{text-decoration:none}
 .split-metric{background:rgba(255,255,255,.72);border-radius:12px;padding:8px}
 .split-metric-n{font-size:14px;font-weight:900;color:var(--ink);word-break:break-word}
 .split-metric-l{font-size:10px;color:var(--muted);font-weight:800;margin-top:2px}
+.split-toggle{font-size:18px;color:var(--tv-fg,#0f5e5e);font-weight:900;line-height:1;transform:rotate(0deg);transition:transform .15s}
+.split-person.open .split-toggle{transform:rotate(180deg)}
 .split-balance{margin-top:10px;padding:9px 10px;border-radius:12px;font-size:13px;font-weight:900;text-align:center}
 .split-balance.receive{background:#e7f6f0;color:#0f6e56}.split-balance.pay{background:#fff0f2;color:#a52f49}
+.split-detail{margin-top:10px}
+.split-detail-title{font-size:11px;font-weight:900;color:var(--muted);margin:10px 0 6px}
+.split-exp-mini{background:rgba(255,255,255,.72);border:1px solid rgba(217,226,223,.7);border-radius:12px;padding:8px 10px;margin-bottom:6px}
+.split-exp-line{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:12px}
+.split-exp-name{font-weight:900;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.split-exp-meta{font-size:11px;color:var(--muted);margin-top:3px;line-height:1.45}
 .split-txn{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);align-items:center;gap:8px;padding:13px;background:#fff8e8;border-radius:var(--r);margin-bottom:8px;border:1px solid #f4ce84}
 .split-txn-person{display:flex;align-items:center;gap:7px;min-width:0;font-weight:900}
 .split-txn-person .split-avatar{width:30px;height:30px;border-radius:10px;font-size:17px}
@@ -853,19 +863,27 @@ function exps(te){
 function splt(b,tx,te){
   const sharedExpenses=S.expenses.filter(e=>!isPersonalExp(e));
   const personMini=t=>{const c=getTvColor(t),ic=S.travelerIcons?.[t]||'🙂';return`<div class="split-txn-person" style="--tv-bg:${c.bg};--tv-fg:${c.fg};--tv-ac:${c.accent};"><div class="split-avatar">${ic}</div><div class="split-txn-name">${esc(t)}</div></div>`;};
+  const personShare=(e,t)=>{
+    if(e.shares)return Number(e.shares[t]||0);
+    return (e.splitWith||[]).includes(t)?expValue(e)/Math.max(1,(e.splitWith||[]).length):0;
+  };
   const br=S.travelers.map(t=>{
     const v=b[t]||0,paid=sharedExpenses.filter(e=>e.paidBy===t).reduce((s,e)=>s+expValue(e),0),count=sharedExpenses.filter(e=>e.paidBy===t).length,shared=sharedExpenses.filter(e=>(e.splitWith||[]).includes(t)||e.shares?.[t]).length,pos=v>=0;
     const ic=S.travelerIcons?.[t]||'🙂',c=getTvColor(t),meta=(S.travelerMeta||{})[t]||{};
-    return`<div class="split-person" style="--tv-bg:${c.bg};--tv-fg:${c.fg};--tv-ac:${c.accent};">
-      <div class="split-person-head"><div class="split-avatar">${ic}</div><div style="min-width:0;flex:1;"><div class="split-name">${esc(t)}</div>${meta.role?`<div class="split-role">${esc(meta.role)}</div>`:''}</div></div>
-      ${meta.bio?`<div class="split-bio">💬 ${esc(meta.bio)}</div>`:''}
-      <div class="split-metrics"><div class="split-metric"><div class="split-metric-n">${fmt(paid)}</div><div class="split-metric-l">共同分帳已付</div></div><div class="split-metric"><div class="split-metric-n">${count} / ${shared}</div><div class="split-metric-l">付款 / 分擔筆數</div></div></div>
+    const open=S.splitExpanded===t;
+    const related=sharedExpenses.filter(e=>e.paidBy===t||personShare(e,t)>0);
+    const detail=related.length?`<div class="split-detail-title">相關分帳明細</div>${related.map(e=>{
+      const share=personShare(e,t),isPayer=e.paidBy===t;
+      return`<div class="split-exp-mini"><div class="split-exp-line"><div class="split-exp-name">${CE[e.category]||'📌'} ${esc(e.item)}</div><div style="font-weight:900;">${fmt(expValue(e))}</div></div><div class="split-exp-meta">${isPayer?'我先付款':'我有分擔'}${share?` · 負擔 ${fmt(convertAmount(share,e.currency||'TWD',S.settleCurrency||'TWD'))}`:''}${e.paidBy?` · 付款人 ${esc(S.travelerIcons?.[e.paidBy]||'')} ${esc(e.paidBy)}`:''}</div></div>`;
+    }).join('')}`:`<div class="split-detail-title">相關分帳明細</div><div class="mini">目前沒有共同分帳明細</div>`;
+    return`<div class="split-person${open?' open':''}" style="--tv-bg:${c.bg};--tv-fg:${c.fg};--tv-ac:${c.accent};" onclick="toggleSplitPerson('${esc(t)}')">
+      <div class="split-person-head"><div class="split-avatar">${ic}</div><div style="min-width:0;flex:1;"><div class="split-name">${esc(t)}</div>${meta.role?`<div class="split-role">${esc(meta.role)}</div>`:''}</div><div class="split-toggle">⌄</div></div>
       <div class="split-balance ${pos?'receive':'pay'}">${pos?`+ ${fmt(Math.abs(v))} 應收`:`${fmt(Math.abs(v))} 應付`}</div>
+      ${open?`<div class="split-detail">${meta.bio?`<div class="split-bio">💬 ${esc(meta.bio)}</div>`:''}<div class="split-metrics"><div class="split-metric"><div class="split-metric-n">${fmt(paid)}</div><div class="split-metric-l">共同分帳已付</div></div><div class="split-metric"><div class="split-metric-n">${count} / ${shared}</div><div class="split-metric-l">付款 / 分擔筆數</div></div></div>${detail}</div>`:''}
     </div>`;
   }).join('');
   const tc=tx.length?tx.map(t=>`<div class="split-txn">${personMini(t.from)}<div><div style="font-size:12px;color:#854F0B;font-weight:800;">轉帳給</div><div style="font-size:16px;font-weight:900;color:#633806;">${fmt(t.amount)}</div></div>${personMini(t.to)}</div>`).join(''):`<div style="text-align:center;padding:16px;color:var(--muted);font-size:14px;background:#fff;border-radius:var(--r);border:1px solid var(--line);">${sharedExpenses.length?'✅ 共同分帳已平衡！':'尚無共同分帳記錄'}</div>`;
-  const det=sharedExpenses.length?`<div class="sh">共同分帳明細</div>${sharedExpenses.map(e=>`<div class="card" style="padding:12px 14px;margin-bottom:8px;"><div style="display:flex;justify-content:space-between;gap:8px;margin-bottom:4px;"><div style="font-weight:900;">${CE[e.category]||'📌'} ${esc(e.item)}</div><div style="font-weight:900;">${fmt(expValue(e))}</div></div><div style="font-size:12px;color:var(--muted);margin-bottom:8px;"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${getTvColor(e.paidBy).accent};margin-right:5px;vertical-align:middle;"></span>${esc(S.travelerIcons?.[e.paidBy]||'')} ${esc(e.paidBy)} 先付款${e.shares?' · 自訂分擔':` · 每人 ${fmt(expValue(e)/(e.splitWith?.length||1))}`}</div><div style="display:flex;flex-wrap:wrap;gap:5px;">${(e.shares?Object.entries(e.shares).filter(([,v])=>Number(v)>0).map(([p,v])=>`${p}:${v}`):(e.splitWith||[]).map(p=>[p,null])).map(([p,v])=>`<span style="font-size:12px;padding:3px 9px;background:${p===e.paidBy?'#E1F5EE':'#f2f5f3'};color:${p===e.paidBy?'#085041':'#66736f'};border-radius:999px;border:1px solid ${p===e.paidBy?'#9FE1CB':'transparent'};">${esc(p)}${v?` ${fmt(convertAmount(v,e.currency||'TWD',S.settleCurrency||'TWD'))}`:''}${p===e.paidBy?' (付)':''}</span>`).join('')}</div></div>`).join('')}`:'';
-  return`<div class="sh">旅伴結算</div><div class="split-people">${br}</div><div class="sh">付款方式</div>${tc}${det}`;
+  return`<div class="sh">旅伴結算</div><div class="split-people">${br}</div><div class="sh">付款方式</div>${tc}`;
 }
 // buildModal defined below with note support
 function mTripGate(){
@@ -1015,6 +1033,10 @@ function _tvUpdatePreview(){
 function toggleTvExpand(name){
   S.tvExpanded=(S.tvExpanded===name)?'':name;
   _refreshHeroContent();
+}
+
+function toggleSplitPerson(name){
+  setU({splitExpanded:S.splitExpanded===name?'':name});
 }
 
 function editTvProfile(name){
