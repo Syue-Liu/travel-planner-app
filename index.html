@@ -13,8 +13,8 @@
   --shadow:0 18px 45px rgba(20,45,40,.14);--r:14px;
 }
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-html{background:#edf4f0;color:var(--ink);font-family:var(--font-sans);-webkit-text-size-adjust:100%}
-body{min-height:100vh;font-size:15px;line-height:1.45;background:linear-gradient(180deg,#edf4f0 0,#fff7eb 100%);color:var(--ink)}
+html{background:#edf4f0;color:var(--ink);font-family:var(--font-sans);-webkit-text-size-adjust:100%;overflow-x:hidden}
+body{min-height:100vh;font-size:15px;line-height:1.45;background:linear-gradient(180deg,#edf4f0 0,#fff7eb 100%);color:var(--ink);overflow-x:hidden}
 button,input,select,textarea{font:inherit}
 button{touch-action:manipulation}
 a{text-decoration:none}
@@ -41,6 +41,7 @@ a{text-decoration:none}
 .cover-actions{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
 .glass{background:rgba(255,255,255,.18);color:#fff;border:1px solid rgba(255,255,255,.26);backdrop-filter:blur(10px)}
 .cover-menu-wrap{position:relative;z-index:80;flex-shrink:0}
+.cover-menu-backdrop{position:fixed;inset:0;z-index:110;background:transparent}
 .hamb{width:46px;height:46px;border-radius:999px;border:1px solid rgba(255,255,255,.45);background:rgba(255,255,255,.16);backdrop-filter:blur(12px);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;cursor:pointer;box-shadow:0 12px 28px rgba(0,0,0,.16)}
 .hamb span{width:20px;height:2px;border-radius:99px;background:#fff;box-shadow:0 1px 5px rgba(0,0,0,.2)}
 .cover-menu{position:absolute;right:0;top:54px;z-index:120;min-width:190px;padding:8px;border-radius:18px;background:rgba(255,255,255,.94);backdrop-filter:blur(18px);border:1px solid rgba(255,255,255,.7);box-shadow:0 18px 44px rgba(18,38,35,.24)}
@@ -363,12 +364,13 @@ input:focus,select:focus,textarea:focus{border-color:#42a787;box-shadow:0 0 0 3p
   transition:background .36s ease,-webkit-backdrop-filter .36s ease,backdrop-filter .36s ease;}
 .hero-backdrop.open{background:rgba(0,0,0,.28);pointer-events:auto;
   -webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);}
-.hero-card{position:fixed;z-index:81;background:#fff;overflow:hidden;
+.hero-card{position:fixed;z-index:81;background:#fff;overflow:hidden;touch-action:pan-y;overscroll-behavior:contain;
   display:flex;flex-direction:column;will-change:top,left,width,height,border-radius;
   box-shadow:0 4px 20px rgba(0,0,0,.10);}
 .hero-card.animating{transition:top .42s cubic-bezier(.32,1.12,.58,1),left .42s cubic-bezier(.32,1.12,.58,1),width .42s cubic-bezier(.32,1.12,.58,1),height .42s cubic-bezier(.32,1.12,.58,1),border-radius .42s cubic-bezier(.32,1.12,.58,1),box-shadow .42s ease;}
 .hero-card.closing{transition:top .34s cubic-bezier(.4,0,.2,1),left .34s cubic-bezier(.4,0,.2,1),width .34s cubic-bezier(.4,0,.2,1),height .34s cubic-bezier(.4,0,.2,1),border-radius .34s cubic-bezier(.4,0,.2,1),box-shadow .34s ease;}
-.hero-body{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:20px 16px calc(18px + env(safe-area-inset-bottom));opacity:0;transition:opacity .18s ease .14s;}
+.hero-body{flex:1;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;touch-action:pan-y;padding:20px 16px calc(18px + env(safe-area-inset-bottom));opacity:0;transition:opacity .18s ease .14s;}
+.hero-body .msh{width:100%;max-width:100%;overflow-x:hidden}
 .hero-card.animating .hero-body{opacity:1;}
 .hero-card.closing .hero-body{opacity:0;transition:opacity .12s ease;}
 /* ════ SHEET modal (bottom slide-up) ════ */
@@ -742,9 +744,9 @@ function hdr(te){
   if(S.editTN)return`<header class="cover" style="--cover:url('${esc(S.cover)}')"><div class="topbar"></div><div class="cover-bottom"><div class="title-edit"><input class="tni" id="tn-in" value="${esc(S.tnDraft)}" placeholder="行程名稱" oninput="S.tnDraft=this.value" onkeydown="if(event.key==='Enter')saveTN()" autofocus><button class="btn glass" onclick="saveTN()">完成</button></div></div></header>${statsStrip}`;
   const coverStyle=`--cover:url('${esc(S.cover)}');--cover-pos:${S.coverPos||'30%'}`;
   if(S.editTN)return`<header class="cover" style="${coverStyle}"><div class="topbar"></div><div class="cover-bottom"><div class="title-edit"><input class="tni" id="tn-in" value="${esc(S.tnDraft)}" placeholder="行程名稱" oninput="S.tnDraft=this.value" onkeydown="if(event.key==='Enter')saveTN()" autofocus><button class="btn glass" onclick="saveTN()">完成</button></div></div></header>${statsStrip}`;
-  const menu=S.menuOpen?`<div class="cover-menu"><button onclick="copyShareLink();setU({menuOpen:false})"><span class="mi">🔗</span>分享連結</button><button onclick="openModal(this,{t:'tools'});S.menuOpen=false;"><span class="mi">☰</span>旅程工具</button><button onclick="openModal(this,{t:'cover'});S.menuOpen=false;"><span class="mi">📷</span>更換封面</button><button onclick="openModal(this,{t:'tv'});S.menuOpen=false;"><span class="mi">👥</span>旅伴管理</button><button onclick="openModal(this,{t:'help'});S.menuOpen=false;"><span class="mi">📖</span>使用說明</button></div>`:'';
+  const menu=S.menuOpen?`<div class="cover-menu-backdrop" onclick="setU({menuOpen:false})"></div><div class="cover-menu" onclick="event.stopPropagation()"><button onclick="copyShareLink();setU({menuOpen:false})"><span class="mi">🔗</span>分享連結</button><button onclick="S.menuOpen=false;openModal(this,{t:'tools'})"><span class="mi">☰</span>旅程工具</button><button onclick="S.menuOpen=false;openModal(this,{t:'cover'})"><span class="mi">📷</span>更換封面</button><button onclick="S.menuOpen=false;openModal(this,{t:'tv'})"><span class="mi">👥</span>旅伴管理</button><button onclick="S.menuOpen=false;openModal(this,{t:'help'})"><span class="mi">📖</span>使用說明</button></div>`:'';
   const syncChip=cloud.tripId?`<span class="hdr-sub-chip">🔗 ${esc(cloud.tripId)}</span><button class="hdr-sync-switch" title="切換同步代碼" aria-label="切換同步代碼" onclick="event.stopPropagation();openModal(this,{t:'tools'})">⇄</button>`:'';
-  return`<header class="cover" style="${coverStyle}"><div class="topbar"><div></div><div class="cover-menu-wrap"><button class="hamb" aria-label="開啟選單" onclick="setU({menuOpen:!S.menuOpen})"><span></span><span></span><span></span></button>${menu}</div></div><div class="cover-bottom"><div class="hdr-title" onclick="setU({editTN:true,tnDraft:'${esc(S.tripName)}'})"><span>${esc(S.tripName)}</span><span class="hdr-title-edit-icon">✏️</span></div><div class="hdr-sub"><span>${esc(cloud.status||'本機儲存')}</span>${syncChip}</div>${!cloud.ready?`<div class="sync-quick"><span style="font-size:14px;">🔗</span><input id="hdr-sync-inp" type="text" placeholder="輸入同步代碼，Enter 跳轉" autocomplete="off" autocapitalize="none" spellcheck="false" onkeydown="if(event.key==='Enter'){var v=this.value.trim();if(v){var el=document.getElementById('trip-code');if(el)el.value=v;else{S._quickCode=v;}switchTrip(false);}}"><button class="sync-quick-btn" onclick="var v=document.getElementById('hdr-sync-inp').value.trim();if(v){var el=document.getElementById('trip-code');if(el)el.value=v;switchTrip(false);}">跳轉</button></div>`:''}</div></header>${statsStrip}`;
+  return`<header class="cover" style="${coverStyle}"><div class="topbar"><div></div><div class="cover-menu-wrap"><button class="hamb" aria-label="開啟選單" onclick="event.stopPropagation();setU({menuOpen:!S.menuOpen})"><span></span><span></span><span></span></button>${menu}</div></div><div class="cover-bottom"><div class="hdr-title" onclick="setU({editTN:true,tnDraft:'${esc(S.tripName)}'})"><span>${esc(S.tripName)}</span><span class="hdr-title-edit-icon">✏️</span></div><div class="hdr-sub"><span>${esc(cloud.status||'本機儲存')}</span>${syncChip}</div>${!cloud.ready?`<div class="sync-quick"><span style="font-size:14px;">🔗</span><input id="hdr-sync-inp" type="text" placeholder="輸入同步代碼，Enter 跳轉" autocomplete="off" autocapitalize="none" spellcheck="false" onkeydown="if(event.key==='Enter'){var v=this.value.trim();if(v){var el=document.getElementById('trip-code');if(el)el.value=v;else{S._quickCode=v;}switchTrip(false);}}"><button class="sync-quick-btn" onclick="var v=document.getElementById('hdr-sync-inp').value.trim();if(v){var el=document.getElementById('trip-code');if(el)el.value=v;switchTrip(false);}">跳轉</button></div>`:''}</div></header>${statsStrip}`;
 }
 function saveTN(){const v=document.getElementById('tn-in')?.value?.trim()||S.tnDraft.trim()||'未命名旅程';setD({tripName:v,editTN:false});}
 function gnav(){
@@ -1662,7 +1664,7 @@ function showNote(locId){
   const l=S.days.flatMap(d=>d.locations).find(l=>l.id===locId);
   if(l){const el=document.querySelector(`[onclick*="showNoteSheet('${locId}'"]`);showNoteSheet(locId,l.name,el||document.body);}
 }
-function buildModal(){if(S.modal?.t==='wl_add')return buildWlAddModal();if(S.modal?.t==='wl_import')return buildWlImportModal();if(S.modal?.t==='wl_edit')return buildWlEditModal();if(S.modal?.t==='memo_add')return mMemoAdd();if(S.modal?.t==='memo_import')return buildMemoImportModal();
+function buildModal(){if(S.modal?.t==='wl_add')return buildWlAddModal();if(S.modal?.t==='wl_import')return buildWlImportModal();if(S.modal?.t==='wl_edit')return buildWlEditModal();if(S.modal?.t==='wl_day')return mWlDay();if(S.modal?.t==='memo_add')return mMemoAdd();if(S.modal?.t==='memo_import')return buildMemoImportModal();
   const m=S.modal;let c='';
   if(m.t==='tripGate')c=mTripGate();else if(m.t==='loc')c=mLoc();else if(m.t==='nd'||m.t==='ed')c=mDay();else if(m.t==='exp')c=mExp();else if(m.t==='tv')c=mTv();else if(m.t==='tvEdit')c=buildTvEditModal();else if(m.t==='cover')c=mCover();else if(m.t==='tools')c=mTools();else if(m.t==='import')c=mImport();else if(m.t==='note')c=mNote();else if(m.t==='help')c=mHelp();
   const lock=m.t==='tripGate';
@@ -1951,8 +1953,9 @@ function wlCardHtml(item){
   const bg=CB[appCat]||'#F1EFE8';
   const fg=CF[appCat]||'#444441';
   const badge=`<span class="wl-badge" style="background:${bg};color:${fg};">${catMeta.emoji} ${catMeta.label}</span>`;
-  const dayBtns=S.days.map((d,i)=>`<button class="wl-day-btn" onclick="wlAddToDay('${item.id}',${i})">➕ ${esc(d.title)}</button>`).join('');
-  const done=item.added?`<span style="font-size:11px;color:#aaa;padding:4px 0;">✅ 已加入行程</span>`:'';
+  const dayBtns=S.days.map((d,i)=>`<button class="wl-day-btn" title="${esc(d.title)}${d.date?` · ${esc(d.date)}`:''}" onclick="wlOpenAddToDay('${item.id}',${i},this)">➕ Day ${i+1}</button>`).join('');
+  const added=wlIsInItinerary(item);
+  const done=added?`<span style="font-size:11px;color:#aaa;padding:4px 0;">✅ 已加入行程</span>`:'';
   const gmQ=encodeURIComponent([item.name,item.address].filter(Boolean).join(' ').trim());
   const gmUrl=`https://www.google.com/maps/search/?api=1&query=${gmQ}`;
   const addrEl=item.address?`<div class="wl-card-note" style="display:flex;align-items:center;gap:6px;">
@@ -2034,16 +2037,49 @@ function wlDelete(id){
   setD({wishlist:wlItems().filter(i=>i.id!==id)});
 }
 
-function wlAddToDay(itemId, dayIdx){
+function wlIsInItinerary(item){
+  if(!item)return false;
+  return (S.days||[]).some(d=>(d.locations||[]).some(l=>{
+    if(l.sourceWishlistId&&l.sourceWishlistId===item.id)return true;
+    const sameName=String(l.name||'').trim()===String(item.name||'').trim();
+    const sameAddr=String(l.address||'').trim()&&String(l.address||'').trim()===String(item.address||'').trim();
+    const samePhone=String(l.phone||'').trim()&&String(l.phone||'').trim()===String(item.phone||'').trim();
+    return sameName&&(sameAddr||samePhone);
+  }));
+}
+function wlOpenAddToDay(itemId, dayIdx, el){
+  const item=wlItems().find(i=>i.id===itemId);
+  if(!item)return;
+  const day=S.days[dayIdx]||S.days[0];
+  FM={itemId,dayIdx,date:day?.date||localDate(),time:''};
+  openModal(el,{t:'wl_day',itemId,dayIdx});
+}
+function mWlDay(){
+  const item=wlItems().find(i=>i.id===S.modal.itemId);
+  if(!item)return`<div class="mhd"><div class="mt">加入行程</div><div class="mcl" onclick="setU({modal:null})">✕</div></div><div class="empty">找不到清單項目</div>`;
+  const dayOpts=S.days.map((d,i)=>`<option value="${i}"${Number(FM.dayIdx)===i?' selected':''}>Day ${i+1} · ${esc(d.title)}</option>`).join('');
+  return`<div class="mhd"><div class="mt">加入行程</div><div class="mcl" onclick="setU({modal:null})">✕</div></div>
+<div class="fg"><label class="fl">清單地點</label><div class="mini" style="font-size:15px;color:var(--ink);font-weight:900;">${esc(item.name)}</div></div>
+<div class="fg"><label class="fl">加入哪一天</label><select onchange="FM.dayIdx=Number(this.value);FM.date=S.days[FM.dayIdx]?.date||FM.date;_refreshHeroContent()">${dayOpts}</select></div>
+<div class="mobile-stack" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;"><div><label class="fl">日期</label><input type="date" value="${esc(FM.date||localDate())}" oninput="FM.date=this.value"></div><div><label class="fl">時間（選填）</label><input type="time" value="${esc(FM.time||'')}" oninput="FM.time=this.value"></div></div>
+<div class="tip">儲存後會自動加入 Day ${Number(FM.dayIdx)+1}，有填時間會依時間排序。</div>
+<div class="ar"><button class="btn bp" style="flex:1;padding:10px;" onclick="wlConfirmAddToDay()">加入行程</button><button class="btn" style="flex:1;padding:10px;" onclick="setU({modal:null})">取消</button></div>`;
+}
+function wlConfirmAddToDay(){
+  wlAddToDay(FM.itemId,Number(FM.dayIdx||0),FM.date||'',FM.time||'');
+}
+function wlAddToDay(itemId, dayIdx, date='', time=''){
   const item=wlItems().find(i=>i.id===itemId);
   if(!item)return;
   const days=JSON.parse(JSON.stringify(S.days));
   const day=days[dayIdx];
+  if(!day)return;
   const appCat=WL_CAT_MAP[item.cat]||'其他';
-  day.locations.push({id:uid(),name:item.name,address:item.address||'',phone:item.phone||'',time:'',notes:item.note||'',category:appCat,reservation:''});
-  // Mark as added
+  if(date)day.date=date;
+  day.locations.push({id:uid(),sourceWishlistId:item.id,name:item.name,address:item.address||'',phone:item.phone||'',time:time||'',notes:item.note||'',category:appCat,reservation:''});
+  if(time)day.locations=sortLocationsByTime(day.locations);
   const wishlist=wlItems().map(i=>i.id===itemId?{...i,added:true}:i);
-  setD({days,wishlist});
+  setD({days,wishlist,dayIdx,view:'itinerary',modal:null});
   // Toast
   const t=document.createElement('div');
   t.className='wl-toast';
@@ -2159,7 +2195,7 @@ function wlConfirmImport(){
 
 // ════ HERO & SHEET modal engine ════════════════════════
 // Hero modal types (large forms) — open from trigger element
-const HERO_TYPES=new Set(['loc','exp','nd','ed','wl_add','wl_import','wl_edit','import','tv','tvEdit','cover','tools','help','note','memo_add','memo_import','tripGate']);
+const HERO_TYPES=new Set(['loc','exp','nd','ed','wl_add','wl_import','wl_edit','wl_day','import','tv','tvEdit','cover','tools','help','note','memo_add','memo_import','tripGate']);
 // Sheet modal types (compact) — slide up from bottom
 const SHEET_TYPES=new Set([]);
 
@@ -2216,6 +2252,7 @@ function _getModalContent(m){
   else if(m.t==='wl_add')c=buildWlAddModal();
   else if(m.t==='wl_import')c=buildWlImportModal();
   else if(m.t==='wl_edit')c=buildWlEditModal();
+  else if(m.t==='wl_day')c=mWlDay();
   return c||null;
 }
 
@@ -2235,21 +2272,27 @@ function _mountHero(content, m){
   card.id='_heroCard'; card.className='hero-card';
   card.style.cssText=`top:${o.top}px;left:${o.left}px;width:${o.width}px;height:${o.height}px;border-radius:10px;`;
   // Wrap existing msh-style content in hero-body
-  card.innerHTML=`<div class="hero-body"><div class="msh" style="border-radius:0;padding:0;max-height:none;box-shadow:none;overflow:visible;">${content}</div></div>`;
+  card.innerHTML=`<div class="hero-body"><div class="msh" style="border-radius:0;padding:0;max-height:none;box-shadow:none;overflow-x:hidden;overflow-y:visible;">${content}</div></div>`;
   document.body.appendChild(card);
 
-  // Swipe down gesture
-  let ty0=0,cy0=0;
-  card.addEventListener('touchstart',e=>{ty0=e.touches[0].clientY;},{passive:true});
+  // Swipe down only from the modal header. Form content stays locked to vertical scroll.
+  let ty0=0,cy0=0,swipeHead=false;
+  card.addEventListener('touchstart',e=>{
+    swipeHead=!!e.target.closest('.mhd');
+    ty0=swipeHead?e.touches[0].clientY:0;
+    cy0=ty0;
+  },{passive:true});
   card.addEventListener('touchmove',e=>{
+    if(!swipeHead)return;
     cy0=e.touches[0].clientY;
     const dy=Math.max(0,cy0-ty0);
     if(dy>0){card.style.transition='none';card.style.transform=`translateY(${dy*.4}px) scale(${1-dy*.0006})`;bd.style.opacity=String(Math.max(0,1-dy/220));}
   },{passive:true});
   card.addEventListener('touchend',()=>{
+    if(!swipeHead){ty0=0;cy0=0;return;}
     card.style.transform=''; bd.style.opacity='';
     if(cy0-ty0>75)_closeHero(); else{card.style.transition='';card.classList.add('animating');}
-    ty0=0;cy0=0;
+    ty0=0;cy0=0;swipeHead=false;
   });
 
   card._origin=o;
