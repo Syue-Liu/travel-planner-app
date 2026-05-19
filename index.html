@@ -786,8 +786,9 @@ function exps(te){
   const bars=cs.length?`<div class="card" style="padding:14px;margin-bottom:10px;"><div style="font-size:13px;color:var(--muted);margin-bottom:10px;font-weight:900;">消費分類</div>${cs.map(({c,t})=>`<div class="bar-lb"><span>${CE[c]} ${c}</span><span style="font-weight:800;">${fmt(t)}</span></div><div class="bar-tr"><div style="height:100%;border-radius:999px;background:${CBr[c]};width:${te?Math.round(t/te*100):0}%;"></div></div>`).join('')}</div>`:'';
   const list=S.expenses.length?S.expenses.map(e=>{
     const personal=isPersonalExp(e);
-    const meta=personal?'純記帳':`${esc(e.paidBy||'未選付款人')} · ${e.shares?'自訂分擔':`${e.splitWith?.length||0}人分`}`;
-    return`<div class="card"><div class="exp-row"><div class="cat-ic" style="background:${CB[e.category]||'#F1EFE8'}">${CE[e.category]||'📌'}</div><div class="exp-inf"><div class="exp-nm">${esc(e.item)}</div><div class="exp-mt">${meta} · <span style="color:${CF[e.category]||'#444'};">${e.category||'其他'}</span>${e.currency&&e.currency!=='TWD'?` · ${esc(e.currency)} ${Number(e.amount||0).toLocaleString()}`:''}</div></div><div class="exp-rt"><div class="exp-am">${fmt(expValue(e))}</div><div class="brow" style="margin-top:7px;justify-content:flex-end;"><button class="btn" style="min-height:30px;padding:4px 8px;" onclick="_heroOrigin=this.getBoundingClientRect();oExp('${e.id}')">編輯</button><button class="btn br" style="min-height:30px;padding:4px 8px;" onclick="dExp('${e.id}')">刪</button></div></div></div></div>`;
+    const dt=formatExpenseDate(e.date);
+    const meta=(dt?`${dt} · `:'')+(personal?'純記帳':`${esc(e.paidBy||'未選付款人')} · ${e.shares?'自訂分擔':`${e.splitWith?.length||0}人分`}`);
+    return`<div class="card"><div class="exp-row"><div class="cat-ic" style="background:${CB[e.category]||'#F1EFE8'}">${CE[e.category]||'📌'}</div><div class="exp-inf"><div class="exp-nm">${esc(e.item)}</div><div class="exp-mt">${meta} · <span style="color:${CF[e.category]||'#444'};">${e.category||'其他'}</span>${e.currency&&e.currency!=='TWD'?` · ${esc(e.currency)} ${Number(e.amount||0).toLocaleString()}`:''}</div></div><div class="exp-rt"><div class="exp-am">${fmt(expValue(e))}</div><div class="brow" style="margin-top:7px;justify-content:flex-end;"><button class="btn" style="min-height:30px;padding:4px 8px;" onclick="_heroOrigin=this.getBoundingClientRect();oExp('${e.id}')">編輯</button></div></div></div></div>`;
   }).join(''):`<div class="empty"><div style="font-size:30px;margin-bottom:8px;">💰</div>尚無記帳記錄</div>`;
   return`<div class="tool-row"><button class="btn bp mobile-fab-replaced" onclick="_heroOrigin=this.getBoundingClientRect();oExp('')">新增記帳</button><button class="btn" onclick="setU({modal:{t:'tools'}})">預算 / 匯出</button></div><div class="stats"><div class="stat"><div class="stat-n">${fmt(te)}</div><div class="stat-l">總花費</div></div><div class="stat"><div class="stat-n">${S.travelers.length?fmt(te/S.travelers.length):'-'}</div><div class="stat-l">人均</div></div></div>${bud}${bars}${list}<button class="add-btn mobile-fab-replaced" onclick="oExp('')">+ 新增記帳</button>`;
 }
@@ -853,12 +854,13 @@ function mExp(){
   return`<div class="mhd"><div class="mt">${S.modal.ocr?'AI 收據記帳':(S.modal.expId?'編輯記帳':'新增記帳')}</div><div class="mcl" onclick="setU({modal:null})">✕</div></div>
 ${S.modal.ocr?`<div class="receipt-box"><label class="fl">AI 收據記帳</label><input type="file" accept="image/*" onchange="readReceipt(this.files?.[0])"><div id="ocr-status" class="mini">上傳收據照片後，會嘗試辨識品項、金額並自動分類。</div></div>`:''}
 <div class="fg"><label class="fl">記帳模式</label><div class="scs"><span class="sc${personal?' on':''}" onclick="FM.expenseMode='personal';FM.paidBy='';FM.splitWith=[];FM.shares={};_refreshHeroContent()">純記帳</span><span class="sc${!personal?' on':''}" onclick="FM.expenseMode='shared';FM.splitWith=FM.splitWith?.length?FM.splitWith:[...S.travelers];_refreshHeroContent()">共同分帳</span></div><div class="tip">${personal?'只記錄花費，不會進入分帳計算。':'用於多人旅行，需選擇誰付款與分攤方式。'}</div></div>
+<div class="fg"><label class="fl">日期</label><input type="date" value="${esc(FM.date||localDate())}" oninput="FM.date=this.value"></div>
 <div class="fg"><label class="fl">品項 *</label><input id="exp-item" type="text" value="${esc(FM.item||'')}" placeholder="例：車票、晚餐、飯店..." oninput="FM.item=this.value;updAH()">${ah}</div>
 <div class="mobile-stack" style="display:grid;grid-template-columns:2fr 1fr;gap:8px;margin-bottom:12px;"><div><label class="fl">金額 *</label><input type="number" inputmode="decimal" value="${FM.amount||''}" placeholder="0" oninput="FM.amount=this.value"></div><div><label class="fl">幣別</label><select onchange="FM.currency=this.value">${curOpts}</select></div></div>
 <div class="mobile-stack" style="display:grid;grid-template-columns:${personal?'1fr':'1fr 1fr'};gap:8px;margin-bottom:12px;"><div><label class="fl">分類</label><select id="exp-cat" onchange="FM.category=this.value"><option value="">自動偵測</option>${cOpts}</select></div>${personal?'':`<div><label class="fl">誰付款 *</label><select onchange="FM.paidBy=this.value">${tOpts}</select></div>`}</div>
 ${personal?'':`<div class="fg"><label class="fl">分帳方式</label><div class="scs"><span class="sc${!custom?' on':''}" onclick="FM.splitMode='equal';_refreshHeroContent()">平均分</span><span class="sc${custom?' on':''}" onclick="FM.splitMode='custom';FM.shares=FM.shares||{};_refreshHeroContent()">自訂金額</span></div></div>
 ${custom?`<div class="fg"><label class="fl">每個人負擔金額（${FM.currency||'TWD'}，加總需等於總金額）</label>${shareRows}</div>`:`<div class="fg"><label class="fl">分帳對象（點選切換）</label><div class="scs">${scs}</div></div>`}`}
-<div class="ar"><button class="btn bp" style="flex:1;padding:10px;" onclick="sExp()">儲存</button><button class="btn" style="flex:1;padding:10px;" onclick="setU({modal:null})">取消</button></div>`;
+<div class="ar"><button class="btn bp" style="flex:1;padding:10px;" onclick="sExp()">${S.modal.expId?'儲存修改':'儲存'}</button>${S.modal.expId?`<button class="btn br" style="flex:1;padding:10px;" onclick="deleteEditingExpense()">刪除</button>`:''}<button class="btn" style="flex:1;padding:10px;" onclick="setU({modal:null})">取消</button></div>`;
 }
 function getTvStats(name){
   const exps=S.expenses||[];
@@ -1040,10 +1042,24 @@ function oExp(expId,opts={}){
   if(expId){
     const e=S.expenses.find(x=>x.id===expId);
     const mode=isPersonalExp(e)?'personal':'shared';
-    FM={...e,amount:String(e.amount),currency:e.currency||'TWD',expenseMode:mode,splitMode:e.shares?'custom':'equal',shares:{...(e.shares||{})},splitWith:[...(e.splitWith||[])]};
+    FM={...e,amount:String(e.amount),date:normalizeExpenseDate(e.date)||localDate(),currency:e.currency||'TWD',expenseMode:mode,splitMode:e.shares?'custom':'equal',shares:{...(e.shares||{})},splitWith:[...(e.splitWith||[])]};
   }
-  else FM={item:'',amount:'',currency:'TWD',category:'',paidBy:'',expenseMode:'personal',splitMode:'equal',shares:{},splitWith:[]};
+  else FM={item:'',amount:'',date:localDate(),currency:'TWD',category:'',paidBy:'',expenseMode:'personal',splitMode:'equal',shares:{},splitWith:[]};
   setU({modal:{t:'exp',expId:expId||null,ocr:!!opts.ocr}});
+}
+function normalizeExpenseDate(v){
+  v=String(v||'').trim();
+  let m=v.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);
+  if(m)return`${m[1]}-${String(m[2]).padStart(2,'0')}-${String(m[3]).padStart(2,'0')}`;
+  m=v.match(/^(\d{4})[\/.](\d{1,2})[\/.](\d{1,2})$/);
+  if(m)return`${m[1]}-${String(m[2]).padStart(2,'0')}-${String(m[3]).padStart(2,'0')}`;
+  return '';
+}
+function formatExpenseDate(v){
+  const d=normalizeExpenseDate(v);
+  if(!d)return esc(v||'');
+  const [,m,day]=d.match(/^\d{4}-(\d{2})-(\d{2})$/)||[];
+  return m&&day?`${Number(m)}/${Number(day)}`:d;
 }
 function locTimeMins(loc){
   const t=String(loc?.time||'').trim();
@@ -1093,9 +1109,15 @@ function sExp(){
     if(Math.abs(sum-amount)>0.5){alert(`自訂分擔加總 ${sum.toLocaleString()}，需等於總金額 ${amount.toLocaleString()}`);return;}
     splitWith=Object.keys(shares);
   }
-  const exp={id:S.modal.expId||uid(),item:FM.item,amount,currency:cur,amountBase:Math.round(convertAmount(amount,cur,'TWD')),category:FM.category||ac(FM.item),paidBy:personal?'':FM.paidBy,expenseMode:personal?'personal':'shared',splitWith,shares:personal?null:shares,date:new Date().toLocaleDateString('zh-TW')};
+  const exp={id:S.modal.expId||uid(),item:FM.item,amount,currency:cur,amountBase:Math.round(convertAmount(amount,cur,'TWD')),category:FM.category||ac(FM.item),paidBy:personal?'':FM.paidBy,expenseMode:personal?'personal':'shared',splitWith,shares:personal?null:shares,date:normalizeExpenseDate(FM.date)||localDate()};
   if(S.modal.expId){const i=exps.findIndex(e=>e.id===S.modal.expId);exps[i]=exp;}else exps.push(exp);
   setD({expenses:exps,modal:null});
+}
+function deleteEditingExpense(){
+  const id=S.modal?.expId;
+  if(!id)return;
+  if(!confirm('確定要刪除這筆記帳嗎？'))return;
+  setD({expenses:S.expenses.filter(e=>e.id!==id),modal:null});
 }
 function saveCoverUrl(){
   const v=document.getElementById('cover-url')?.value?.trim();
