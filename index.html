@@ -664,10 +664,22 @@ const MAP_FALLBACKS=[
   {re:/京成電鐵|Skyliner|成田機場車站|成田空港駅/i,lat:35.7728,lng:140.3870}
 ];
 const GEO_CACHE_VERSION='v2';
+const GEO_FAIL_TTL=24*60*60*1000;
+const GEO_TIMEOUT_MS=2600;
 function fallbackCoord(l){
   const q=[l?.name,l?.address,l?.notes].filter(Boolean).join(' ');
   const m=MAP_FALLBACKS.find(x=>x.re.test(q));
   return m?{lat:m.lat,lng:m.lng}:null;
+}
+async function fetchJsonTimeout(url,ms=GEO_TIMEOUT_MS){
+  const ctl=new AbortController();
+  const timer=setTimeout(()=>ctl.abort(),ms);
+  try{
+    const res=await fetch(url,{signal:ctl.signal});
+    return await res.json();
+  }finally{
+    clearTimeout(timer);
+  }
 }
 async function geocodeLoc(l){
   const fb=fallbackCoord(l);
@@ -677,17 +689,25 @@ async function geocodeLoc(l){
     const key='geo:'+GEO_CACHE_VERSION+':'+q;
     try{
       const cached=localStorage.getItem(key);
-      if(cached)return JSON.parse(cached);
+      if(cached){
+        const obj=JSON.parse(cached);
+        if(obj?.missUntil&&obj.missUntil>Date.now())continue;
+        if(Number.isFinite(obj?.lat)&&Number.isFinite(obj?.lng))return obj;
+      }
     }catch{}
     try{
       const url='https://nominatim.openstreetmap.org/search?format=json&limit=1&accept-language=zh-TW&q='+encodeURIComponent(q);
-      const res=await fetch(url);
-      const data=await res.json();
-      if(!data?.length)continue;
+      const data=await fetchJsonTimeout(url);
+      if(!data?.length){
+        try{localStorage.setItem(key,JSON.stringify({missUntil:Date.now()+GEO_FAIL_TTL}));}catch{}
+        continue;
+      }
       const p={lat:Number(data[0].lat),lng:Number(data[0].lon)};
       try{localStorage.setItem(key,JSON.stringify(p));}catch{}
       return p;
-    }catch{}
+    }catch{
+      try{localStorage.setItem(key,JSON.stringify({missUntil:Date.now()+GEO_FAIL_TTL}));}catch{}
+    }
   }
   return null;
 }
@@ -706,14 +726,13 @@ async function mountItinMap(day){
   if(!el)return;
   const locs=dayMapLocs(day);
   if(!locs.length)return;
-  el.innerHTML='<div class="itin-map-loading">🗺️ 正在整理地圖位置...</div>';
+  el.innerHTML='<div class="itin-map-loading">🗺️ 正在整理地圖位置...<br><span style="font-size:11px;color:#8a9894;">第一次會稍慢，之後會使用快取加速</span></div>';
   const ok=await ensureLeaflet();
   if(!ok){el.innerHTML='<div class="itin-map-loading">地圖載入失敗，請先使用右上方「開啟路線」。</div>';return;}
-  const pts=[];
-  for(let i=0;i<locs.length;i++){
-    const p=await geocodeLoc(locs[i]);
-    if(p)pts.push({loc:locs[i],idx:i,lat:p.lat,lng:p.lng});
-  }
+  const pts=(await Promise.all(locs.map(async(l,i)=>{
+    const p=await geocodeLoc(l);
+    return p?{loc:l,idx:i,lat:p.lat,lng:p.lng}:null;
+  }))).filter(Boolean);
   if(!document.body.contains(el))return;
   if(!pts.length){
     el.innerHTML='<div class="itin-map-loading">目前無法自動定位這些地址，請用「開啟路線」查看 Google Maps。</div>';
