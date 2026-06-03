@@ -80,6 +80,7 @@ a{text-decoration:none}
 .itin-map-canvas .leaflet-container{font-family:var(--font-sans)}
 .itin-map-loading{padding:14px;text-align:center;color:var(--muted)}
 .itin-map-marker{width:28px;height:28px;border-radius:999px;background:#0f5e5e;color:#fff;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:900;border:2px solid #fff;box-shadow:0 4px 12px rgba(31,59,53,.25)}
+.itin-map-marker.combo{width:auto;min-width:34px;padding:0 8px;border-radius:999px;font-size:11px;letter-spacing:0}
 .itin-map-list{padding:12px;display:flex;flex-direction:column;gap:8px;border-left:1px solid rgba(207,227,245,.75);max-height:310px;overflow-y:auto}
 .itin-map-point{display:grid;grid-template-columns:28px minmax(0,1fr);gap:8px;align-items:flex-start;padding:8px;border:1px solid rgba(217,226,223,.85);border-radius:12px;background:#fff}
 .itin-map-pin{width:28px;height:28px;border-radius:999px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:12px;font-weight:900;box-shadow:0 5px 14px rgba(31,59,53,.12)}
@@ -653,10 +654,27 @@ function ensureLeaflet(){
   ]).then(()=>!!window.L).catch(()=>false);
   return _leafletReady;
 }
+const MAP_FALLBACKS=[
+  {re:/桃園國際機場|桃園機場|TPE|航站南路/i,lat:25.0777,lng:121.2328},
+  {re:/成田國際機場|成田機場|NRT|成田市古込|成田市古込1-1/i,lat:35.7720,lng:140.3929},
+  {re:/羽田機場|羽田空港|HND/i,lat:35.5494,lng:139.7798},
+  {re:/新宿站|新宿駅/i,lat:35.6896,lng:139.7006},
+  {re:/歌舞伎町|大久保公園|新宿區歌舞伎町|新宿区歌舞伎町/i,lat:35.6954,lng:139.7037},
+  {re:/一蘭.*新宿|新宿.*一蘭/i,lat:35.6939,lng:139.7021},
+  {re:/京成電鐵|Skyliner|成田機場車站|成田空港駅/i,lat:35.7728,lng:140.3870}
+];
+const GEO_CACHE_VERSION='v2';
+function fallbackCoord(l){
+  const q=[l?.name,l?.address,l?.notes].filter(Boolean).join(' ');
+  const m=MAP_FALLBACKS.find(x=>x.re.test(q));
+  return m?{lat:m.lat,lng:m.lng}:null;
+}
 async function geocodeLoc(l){
+  const fb=fallbackCoord(l);
+  if(fb)return fb;
   const qs=[mqLoc(l),l?.address,l?.name].map(s=>String(s||'').trim()).filter(Boolean);
   for(const q of [...new Set(qs)]){
-    const key='geo:'+q;
+    const key='geo:'+GEO_CACHE_VERSION+':'+q;
     try{
       const cached=localStorage.getItem(key);
       if(cached)return JSON.parse(cached);
@@ -672,6 +690,15 @@ async function geocodeLoc(l){
     }catch{}
   }
   return null;
+}
+function groupMapPoints(pts){
+  const groups=new Map();
+  pts.forEach(p=>{
+    const key=`${p.lat.toFixed(4)},${p.lng.toFixed(4)}`;
+    if(!groups.has(key))groups.set(key,{lat:p.lat,lng:p.lng,items:[]});
+    groups.get(key).items.push(p);
+  });
+  return [...groups.values()];
 }
 async function mountItinMap(day){
   if(!day||S.view!=='itinerary'||S.mapOpen===false)return;
@@ -696,15 +723,21 @@ async function mountItinMap(day){
   const map=L.map(el,{scrollWheelZoom:false,zoomControl:true});
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'&copy; OpenStreetMap'}).addTo(map);
   const latlngs=[];
-  pts.forEach(p=>{
-    const cat=p.loc.category||ac(`${p.loc.name} ${p.loc.notes||''} ${p.loc.address||''}`);
+  const groups=groupMapPoints(pts);
+  groups.forEach(g=>{
+    const first=g.items[0];
+    const cat=first.loc.category||ac(`${first.loc.name} ${first.loc.notes||''} ${first.loc.address||''}`);
     const color=CBr[cat]||'#0f5e5e';
-    const icon=L.divIcon({className:'',html:`<div class="itin-map-marker" style="background:${color};">${p.idx+1}</div>`,iconSize:[28,28],iconAnchor:[14,14]});
-    const ll=[p.lat,p.lng];
+    const label=g.items.map(x=>x.idx+1).join('/');
+    const combo=g.items.length>1?' combo':'';
+    const icon=L.divIcon({className:'',html:`<div class="itin-map-marker${combo}" style="background:${color};">${label}</div>`,iconSize:g.items.length>1?[48,28]:[28,28],iconAnchor:g.items.length>1?[24,14]:[14,14]});
+    const ll=[g.lat,g.lng];
     latlngs.push(ll);
-    L.marker(ll,{icon}).addTo(map).bindPopup(`<b>${esc(p.loc.time||'')} ${esc(p.loc.name)}</b><br>${esc(p.loc.address||'')}`);
+    const popup=g.items.map(p=>`<div style="margin-bottom:6px;"><b>${p.idx+1}. ${esc(p.loc.time||'')} ${esc(p.loc.name)}</b><br>${esc(p.loc.address||'')}</div>`).join('');
+    L.marker(ll,{icon}).addTo(map).bindPopup(popup);
   });
-  if(latlngs.length>1)L.polyline(latlngs,{color:'#0f5e5e',weight:4,opacity:.75}).addTo(map);
+  const routeLatLngs=pts.map(p=>[p.lat,p.lng]);
+  if(routeLatLngs.length>1)L.polyline(routeLatLngs,{color:'#0f5e5e',weight:4,opacity:.75}).addTo(map);
   map.fitBounds(L.latLngBounds(latlngs),{padding:[28,28],maxZoom:15});
   setTimeout(()=>map.invalidateSize(),120);
 }
