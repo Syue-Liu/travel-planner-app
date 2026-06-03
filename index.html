@@ -69,6 +69,20 @@ a{text-decoration:none}
 .section-actions{display:flex;align-items:center;justify-content:flex-end;gap:6px;flex-wrap:nowrap;position:relative;flex-shrink:0}
 .action-group{display:flex;align-items:center;gap:7px;position:relative;flex-wrap:nowrap}
 .quick-holder{position:relative}
+.itin-map-card{background:linear-gradient(180deg,#f7fbff 0%,#fff 100%);border:1px solid #cfe3f5;border-radius:var(--r);margin:0 0 12px;overflow:hidden;box-shadow:0 8px 24px rgba(31,59,53,.06)}
+.itin-map-head{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px 14px;border-bottom:1px solid rgba(207,227,245,.75)}
+.itin-map-title{display:flex;align-items:center;gap:8px;font-weight:900;color:#0c447c;min-width:0}
+.itin-map-title span:last-child{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.itin-map-actions{display:flex;align-items:center;gap:6px;flex-shrink:0}
+.itin-map-toggle{width:32px;height:32px;border-radius:999px;border:1px solid #cfe3f5;background:#fff;color:#0c447c;font-weight:900;cursor:pointer}
+.itin-map-body{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(240px,.9fr);gap:0}
+.itin-map-frame{width:100%;min-height:270px;border:0;background:#edf4f0;display:block}
+.itin-map-list{padding:12px;display:flex;flex-direction:column;gap:8px;border-left:1px solid rgba(207,227,245,.75);max-height:310px;overflow-y:auto}
+.itin-map-point{display:grid;grid-template-columns:28px minmax(0,1fr);gap:8px;align-items:flex-start;padding:8px;border:1px solid rgba(217,226,223,.85);border-radius:12px;background:#fff}
+.itin-map-pin{width:28px;height:28px;border-radius:999px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:12px;font-weight:900;box-shadow:0 5px 14px rgba(31,59,53,.12)}
+.itin-map-name{font-size:13px;font-weight:900;color:var(--ink);line-height:1.35;word-break:break-word}
+.itin-map-meta{font-size:11px;color:var(--muted);margin-top:2px;line-height:1.45;word-break:break-word}
+.itin-map-empty{padding:14px;color:var(--muted);font-size:13px;text-align:center}
 .card{background:var(--paper);border-radius:var(--r);border:1px solid rgba(217,226,223,.9);margin-bottom:10px;overflow:hidden;box-shadow:0 8px 24px rgba(31,59,53,.06)}
 .loc-wrap{display:grid;grid-template-columns:56px minmax(0,1fr);gap:10px;padding:14px}
 .loc-time{font-size:12px;font-weight:800;color:#0f6e56;padding-top:2px;width:56px;min-width:56px;white-space:nowrap;font-variant-numeric:tabular-nums}
@@ -305,6 +319,11 @@ input:focus,select:focus,textarea:focus{border-color:#42a787;box-shadow:0 0 0 3p
   .action-group.manage{justify-content:flex-end}
   .section-actions .btn{min-height:42px;padding:8px 12px}
   .quick-menu{width:min(92vw,280px)}
+  .itin-map-head{padding:10px 12px}
+  .itin-map-title{font-size:13px}
+  .itin-map-body{grid-template-columns:1fr}
+  .itin-map-frame{min-height:220px}
+  .itin-map-list{border-left:0;border-top:1px solid rgba(207,227,245,.75);max-height:190px}
   .loc-wrap{grid-template-columns:68px minmax(0,1fr);gap:8px;padding:13px 12px}
   .loc-time{width:68px;min-width:68px;font-size:15px;line-height:1.2;text-align:left}
   .loc-body{min-width:0}
@@ -606,6 +625,21 @@ function ac(s){for(const[r,c]of CR)if(r.test(s))return c;return'其他';}
 function uid(){return Math.random().toString(36).slice(2,9);}
 function mu(a){return'https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(a);}
 function nu(a){return'https://www.google.com/maps/dir/?api=1&destination='+encodeURIComponent(a);}
+function mqLoc(l){return [l?.name,l?.address].filter(Boolean).join(' ').trim();}
+function dayMapLocs(day){return (day?.locations||[]).filter(l=>mqLoc(l));}
+function dayRouteUrl(locs){
+  const qs=locs.map(mqLoc).filter(Boolean);
+  if(!qs.length)return'';
+  if(qs.length===1)return mu(qs[0]);
+  const origin=qs[0],destination=qs[qs.length-1],waypoints=qs.slice(1,-1).join('|');
+  return 'https://www.google.com/maps/dir/?api=1&origin='+encodeURIComponent(origin)+'&destination='+encodeURIComponent(destination)+(waypoints?'&waypoints='+encodeURIComponent(waypoints):'');
+}
+function dayEmbedUrl(locs){
+  const qs=locs.map(mqLoc).filter(Boolean);
+  if(!qs.length)return'';
+  if(qs.length===1)return 'https://www.google.com/maps?q='+encodeURIComponent(qs[0])+'&output=embed';
+  return 'https://www.google.com/maps/dir/'+qs.map(encodeURIComponent).join('/')+'?output=embed';
+}
 function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
 function money(n){return'NT$'+(Math.round(n)||0).toLocaleString();}
 function ntd(n){return money(n);}
@@ -789,6 +823,21 @@ function gnav(){
   const ts=[['memo','📝 備忘'],['itinerary','🗺 行程'],['wishlist','🌟 清單'],['expenses','💰 記帳'],['split','⚖ 分帳']];
   return`<nav class="nav">${ts.map(([k,l])=>`<button class="nav-btn${S.view===k?' on':''}" onclick="switchTab('${k}')">${l}</button>`).join('')}</nav>`;
 }
+function itineraryMap(day){
+  const locs=dayMapLocs(day);
+  if(!locs.length)return`<div class="itin-map-card"><div class="itin-map-empty">🗺️ 這一天還沒有可定位的地址，填入地點名稱或地址後就會出現地圖。</div></div>`;
+  const open=S.mapOpen!==false;
+  const routeUrl=dayRouteUrl(locs);
+  const embedUrl=dayEmbedUrl(locs);
+  const points=locs.map((l,i)=>{
+    const cat=l.category||ac(`${l.name} ${l.notes||''} ${l.address||''}`);
+    const color=CBr[cat]||'#0f5e5e';
+    const q=mqLoc(l);
+    return`<a class="itin-map-point" href="${mu(q)}" target="_blank" rel="noopener"><span class="itin-map-pin" style="background:${color};">${i+1}</span><span><span class="itin-map-name">${l.time?`${esc(l.time)} · `:''}${esc(l.name)}</span><span class="itin-map-meta">${esc(l.address||'以地點名稱搜尋')}</span></span></a>`;
+  }).join('');
+  const routeBtn=routeUrl?`<a href="${routeUrl}" target="_blank" rel="noopener"><button class="btn bp" style="min-height:32px;padding:6px 10px;">開啟路線</button></a>`:'';
+  return`<section class="itin-map-card"><div class="itin-map-head"><div class="itin-map-title"><span>🗺️</span><span>今日地圖 · ${locs.length} 個地點</span></div><div class="itin-map-actions">${routeBtn}<button class="itin-map-toggle" title="${open?'收合地圖':'展開地圖'}" onclick="setU({mapOpen:${open?'false':'true'}})">${open?'⌃':'⌄'}</button></div></div>${open?`<div class="itin-map-body"><iframe class="itin-map-frame" loading="lazy" referrerpolicy="no-referrer-when-downgrade" src="${embedUrl}" title="${esc(day.title)}地圖"></iframe><div class="itin-map-list">${points}</div></div>`:''}</section>`;
+}
 function itin(day,si){
   if(!day)return'';
   const tabs=S.days.map((d,i)=>`<button class="dtab${i===si?' on':''}" title="${esc(d.title)}${d.date?` · ${esc(d.date)}`:''}" onclick="setU({dayIdx:${i}})">Day ${i+1}</button>`).join('');
@@ -836,7 +885,7 @@ function itin(day,si){
   }
   // Store detail for sheet
   if(weatherDetail)window['_wx_'+day.id]=weatherDetail;
-  return`<div class="day-tabs">${tabs}<button class="dtab dtab-add" onclick="FM={title:'第${nd}天',date:'',city:''};openModal(this,{t:'nd'})">+ 新增</button></div><div class="section-head"><div class="section-title-wrap"><div class="section-title">${esc(day.title)}</div>${(day.date||weatherBadge)?`<div class="section-meta">${day.date?`<span class="section-meta-date">📅 ${day.date}</span>`:''}${weatherBadge}</div>`:''}</div><div class="section-actions"><div class="action-group primary"><button class="btn" title="跳到現在" onclick="jumpToNow()">🕐</button><button class="btn" title="排序行程" style="${S.sortMode?'background:#183b40;border-color:#183b40;color:#fff;':''}" onclick="setU({sortMode:!S.sortMode})">${S.sortMode?'完成':'排序'}</button><div class="quick-holder mobile-fab-replaced"><button class="btn" style="background:#f0faf5;border-color:#9fe1cb;color:#085041;font-weight:800;white-space:nowrap;" onclick="toggleQuickMenu(this)">＋ 快速新增</button>${quickMenu}</div></div><div class="action-group manage"><button class="btn" onclick="FM={title:\'${esc(day.title)}\',date:\'${esc(day.date||'')}\',city:\'${esc(day.city||'')}\'}; openModal(this,{t:\'ed\',dayId:\'${day.id}\'})">編輯</button>${S.days.length>1?`<button class="btn br" onclick="dDay(\'${day.id}\')">刪除</button>`:''}</div></div></div>${locs}<button class="add-btn mobile-fab-replaced" onclick="_heroOrigin=this.getBoundingClientRect();oLoc('')">＋ 新增地點</button>`;
+  return`<div class="day-tabs">${tabs}<button class="dtab dtab-add" onclick="FM={title:'第${nd}天',date:'',city:''};openModal(this,{t:'nd'})">+ 新增</button></div><div class="section-head"><div class="section-title-wrap"><div class="section-title">${esc(day.title)}</div>${(day.date||weatherBadge)?`<div class="section-meta">${day.date?`<span class="section-meta-date">📅 ${day.date}</span>`:''}${weatherBadge}</div>`:''}</div><div class="section-actions"><div class="action-group primary"><button class="btn" title="跳到現在" onclick="jumpToNow()">🕐</button><button class="btn" title="排序行程" style="${S.sortMode?'background:#183b40;border-color:#183b40;color:#fff;':''}" onclick="setU({sortMode:!S.sortMode})">${S.sortMode?'完成':'排序'}</button><div class="quick-holder mobile-fab-replaced"><button class="btn" style="background:#f0faf5;border-color:#9fe1cb;color:#085041;font-weight:800;white-space:nowrap;" onclick="toggleQuickMenu(this)">＋ 快速新增</button>${quickMenu}</div></div><div class="action-group manage"><button class="btn" onclick="FM={title:\'${esc(day.title)}\',date:\'${esc(day.date||'')}\',city:\'${esc(day.city||'')}\'}; openModal(this,{t:\'ed\',dayId:\'${day.id}\'})">編輯</button>${S.days.length>1?`<button class="btn br" onclick="dDay(\'${day.id}\')">刪除</button>`:''}</div></div></div>${itineraryMap(day)}${locs}<button class="add-btn mobile-fab-replaced" onclick="_heroOrigin=this.getBoundingClientRect();oLoc('')">＋ 新增地點</button>`;
 }
 function exps(te){
   const cs=CATS.map(c=>({c,t:S.expenses.filter(e=>e.category===c).reduce((s,e)=>s+expValue(e),0)})).filter(x=>x.t>0);
