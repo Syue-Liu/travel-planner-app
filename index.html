@@ -76,7 +76,10 @@ a{text-decoration:none}
 .itin-map-actions{display:flex;align-items:center;gap:6px;flex-shrink:0}
 .itin-map-toggle{width:32px;height:32px;border-radius:999px;border:1px solid #cfe3f5;background:#fff;color:#0c447c;font-weight:900;cursor:pointer}
 .itin-map-body{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(240px,.9fr);gap:0}
-.itin-map-frame{width:100%;min-height:270px;border:0;background:#edf4f0;display:block}
+.itin-map-canvas{width:100%;min-height:270px;background:#edf4f0;display:flex;align-items:center;justify-content:center;color:#66736f;font-size:13px;font-weight:800;position:relative;z-index:1}
+.itin-map-canvas .leaflet-container{font-family:var(--font-sans)}
+.itin-map-loading{padding:14px;text-align:center;color:var(--muted)}
+.itin-map-marker{width:28px;height:28px;border-radius:999px;background:#0f5e5e;color:#fff;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:900;border:2px solid #fff;box-shadow:0 4px 12px rgba(31,59,53,.25)}
 .itin-map-list{padding:12px;display:flex;flex-direction:column;gap:8px;border-left:1px solid rgba(207,227,245,.75);max-height:310px;overflow-y:auto}
 .itin-map-point{display:grid;grid-template-columns:28px minmax(0,1fr);gap:8px;align-items:flex-start;padding:8px;border:1px solid rgba(217,226,223,.85);border-radius:12px;background:#fff}
 .itin-map-pin{width:28px;height:28px;border-radius:999px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:12px;font-weight:900;box-shadow:0 5px 14px rgba(31,59,53,.12)}
@@ -322,7 +325,7 @@ input:focus,select:focus,textarea:focus{border-color:#42a787;box-shadow:0 0 0 3p
   .itin-map-head{padding:10px 12px}
   .itin-map-title{font-size:13px}
   .itin-map-body{grid-template-columns:1fr}
-  .itin-map-frame{min-height:220px}
+  .itin-map-canvas{min-height:220px}
   .itin-map-list{border-left:0;border-top:1px solid rgba(207,227,245,.75);max-height:190px}
   .loc-wrap{grid-template-columns:68px minmax(0,1fr);gap:8px;padding:13px 12px}
   .loc-time{width:68px;min-width:68px;font-size:15px;line-height:1.2;text-align:left}
@@ -640,6 +643,71 @@ function dayEmbedUrl(locs){
   if(qs.length===1)return 'https://www.google.com/maps?q='+encodeURIComponent(qs[0])+'&output=embed';
   return 'https://www.google.com/maps/dir/'+qs.map(encodeURIComponent).join('/')+'?output=embed';
 }
+let _leafletReady=null;
+function ensureLeaflet(){
+  if(window.L)return Promise.resolve(true);
+  if(_leafletReady)return _leafletReady;
+  _leafletReady=Promise.all([
+    loadCss('https://unpkg.com/leaflet@1.9.4/dist/leaflet.css'),
+    loadScript('https://unpkg.com/leaflet@1.9.4/dist/leaflet.js')
+  ]).then(()=>!!window.L).catch(()=>false);
+  return _leafletReady;
+}
+async function geocodeLoc(l){
+  const qs=[mqLoc(l),l?.address,l?.name].map(s=>String(s||'').trim()).filter(Boolean);
+  for(const q of [...new Set(qs)]){
+    const key='geo:'+q;
+    try{
+      const cached=localStorage.getItem(key);
+      if(cached)return JSON.parse(cached);
+    }catch{}
+    try{
+      const url='https://nominatim.openstreetmap.org/search?format=json&limit=1&accept-language=zh-TW&q='+encodeURIComponent(q);
+      const res=await fetch(url);
+      const data=await res.json();
+      if(!data?.length)continue;
+      const p={lat:Number(data[0].lat),lng:Number(data[0].lon)};
+      try{localStorage.setItem(key,JSON.stringify(p));}catch{}
+      return p;
+    }catch{}
+  }
+  return null;
+}
+async function mountItinMap(day){
+  if(!day||S.view!=='itinerary'||S.mapOpen===false)return;
+  const el=document.getElementById(`itin-map-${day.id}`);
+  if(!el)return;
+  const locs=dayMapLocs(day);
+  if(!locs.length)return;
+  el.innerHTML='<div class="itin-map-loading">🗺️ 正在整理地圖位置...</div>';
+  const ok=await ensureLeaflet();
+  if(!ok){el.innerHTML='<div class="itin-map-loading">地圖載入失敗，請先使用右上方「開啟路線」。</div>';return;}
+  const pts=[];
+  for(let i=0;i<locs.length;i++){
+    const p=await geocodeLoc(locs[i]);
+    if(p)pts.push({loc:locs[i],idx:i,lat:p.lat,lng:p.lng});
+  }
+  if(!document.body.contains(el))return;
+  if(!pts.length){
+    el.innerHTML='<div class="itin-map-loading">目前無法自動定位這些地址，請用「開啟路線」查看 Google Maps。</div>';
+    return;
+  }
+  el.innerHTML='';
+  const map=L.map(el,{scrollWheelZoom:false,zoomControl:true});
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'&copy; OpenStreetMap'}).addTo(map);
+  const latlngs=[];
+  pts.forEach(p=>{
+    const cat=p.loc.category||ac(`${p.loc.name} ${p.loc.notes||''} ${p.loc.address||''}`);
+    const color=CBr[cat]||'#0f5e5e';
+    const icon=L.divIcon({className:'',html:`<div class="itin-map-marker" style="background:${color};">${p.idx+1}</div>`,iconSize:[28,28],iconAnchor:[14,14]});
+    const ll=[p.lat,p.lng];
+    latlngs.push(ll);
+    L.marker(ll,{icon}).addTo(map).bindPopup(`<b>${esc(p.loc.time||'')} ${esc(p.loc.name)}</b><br>${esc(p.loc.address||'')}`);
+  });
+  if(latlngs.length>1)L.polyline(latlngs,{color:'#0f5e5e',weight:4,opacity:.75}).addTo(map);
+  map.fitBounds(L.latLngBounds(latlngs),{padding:[28,28],maxZoom:15});
+  setTimeout(()=>map.invalidateSize(),120);
+}
 function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
 function money(n){return'NT$'+(Math.round(n)||0).toLocaleString();}
 function ntd(n){return money(n);}
@@ -694,6 +762,12 @@ function loadScript(src){
   return new Promise(resolve=>{
     if(document.querySelector(`script[src="${src}"]`)){resolve(true);return;}
     const s=document.createElement('script');s.src=src;s.onload=()=>resolve(true);s.onerror=()=>resolve(false);document.head.appendChild(s);
+  });
+}
+function loadCss(src){
+  return new Promise(resolve=>{
+    if(document.querySelector(`link[href="${src}"]`)){resolve(true);return;}
+    const l=document.createElement('link');l.rel='stylesheet';l.href=src;l.onload=()=>resolve(true);l.onerror=()=>resolve(false);document.head.appendChild(l);
   });
 }
 async function initCloud(){
@@ -775,6 +849,7 @@ function render(){
     if(t)t.scrollIntoView({inline:'nearest',block:'nearest',behavior:'instant'});
     if(savedScroll>0)window.scrollTo({top:savedScroll,behavior:'instant'});
   },0);
+  if(S.view==='itinerary'&&S.mapOpen!==false)setTimeout(()=>mountItinMap(ad),0);
 }
 function fabConfig(){
   if(S.modal||S.editTN||S.view==='split')return null;
@@ -828,7 +903,6 @@ function itineraryMap(day){
   if(!locs.length)return`<div class="itin-map-card"><div class="itin-map-empty">🗺️ 這一天還沒有可定位的地址，填入地點名稱或地址後就會出現地圖。</div></div>`;
   const open=S.mapOpen!==false;
   const routeUrl=dayRouteUrl(locs);
-  const embedUrl=dayEmbedUrl(locs);
   const points=locs.map((l,i)=>{
     const cat=l.category||ac(`${l.name} ${l.notes||''} ${l.address||''}`);
     const color=CBr[cat]||'#0f5e5e';
@@ -836,7 +910,7 @@ function itineraryMap(day){
     return`<a class="itin-map-point" href="${mu(q)}" target="_blank" rel="noopener"><span class="itin-map-pin" style="background:${color};">${i+1}</span><span><span class="itin-map-name">${l.time?`${esc(l.time)} · `:''}${esc(l.name)}</span><span class="itin-map-meta">${esc(l.address||'以地點名稱搜尋')}</span></span></a>`;
   }).join('');
   const routeBtn=routeUrl?`<a href="${routeUrl}" target="_blank" rel="noopener"><button class="btn bp" style="min-height:32px;padding:6px 10px;">開啟路線</button></a>`:'';
-  return`<section class="itin-map-card"><div class="itin-map-head"><div class="itin-map-title"><span>🗺️</span><span>今日地圖 · ${locs.length} 個地點</span></div><div class="itin-map-actions">${routeBtn}<button class="itin-map-toggle" title="${open?'收合地圖':'展開地圖'}" onclick="setU({mapOpen:${open?'false':'true'}})">${open?'⌃':'⌄'}</button></div></div>${open?`<div class="itin-map-body"><iframe class="itin-map-frame" loading="lazy" referrerpolicy="no-referrer-when-downgrade" src="${embedUrl}" title="${esc(day.title)}地圖"></iframe><div class="itin-map-list">${points}</div></div>`:''}</section>`;
+  return`<section class="itin-map-card"><div class="itin-map-head"><div class="itin-map-title"><span>🗺️</span><span>今日地圖 · ${locs.length} 個地點</span></div><div class="itin-map-actions">${routeBtn}<button class="itin-map-toggle" title="${open?'收合地圖':'展開地圖'}" onclick="setU({mapOpen:${open?'false':'true'}})">${open?'⌃':'⌄'}</button></div></div>${open?`<div class="itin-map-body"><div class="itin-map-canvas" id="itin-map-${esc(day.id)}"><div class="itin-map-loading">🗺️ 正在整理地圖位置...</div></div><div class="itin-map-list">${points}</div></div>`:''}</section>`;
 }
 function itin(day,si){
   if(!day)return'';
