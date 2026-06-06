@@ -667,11 +667,21 @@ const MAP_FALLBACKS=[
   {re:/新宿站|新宿駅/i,lat:35.6896,lng:139.7006},
   {re:/一蘭.*新宿|新宿.*一蘭/i,lat:35.6939,lng:139.7021},
   {re:/大久保公園|大久保公園附近飯店|歌舞伎町 2 丁目|歌舞伎町2丁目/i,lat:35.6964,lng:139.7033},
-  {re:/京成電鐵|Skyliner|成田機場車站|成田空港駅/i,lat:35.7728,lng:140.3870}
+  {re:/京成電鐵|Skyliner|成田機場車站|成田空港駅/i,lat:35.7728,lng:140.3870},
+  {re:/Rental819.*落合南長崎|落合南長崎|西落合3-1-1|西落合 3-1-1/i,lat:35.7239,lng:139.6839},
+  {re:/談合坂|談合坂SA|上野原市大野/i,lat:35.6405,lng:139.0216},
+  {re:/餺飥不動|ほうとう不動|河口湖.*不動|富士河口湖町船津/i,lat:35.5025,lng:138.7688},
+  {re:/富士吉田本町通|本町通|富士吉田.*下吉田|下吉田/i,lat:35.4874,lng:138.8076},
+  {re:/The Gran Resort Princess|グランリゾートプリンセス|富士河口湖町船津1436/i,lat:35.4898,lng:138.7692},
+  {re:/山麓園|富士河口湖町船津3370-1|船津3370-1/i,lat:35.4994,lng:138.7706},
+  {re:/登坂飯店|Noborisaka|富士河口湖町船津/i,lat:35.4929,lng:138.7685},
+  {re:/山中湖平野|平野沙洲|山中湖村平野/i,lat:35.4202,lng:138.9059},
+  {re:/金太郎富士見線|縣道 366|県道 366|県道366/i,lat:35.3505,lng:138.9433}
 ];
-const GEO_CACHE_VERSION='v3';
+const GEO_CACHE_VERSION='v4';
 const GEO_FAIL_TTL=24*60*60*1000;
 const GEO_TIMEOUT_MS=2600;
+function looksJapan(q){return /東京都|大阪府|京都府|北海道|山梨県|千葉県|神奈川県|埼玉県|静岡県|新宿区|渋谷区|成田市|富士河口湖|山中湖|[ぁ-んァ-ヶ一-龯]/.test(q);}
 function fallbackCoord(l){
   const q=[l?.name,l?.address,l?.notes].filter(Boolean).join(' ');
   const m=MAP_FALLBACKS.find(x=>x.re.test(q));
@@ -702,7 +712,8 @@ async function geocodeLoc(l){
       }
     }catch{}
     try{
-      const url='https://nominatim.openstreetmap.org/search?format=json&limit=1&accept-language=zh-TW&q='+encodeURIComponent(q);
+      const jp=looksJapan(q)?'&countrycodes=jp':'';
+      const url='https://nominatim.openstreetmap.org/search?format=json&limit=1&accept-language=zh-TW'+jp+'&q='+encodeURIComponent(q);
       const data=await fetchJsonTimeout(url);
       if(!data?.length){
         try{localStorage.setItem(key,JSON.stringify({missUntil:Date.now()+GEO_FAIL_TTL}));}catch{}
