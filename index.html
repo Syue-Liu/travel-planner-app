@@ -1574,18 +1574,39 @@ function parseAI(text){
   const timeRe=/^([0-1]?\d|2[0-3]):([0-5]\d)/;
   const dayRe=/^(?:day\s*[-–]?\s*(\d+)|第\s*(\d+)\s*天|Day\s*(\d+)|\*{0,3}第?\s*(\d+)\s*天\*{0,3})/i;
   const cityRe=/[（(]([^）)]+)[）)]/;
+  const dateRe=/(\d{4})[\/\-年.](\d{1,2})[\/\-月.](\d{1,2})日?/;
   const bulletRe=/^[-•◆▶️*]+\s+/;
   const numRe=/^[\d\uff10-\uff19]+[.\uff0e\s、]/;
+  const normDate=s=>{
+    const m=String(s||'').match(dateRe);
+    if(!m)return'';
+    return`${m[1]}-${String(m[2]).padStart(2,'0')}-${String(m[3]).padStart(2,'0')}`;
+  };
+  const cleanDayText=s=>String(s||'')
+    .replace(/^(日期|標題|城市|city|title|date)\s*[:：]\s*/i,'')
+    .trim();
   for(let line of lines){
     line=line.replace(/^\*+|\*+$/g,'').replace(/^#+\s*/,'').trim();
     if(!line)continue;
     const dm=line.match(dayRe);
     if(dm){
       const n=Number(dm[1]||dm[2]||dm[3]||dm[4]);
+      const parts=line.split('|').map(cleanDayText).filter(Boolean);
       const cityM=line.match(cityRe);
-      const city=cityM?cityM[1].trim():'';
-      const rest=line.replace(dayRe,'').replace(cityRe,'').replace(/^[\s:：\-–—]+/,'').trim();
-      cur={title:`第${n}天${rest?` ${rest}`:''}`,date:'',city,locations:[]};
+      const date=normDate(line);
+      let city=cityM?cityM[1].trim():'';
+      let title='';
+      if(parts.length>=2){
+        const afterDay=parts.slice(1);
+        const titlePart=afterDay.find(p=>!normDate(p)&&!/^(東京|大阪|京都|台北|高雄|沖繩|首爾|釜山|曼谷|新加坡|Tokyo|Osaka|Kyoto)$/i.test(p));
+        const cityPart=afterDay.find(p=>!normDate(p)&&p!==titlePart);
+        title=titlePart||'';
+        city=city||cityPart||'';
+      }else{
+        title=line.replace(dayRe,'').replace(cityRe,'').replace(dateRe,'').replace(/日期|標題|城市|[:：|]/g,'').replace(/^[\s:：\-–—]+/,'').trim();
+      }
+      const finalTitle=title?`第${n}天 ${title}`:`第${n}天`;
+      cur={title:finalTitle,date,city,locations:[]};
       days.push(cur);continue;
     }
     if(!cur){cur={title:'行程',date:'',city:'',locations:[]};days.push(cur);}
@@ -1593,17 +1614,29 @@ function parseAI(text){
     // Extract time
     const tm=l.match(timeRe);
     let time='';
-    if(tm){time=tm[0].padStart(5,'0');l=l.slice(tm[0].length).replace(/^[\s:：\-–—]+/,'').trim();}
-    // Pipe format: name | address | phone | notes | category  (3–5 fields)
+    if(tm){time=tm[0].padStart(5,'0');l=l.slice(tm[0].length).replace(/^[\s:：\-–—|]+/,'').trim();}
+    // Pipe format:
+    // New: HH:MM | name | address | phone | notes | category
+    // Old: HH:MM name | address | phone | notes | category
     let name=l,notes='',address='',phone='',category='';
     if(l.includes('|')){
       const parts=l.split('|').map(s=>s.trim());
-      name=parts[0]||'';
-      address=parts[1]||'';
-      phone=parts[2]||'';
-      notes=parts[3]||'';
-      const rawCat=(parts[4]||'').trim();
-      if(CATS.includes(rawCat))category=rawCat;
+      if(!time&&/^([0-1]?\d|2[0-3]):([0-5]\d)$/.test(parts[0]||'')){
+        time=parts[0].padStart(5,'0');
+        name=parts[1]||'';
+        address=parts[2]||'';
+        phone=parts[3]||'';
+        notes=parts[4]||'';
+        const rawCat=(parts[5]||'').trim();
+        if(CATS.includes(rawCat))category=rawCat;
+      }else{
+        name=parts[0]||'';
+        address=parts[1]||'';
+        phone=parts[2]||'';
+        notes=parts[3]||'';
+        const rawCat=(parts[4]||'').trim();
+        if(CATS.includes(rawCat))category=rawCat;
+      }
     } else {
       // Fallback: name - notes
       const sepRe=/\s+[-–—]\s+/;
@@ -1634,7 +1667,7 @@ function onImportInput(){
     const total=days.reduce((s,d)=>s+d.locations.length,0);
     const withAddr=days.reduce((s,d)=>s+d.locations.filter(l=>l.address).length,0);
     prev.innerHTML=`<div style="font-weight:900;font-size:13px;color:#085041;margin-bottom:8px;">✅ 解析成功：${days.length} 天 · ${total} 個地點 · ${withAddr} 個含地址</div>`
-      +days.map(d=>`<div class="import-day-hd">📅 ${esc(d.title)}${d.city?` <span style="font-size:10px;background:#e1f5ee;color:#085041;padding:1px 6px;border-radius:999px;">🌤 ${esc(d.city)}</span>`:''}</div>`
+      +days.map(d=>`<div class="import-day-hd">📅 ${esc(d.title)}${d.date?` <span style="font-size:10px;background:#eef4ff;color:#0c447c;padding:1px 6px;border-radius:999px;">${esc(d.date)}</span>`:''}${d.city?` <span style="font-size:10px;background:#e1f5ee;color:#085041;padding:1px 6px;border-radius:999px;">🌤 ${esc(d.city)}</span>`:''}</div>`
         +d.locations.map(l=>`<div class="import-loc-row"><span class="import-loc-time">${l.time||'--:--'}</span><div style="flex:1;min-width:0;"><div style="display:flex;align-items:center;gap:5px;flex-wrap:wrap;"><span class="import-loc-name">${esc(l.name)}</span><span class="import-loc-cat" style="background:${CB[l.category]};color:${CF[l.category]};">${CE[l.category]} ${l.category}</span></div>${l.address?`<div style="font-size:10px;color:#0c447c;margin-top:2px;">📍 ${esc(l.address)}</div>`:''}${l.phone?`<div style="font-size:10px;color:#444;margin-top:1px;">📞 ${esc(l.phone)}</div>`:''}</div></div>`).join('')
       ).join('');
   }catch(e){prev.innerHTML=`<div class="import-err">解析發生錯誤：${esc(String(e))}</div>`;}
@@ -1648,27 +1681,31 @@ function confirmImport(){
 function mImport(){
   const PROMPT=`請幫我安排 [X] 天 [目的地] 旅遊行程，請嚴格按照以下格式輸出，不要加任何 Markdown、粗體、標題符號：
 
-第1天（城市名）
-HH:MM 地點名稱 | 完整地址 | 電話（查不到則留空） | 備註 | 分類
+第1天 | YYYY-MM-DD | 當日行程標題 | 城市名
+HH:MM | 地點名稱 | 完整地址 | 電話（查不到則留空） | 備註 | 分類
 
 分類只能從以下選一個，完全照填：
 交通、餐飲、住宿、景點、購物、其他
 
 格式說明：
-- 每天用「第X天（城市）」開頭，城市填當天所在城市
-- 每行固定用「|」分成五段：時間 地點名 | 地址 | 電話 | 備註 | 分類
+- 每天第一行固定用「第X天 | 日期 | 當日行程標題 | 城市」開頭
+- 日期請用 YYYY-MM-DD，例如 2026-09-11
+- 當日行程標題請寫短一點，例如「抵達東京與新宿」、「原宿散步與藥妝採買」
+- 城市填當天主要查天氣用的城市，例如 東京、大阪、京都、台北
+- 每個地點固定用「|」分成六段：時間 | 地點名稱 | 地址 | 電話 | 備註 | 分類
 - 地址請用完整地址讓 Google Maps 可準確導航
 - 電話：餐廳、飯店請認真查詢當地電話；景點、交通若無電話則留空
 - 分類必須從上方清單選一個，不可自創
+- 每一天至少 3 個地點，時間請依照實際順序排列
 - 不要加粗體 ** 不要加 # 不要加項目符號 - 不要加編號
 
 範例輸出：
-第1天（東京）
-09:00 淺草寺 | 東京都台東区浅草2丁目3-1 |  | 東京最古老寺廟，推薦早去人少 | 景點
-12:00 壽司大 | 東京都中央区築地4-13-9 | 03-3547-6797 | 場外市場必吃迴轉壽司 | 餐飲
-15:00 晴空塔 | 東京都墨田区押上1-1-2 | 0570-55-0634 | 建議提前網路購票 | 景點
-18:30 思い出横丁 | 東京都新宿区西新宿1-2-1 |  | 居酒屋一條街 | 餐飲
-22:00 新宿王子飯店 | 東京都新宿区歌舞伎町1-30-1 | 03-3205-1111 | 確認 check-in 時間 | 住宿`;
+第1天 | 2026-09-11 | 東京初到與新宿夜晚 | 東京
+09:00 | 淺草寺 | 東京都台東区浅草2丁目3-1 |  | 東京最古老寺廟，推薦早去人少 | 景點
+12:00 | 壽司大 | 東京都中央区築地4-13-9 | 03-3547-6797 | 場外市場必吃迴轉壽司 | 餐飲
+15:00 | 晴空塔 | 東京都墨田区押上1-1-2 | 0570-55-0634 | 建議提前網路購票 | 景點
+18:30 | 思い出横丁 | 東京都新宿区西新宿1-2-1 |  | 居酒屋一條街 | 餐飲
+22:00 | 新宿王子飯店 | 東京都新宿区歌舞伎町1-30-1 | 03-3205-1111 | 確認 check-in 時間 | 住宿`;
   window._geminiPrompt=PROMPT;
   return`<div class="mhd"><div class="mt">✨ AI 行程匯入</div><div class="mcl" onclick="setU({modal:null})">✕</div></div>
 <div style="background:#f0f8f4;border:1px solid #b6e0cc;border-radius:var(--r);padding:12px;margin-bottom:14px;">
@@ -1679,9 +1716,9 @@ HH:MM 地點名稱 | 完整地址 | 電話（查不到則留空） | 備註 | �
 <div style="font-size:12px;font-weight:900;color:#085041;margin-bottom:6px;">步驟二：貼入 Gemini 的回覆</div>
 <textarea class="import-area" id="ai-import-box" placeholder="貼入 Gemini 輸出的行程文字，例如：
 
-第1天（東京）
-09:00 淺草寺 | 東京都台東区浅草2丁目3-1 |  | 東京最古老寺廟 | 景點
-12:00 壽司大 | 東京都中央区築地4-13-9 | 03-3547-6797 | 場外市場必吃 | 餐飲
+第1天 | 2026-09-11 | 東京初到與新宿夜晚 | 東京
+09:00 | 淺草寺 | 東京都台東区浅草2丁目3-1 |  | 東京最古老寺廟 | 景點
+12:00 | 壽司大 | 東京都中央区築地4-13-9 | 03-3547-6797 | 場外市場必吃 | 餐飲
 ..." oninput="onImportInput()"></textarea>
 <div id="import-preview"></div>
 <div class="ar" style="margin-top:12px;"><button class="btn bp" style="flex:1;padding:10px;" onclick="confirmImport()">匯入行程</button><button class="btn" style="flex:1;padding:10px;" onclick="setU({modal:null})">取消</button></div>`;
