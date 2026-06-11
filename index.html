@@ -955,6 +955,8 @@ function render(){
     if(savedScroll>0)window.scrollTo({top:savedScroll,behavior:'instant'});
   },0);
   if(S.view==='itinerary'&&S.mapOpen!==false)setTimeout(()=>mountItinMap(ad),0);
+  // 保險：若狀態有 modal 但畫面上沒有掛載任何視窗，重新掛回（避免狀態不同步導致 FAB 消失）
+  if(S.modal && !document.getElementById('_heroCard') && !document.getElementById('_sheetWrap'))_mountModalOverlay();
 }
 function fabConfig(){
   if(S.modal||S.editTN||S.view==='split')return null;
@@ -2691,7 +2693,7 @@ function _mountHero(content, m){
 
   const bd=document.createElement('div');
   bd.id='_heroBackdrop'; bd.className='hero-backdrop';
-  bd.onclick=_closeHero;
+  bd.onclick=()=>setU({modal:null});
   document.body.appendChild(bd);
 
   const card=document.createElement('div');
@@ -2717,7 +2719,7 @@ function _mountHero(content, m){
   card.addEventListener('touchend',()=>{
     if(!swipeHead){ty0=0;cy0=0;return;}
     card.style.transform=''; bd.style.opacity='';
-    if(cy0-ty0>75)_closeHero(); else{card.style.transition='';card.classList.add('animating');}
+    if(cy0-ty0>75)setU({modal:null}); else{card.style.transition='';card.classList.add('animating');}
     ty0=0;cy0=0;swipeHead=false;
   });
 
