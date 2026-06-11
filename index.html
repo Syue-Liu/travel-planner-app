@@ -22,8 +22,6 @@ a{text-decoration:none}
 #root{min-height:100vh}
 .app{min-height:100vh;max-width:980px;margin:0 auto;background:rgba(255,255,255,.7);box-shadow:0 0 0 1px rgba(255,255,255,.55)}
 .cover{position:relative;z-index:30;aspect-ratio:16/9;min-height:200px;max-height:360px;color:#fff;background:#0f5e5e;background-image:linear-gradient(to bottom,rgba(0,0,0,.55) 0%,rgba(0,0,0,.05) 38%,rgba(0,0,0,.05) 55%,rgba(0,0,0,.72) 100%),var(--cover);background-size:cover;background-position:center var(--cover-pos,30%);display:flex;flex-direction:column;justify-content:space-between}
-.cover-menu-wrap{position:static;z-index:250;flex-shrink:0}
-.cover-menu{position:fixed;right:12px;top:60px;z-index:250;min-width:190px;padding:8px;border-radius:18px;background:rgba(255,255,255,.97);backdrop-filter:blur(18px);border:1px solid rgba(255,255,255,.7);box-shadow:0 18px 44px rgba(18,38,35,.28)}
 .topbar{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;padding:16px 16px 0}
 .cover-bottom{padding:0 16px 18px;display:flex;flex-direction:column;gap:6px}
 .hdr-title{font-size:26px;line-height:1.15;font-weight:900;letter-spacing:-.5px;cursor:pointer;text-shadow:0 2px 16px rgba(0,0,0,.5);word-break:break-word}
@@ -571,6 +569,30 @@ input:focus,select:focus,textarea:focus{border-color:#42a787;box-shadow:0 0 0 3p
 @media (max-width:480px){
   .avatar-pick-grid{grid-template-columns:repeat(6,1fr);max-height:200px;}
 }
+
+/* ── v12 UX 強化 ─────────────────────────────── */
+.dtab-date{font-size:11px;opacity:.72;font-weight:800;margin-left:5px}
+.dtab.on .dtab-date{opacity:.85}
+.dtab-edit{font-size:11px;opacity:.9;margin-left:5px}
+.section-title{cursor:pointer;border-radius:8px;transition:background .15s}
+.section-title:active{background:rgba(15,94,94,.07)}
+.empty-cta{display:flex;gap:8px;justify-content:center;flex-wrap:wrap}
+.empty-cta .btn{min-height:44px;padding:10px 16px;font-size:14px}
+.app-fab-tmpls{display:flex;flex-wrap:wrap;gap:6px;justify-content:flex-end;margin-bottom:4px}
+.app-fab-tmpl{border:0;border-radius:999px;padding:9px 13px;font-size:12px;font-weight:800;cursor:pointer;box-shadow:0 6px 16px rgba(18,38,35,.18);white-space:nowrap;animation:fabSheetUp .24s cubic-bezier(.32,1.08,.58,1)}
+.app-fab-tmpl:active{transform:scale(.96)}
+.undo-toast{position:fixed;bottom:calc(24px + env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);background:#1b2926;color:#fff;border-radius:14px;padding:9px 10px 9px 18px;font-size:14px;font-weight:800;z-index:300;box-shadow:0 10px 28px rgba(0,0,0,.32);display:flex;align-items:center;gap:12px;max-width:min(92vw,440px);animation:wl-toast-in .25s ease}
+.undo-msg{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.undo-btn{flex-shrink:0;border:0;border-radius:9px;background:#42a787;color:#fff;font-size:13px;font-weight:900;padding:8px 16px;cursor:pointer;min-height:36px}
+.undo-btn:active{transform:scale(.96)}
+.ai-step-box{background:#f0f8f4;border:1px solid #b6e0cc;border-radius:var(--r);padding:12px;margin-bottom:14px}
+.ai-step-title{font-size:12px;font-weight:900;color:#085041;margin-bottom:10px}
+.ai-prompt-details summary{font-size:12px;font-weight:800;color:#0f5e5e;cursor:pointer;user-select:none}
+.ai-prompt-details pre{font-size:11px;line-height:1.7;color:#2d4a3e;background:#e4f4ed;border-radius:8px;padding:10px;white-space:pre-wrap;word-break:break-all;max-height:170px;overflow-y:auto;margin-top:8px}
+@media (max-width:640px){
+  .btn-ic{width:38px;height:38px;font-size:16px}
+  .app-fab-tmpls{justify-content:flex-start}
+}
 </style>
 </head>
 <body>
@@ -737,12 +759,21 @@ function groupMapPoints(pts){
   });
   return [...groups.values()];
 }
+let _itinMapCache={sig:null,holder:null,map:null};
 async function mountItinMap(day){
   if(!day||S.view!=='itinerary'||S.mapOpen===false)return;
   const el=document.getElementById(`itin-map-${day.id}`);
   if(!el)return;
   const locs=dayMapLocs(day);
   if(!locs.length)return;
+  // 同一天、地點沒變 → 直接掛回快取的地圖實例，不重建（避免每次重繪都重載圖磚）
+  const sig=day.id+'|'+JSON.stringify(locs.map(l=>[l.name,l.address,l.time,l.category||'']));
+  if(_itinMapCache.sig===sig&&_itinMapCache.holder&&_itinMapCache.map){
+    el.innerHTML='';
+    el.appendChild(_itinMapCache.holder);
+    setTimeout(()=>{try{_itinMapCache.map.invalidateSize();}catch{}},80);
+    return;
+  }
   el.innerHTML='<div class="itin-map-loading">🗺️ 正在整理地圖位置...<br><span style="font-size:11px;color:#8a9894;">第一次會稍慢，之後會使用快取加速</span></div>';
   const ok=await ensureLeaflet();
   if(!ok){el.innerHTML='<div class="itin-map-loading">地圖載入失敗，請先使用右上方「開啟路線」。</div>';return;}
@@ -756,7 +787,10 @@ async function mountItinMap(day){
     return;
   }
   el.innerHTML='';
-  const map=L.map(el,{scrollWheelZoom:false,zoomControl:true});
+  const holder=document.createElement('div');
+  holder.style.cssText='position:absolute;inset:0;';
+  el.appendChild(holder);
+  const map=L.map(holder,{scrollWheelZoom:false,zoomControl:true});
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'&copy; OpenStreetMap'}).addTo(map);
   const latlngs=[];
   const groups=groupMapPoints(pts);
@@ -776,6 +810,8 @@ async function mountItinMap(day){
   if(routeLatLngs.length>1)L.polyline(routeLatLngs,{color:'#0f5e5e',weight:4,opacity:.75}).addTo(map);
   map.fitBounds(L.latLngBounds(latlngs),{padding:[28,28],maxZoom:15});
   setTimeout(()=>map.invalidateSize(),120);
+  if(_itinMapCache.map&&_itinMapCache.map!==map){try{_itinMapCache.map.remove();}catch{}}
+  _itinMapCache={sig,holder,map};
 }
 function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
 function money(n){return'NT$'+(Math.round(n)||0).toLocaleString();}
@@ -933,7 +969,8 @@ function fabConfig(){
 function globalFab(){
   const cfg=fabConfig();
   if(!cfg)return'';
-  const sheet=S.wlFabOpen?`<div class="app-fab-backdrop" onclick="closeWlFab()"></div><div class="app-fab-sheet">
+  const tmplRow=(S.view==='itinerary'&&S.wlFabOpen)?`<div class="app-fab-tmpls">${TMPL.map((t,i)=>`<button class="app-fab-tmpl" style="background:${CB[t.cat]};color:${CF[t.cat]};" onclick="fabTmpl(this,${i})">${CE[t.cat]} ${esc(t.name)}</button>`).join('')}</div>`:'';
+  const sheet=S.wlFabOpen?`<div class="app-fab-backdrop" onclick="closeWlFab()"></div><div class="app-fab-sheet">${tmplRow}
     <button class="app-fab-action" onclick="fabManual(this)"><span class="app-fab-action-ic">${cfg.manualIcon}</span><span><div class="app-fab-action-title">${cfg.manual}</div><div class="app-fab-action-sub">${cfg.manualSub}</div></span></button>
     <button class="app-fab-action ai" onclick="fabAi(this)"><span class="app-fab-action-ic">${cfg.aiIcon}</span><span><div class="app-fab-action-title">${cfg.ai}</div><div class="app-fab-action-sub">${cfg.aiSub}</div></span></button>
   </div>`:'';
@@ -955,7 +992,6 @@ function fabAi(el){
 }
 function hdr(te){
   const statsStrip='';
-  if(S.editTN)return`<header class="cover" style="--cover:url('${esc(S.cover)}')"><div class="topbar"></div><div class="cover-bottom"><div class="title-edit"><input class="tni" id="tn-in" value="${esc(S.tnDraft)}" placeholder="行程名稱" oninput="S.tnDraft=this.value" onkeydown="if(event.key==='Enter')saveTN()" autofocus><button class="btn glass" onclick="saveTN()">完成</button></div></div></header>${statsStrip}`;
   const coverStyle=`--cover:url('${esc(S.cover)}');--cover-pos:${S.coverPos||'30%'}`;
   if(S.editTN)return`<header class="cover" style="${coverStyle}"><div class="topbar"></div><div class="cover-bottom"><div class="title-edit"><input class="tni" id="tn-in" value="${esc(S.tnDraft)}" placeholder="行程名稱" oninput="S.tnDraft=this.value" onkeydown="if(event.key==='Enter')saveTN()" autofocus><button class="btn glass" onclick="saveTN()">完成</button></div></div></header>${statsStrip}`;
   const menu=S.menuOpen?`<div class="cover-menu-backdrop" onclick="setU({menuOpen:false})"></div><div class="cover-menu" onclick="event.stopPropagation()"><button onclick="copyShareLink();setU({menuOpen:false})"><span class="mi">🔗</span>分享連結</button><button onclick="S.menuOpen=false;openModal(this,{t:'tools'})"><span class="mi">☰</span>旅程工具</button><button onclick="S.menuOpen=false;openModal(this,{t:'cover'})"><span class="mi">📷</span>更換封面</button><button onclick="S.menuOpen=false;openModal(this,{t:'tv'})"><span class="mi">👥</span>旅伴管理</button><button onclick="S.menuOpen=false;openModal(this,{t:'help'})"><span class="mi">📖</span>使用說明</button></div>`:'';
@@ -983,10 +1019,14 @@ function itineraryMap(day){
 }
 function itin(day,si){
   if(!day)return'';
-  const tabs=S.days.map((d,i)=>`<button class="dtab${i===si?' on':''}" title="${esc(d.title)}${d.date?` · ${esc(d.date)}`:''}" onclick="setU({dayIdx:${i}})">Day ${i+1}</button>`).join('');
+  const tabs=S.days.map((d,i)=>{
+    const on=i===si;
+    const dshort=d.date?`<span class="dtab-date">${Number(d.date.slice(5,7))}/${Number(d.date.slice(8,10))}</span>`:'';
+    return`<button class="dtab${on?' on':''}" title="${esc(d.title)}${d.date?` · ${esc(d.date)}`:''}${on?'（再點一次可編輯）':''}" onclick="dayTabClick(${i},this)">Day ${i+1}${dshort}${on?'<span class="dtab-edit">✎</span>':''}</button>`;
+  }).join('');
   const nd=S.days.length+1;
   const nowLocId=getNowLocId(day.locations);
-  const locs=!day.locations.length?`<div class="empty"><div style="font-size:30px;margin-bottom:8px;">📍</div>尚無地點，開始規劃吧！</div>`:day.locations.map((l,i)=>{
+  const locs=!day.locations.length?`<div class="empty"><div style="font-size:30px;margin-bottom:8px;">📍</div><div style="font-weight:800;margin-bottom:14px;">這一天還沒有行程</div><div class="empty-cta"><button class="btn bp" onclick="_heroOrigin=this.getBoundingClientRect();oLoc('')">＋ 新增地點</button><button class="btn" style="background:#5b3fc4;border-color:#5b3fc4;color:#fff;" onclick="openModal(this,{t:'import'})">✨ AI 匯入行程</button></div></div>`:day.locations.map((l,i)=>{
     const cat=l.category||ac(`${l.name} ${l.notes||''} ${l.address||''}`);
     const hasCat=cat!=='其他';
     const badge=hasCat?`<span class="loc-cat-badge" style="background:${CB[cat]};color:${CF[cat]};">${CE[cat]} ${cat}</span>`:`<span class="loc-cat-badge" style="background:#F1EFE8;color:#666;">${CE['其他']} 其他</span>`;
@@ -1009,10 +1049,8 @@ function itin(day,si){
     const mapQuery=l.address?`${l.name} ${l.address}`:l.name;
     const mapBtns=l.address||l.name?`<a href="${mu(mapQuery)}" target="_blank" rel="noopener"><button class="btn bp" style="font-size:12px;min-height:30px;padding:5px 10px;">地圖</button></a><a href="${nu(l.address||l.name)}" target="_blank" rel="noopener"><button class="btn ba" style="font-size:12px;min-height:30px;padding:5px 10px;">導航</button></a>`:'';
     const sortBtns=S.sortMode?`<div class="loc-sort-ctrl${isNow?' sort-below':''}"><button class="sort-btn sort-grip" title="拖曳排序" aria-label="拖曳排序" onpointerdown="event.stopPropagation();startTouchDrag(event,'${day.id}','${l.id}')">⠿</button><button class="sort-btn" title="上移" aria-label="上移" onclick="event.stopPropagation();mvLoc('${day.id}','${l.id}',-1)" ${i===0?'disabled':''}>↑</button><button class="sort-btn" title="下移" aria-label="下移" onclick="event.stopPropagation();mvLoc('${day.id}','${l.id}',1)" ${i===day.locations.length-1?'disabled':''}>↓</button></div>`:'';
-    return`<div class="loc-card-wrap${isNow?' loc-now':''}" data-locid="${l.id}" data-dayid="${day.id}" ondragover="dragOver(event)" ondragleave="dragLeave(event)" ondrop="dragDrop(event,'${day.id}','${l.id}')" ondragend="dragEnd()" oncontextmenu="locActionSheet(event,'${day.id}','${l.id}');return false;" data-lpress-t="" ontouchstart="_lpStart(event,'${day.id}','${l.id}')" ontouchend="_lpCancel()" ontouchmove="_lpCancel()"><div class="card" style="border-left-color:${isNow?catBg:borderColor};border-left-width:${isNow?'5':'3'}px;${isNow?`--now-bg:${catLight};`:''}">${sortBtns}${nowBar}<div class="loc-wrap"><div class="loc-time"><span class="loc-time-text" style="${isNow?`color:${catDark};font-weight:900;`:''}">${esc(l.time||'--:--')}</span></div><div class="loc-body"><div class="loc-name">${esc(l.name)} ${badge}${resBadge}${nowBadge}</div>${l.address?`<div class="loc-addr">${esc(l.address)}</div>`:''}${phoneEl}${notesEl}<div class="act-row">${mapBtns}<button class="btn-ic" title="編輯" onclick="_heroOrigin=this.getBoundingClientRect();oLoc('${l.id}')">✏️</button><button class="btn-ic br" title="刪除" onclick="locDeleteConfirm('${day.id}','${l.id}')">🗑️</button></div></div></div></div></div>`;
+    return`<div class="loc-card-wrap${isNow?' loc-now':''}" data-locid="${l.id}" data-dayid="${day.id}" ondragover="dragOver(event)" ondragleave="dragLeave(event)" ondrop="dragDrop(event,'${day.id}','${l.id}')" ondragend="dragEnd()" oncontextmenu="locActionSheet(event,'${day.id}','${l.id}');return false;" data-lpress-t="" ontouchstart="_lpStart(event,'${day.id}','${l.id}')" ontouchend="_lpCancel()" ontouchmove="_lpCancel()"><div class="card" style="border-left-color:${isNow?catBg:borderColor};border-left-width:${isNow?'5':'3'}px;${isNow?`--now-bg:${catLight};`:''}">${sortBtns}${nowBar}<div class="loc-wrap"><div class="loc-time"><span class="loc-time-text" style="${isNow?`color:${catDark};font-weight:900;`:''}">${esc(l.time||'--:--')}</span></div><div class="loc-body"><div class="loc-name">${esc(l.name)} ${badge}${resBadge}${nowBadge}</div>${l.address?`<div class="loc-addr">${esc(l.address)}</div>`:''}${phoneEl}${notesEl}<div class="act-row">${mapBtns}<button class="btn-ic" title="編輯" onclick="_heroOrigin=this.getBoundingClientRect();oLoc('${l.id}')">✏️</button><button class="btn-ic" title="更多選項" aria-label="更多選項" onclick="locActionSheet(event,'${day.id}','${l.id}')">⋯</button></div></div></div></div></div>`;
   }).join('');
-  const quickItems=[...TMPL.map((t,i)=>`<button class="quick-item" onclick="S.quickOpen=false;_heroOrigin=this.getBoundingClientRect();oLoc('',${i})"><span style="background:${CB[t.cat]};color:${CF[t.cat]};border-radius:8px;padding:2px 7px;font-size:12px;font-weight:800;">${CE[t.cat]} ${t.cat}</span> ${esc(t.name)}</button>`),`<hr style="border:none;border-top:1px solid var(--line);margin:3px 0;"><button class="quick-item" style="color:#5b3fc4;font-weight:900;" onclick="S.quickOpen=false;openModal(this,{t:'import'})">✨ AI 匯入行程</button>`].join('');
-  const quickMenu=S.quickOpen?`<div class="quick-menu">${quickItems}</div>`:'';
   const wx=getWx(day.city);
   let weatherBadge='';
   let weatherDetail=null;
@@ -1028,7 +1066,7 @@ function itin(day,si){
   }
   // Store detail for sheet
   if(weatherDetail)window['_wx_'+day.id]=weatherDetail;
-  return`<div class="day-tabs">${tabs}<button class="dtab dtab-add" onclick="FM={title:'第${nd}天',date:'',city:''};openModal(this,{t:'nd'})">+ 新增</button></div><div class="section-head"><div class="section-title-wrap"><div class="section-title">${esc(day.title)}</div>${(day.date||weatherBadge)?`<div class="section-meta">${day.date?`<span class="section-meta-date">📅 ${day.date}</span>`:''}${weatherBadge}</div>`:''}</div><div class="section-actions"><div class="action-group primary"><button class="btn" title="跳到現在" onclick="jumpToNow()">🕐</button><button class="btn" title="排序行程" style="${S.sortMode?'background:#183b40;border-color:#183b40;color:#fff;':''}" onclick="setU({sortMode:!S.sortMode})">${S.sortMode?'完成':'排序'}</button><div class="quick-holder mobile-fab-replaced"><button class="btn" style="background:#f0faf5;border-color:#9fe1cb;color:#085041;font-weight:800;white-space:nowrap;" onclick="toggleQuickMenu(this)">＋ 快速新增</button>${quickMenu}</div></div><div class="action-group manage"><button class="btn" onclick="FM={title:\'${esc(day.title)}\',date:\'${esc(day.date||'')}\',city:\'${esc(day.city||'')}\'}; openModal(this,{t:\'ed\',dayId:\'${day.id}\'})">編輯</button>${S.days.length>1?`<button class="btn br" onclick="dDay(\'${day.id}\')">刪除</button>`:''}</div></div></div>${itineraryMap(day)}${locs}<button class="add-btn mobile-fab-replaced" onclick="_heroOrigin=this.getBoundingClientRect();oLoc('')">＋ 新增地點</button>`;
+  return`<div class="day-tabs">${tabs}<button class="dtab dtab-add" onclick="FM={title:'第${nd}天',date:'',city:''};openModal(this,{t:'nd'})">+ 新增</button></div><div class="section-head"><div class="section-title-wrap"><div class="section-title" title="點擊編輯這一天" onclick="openDayEdit(this)">${esc(day.title)}<span class="hdr-title-edit-icon" style="color:var(--muted);">✏️</span></div>${(day.date||weatherBadge)?`<div class="section-meta">${day.date?`<span class="section-meta-date">📅 ${day.date}</span>`:''}${weatherBadge}</div>`:''}</div><div class="section-actions"><div class="action-group primary"><button class="btn" title="跳到現在的行程" onclick="jumpToNow()">🕐 現在</button><button class="btn" title="排序行程" style="${S.sortMode?'background:#183b40;border-color:#183b40;color:#fff;':''}" onclick="setU({sortMode:!S.sortMode})">${S.sortMode?'✓ 完成排序':'排序'}</button></div></div></div>${itineraryMap(day)}${locs}`;
 }
 function exps(te){
   const cs=CATS.map(c=>({c,t:S.expenses.filter(e=>e.category===c).reduce((s,e)=>s+expValue(e),0)})).filter(x=>x.t>0);
@@ -1121,7 +1159,8 @@ function mDay(){
   return`<div class="mhd"><div class="mt">${isE?'編輯天數':'新增天數'}</div><div class="mcl" onclick="setU({modal:null})">✕</div></div>
 <div class="fg"><label class="fl">標題 *</label><input type="text" value="${esc(FM.title||'')}" placeholder="例：第一天" oninput="FM.title=this.value"></div>
 <div class="mobile-stack" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;"><div><label class="fl">日期</label><input type="date" value="${esc(FM.date||'')}" oninput="FM.date=this.value"></div><div><label class="fl">城市（查天氣用）</label><input type="text" value="${esc(FM.city||'')}" placeholder="例：Tokyo、大阪、台北" oninput="FM.city=this.value"></div></div>
-<div class="ar"><button class="btn bp" style="flex:1;padding:10px;" onclick="sDay()">儲存</button><button class="btn" style="flex:1;padding:10px;" onclick="setU({modal:null})">取消</button></div>`;
+<div class="ar"><button class="btn bp" style="flex:1;padding:10px;" onclick="sDay()">儲存</button><button class="btn" style="flex:1;padding:10px;" onclick="setU({modal:null})">取消</button></div>
+${isE&&S.days.length>1?`<button class="btn br" style="width:100%;margin-top:12px;padding:10px;" onclick="dDayFromModal()">🗑️ 刪除這一天（含當天所有地點）</button>`:''}`;
 }
 function mExp(){
   const tOpts=`<option value=""${!FM.paidBy?' selected':''}>無 / 請選擇</option>`+S.travelers.map(t=>`<option value="${esc(t)}"${FM.paidBy===t?' selected':''}>${esc(t)}</option>`).join('');
@@ -1437,8 +1476,8 @@ function sExp(){
 function deleteEditingExpense(){
   const id=S.modal?.expId;
   if(!id)return;
-  if(!confirm('確定要刪除這筆記帳嗎？'))return;
-  setD({expenses:S.expenses.filter(e=>e.id!==id),modal:null});
+  setU({modal:null});
+  setTimeout(()=>dExp(id),380);
 }
 function saveCoverUrl(){
   const v=document.getElementById('cover-url')?.value?.trim();
@@ -1689,8 +1728,7 @@ function confirmImport(){
   const newDays=[...existing,..._importDays.map(d=>({...d,id:uid()}))];
   setD({days:newDays,dayIdx:0,modal:null});
 }
-function mImport(){
-  const PROMPT=`請幫我安排 [X] 天 [目的地] 旅遊行程，請嚴格按照以下格式輸出，不要加任何 Markdown、粗體、標題符號：
+const AI_ITIN_PROMPT=`請幫我安排 [X] 天 [目的地] 旅遊行程，請嚴格按照以下格式輸出，不要加任何 Markdown、粗體、標題符號：
 
 第1天 | YYYY-MM-DD | 當日行程標題 | 城市名
 HH:MM | 地點名稱 | 完整地址 | 電話（查不到則留空） | 備註 | 分類
@@ -1717,39 +1755,55 @@ HH:MM | 地點名稱 | 完整地址 | 電話（查不到則留空） | 備註 | 
 15:00 | 晴空塔 | 東京都墨田区押上1-1-2 | 0570-55-0634 | 建議提前網路購票 | 景點
 18:30 | 思い出横丁 | 東京都新宿区西新宿1-2-1 |  | 居酒屋一條街 | 餐飲
 22:00 | 新宿王子飯店 | 東京都新宿区歌舞伎町1-30-1 | 03-3205-1111 | 確認 check-in 時間 | 住宿`;
-  window._geminiPrompt=PROMPT;
+
+function _buildItinPrompt(){
+  const dest=(document.getElementById('ai-dest')?.value||'').trim();
+  const days=(document.getElementById('ai-days')?.value||'').trim();
+  const date=(document.getElementById('ai-date')?.value||'').trim();
+  let p=AI_ITIN_PROMPT.replace('[X]',days||'[X]').replace('[目的地]',dest||'[目的地]');
+  if(date)p+=`\n\n補充：第一天日期是 ${date}，之後每天日期依序 +1，請照此填入每天的日期欄位。`;
+  return p;
+}
+
+function mImport(){
+  const curDay=S.days[Math.min(S.dayIdx,S.days.length-1)]||{};
+  const defaultDest=curDay.city||'';
   return`<div class="mhd"><div class="mt">✨ AI 行程匯入</div><div class="mcl" onclick="setU({modal:null})">✕</div></div>
-<div style="background:#f0f8f4;border:1px solid #b6e0cc;border-radius:var(--r);padding:12px;margin-bottom:14px;">
-  <div style="font-size:12px;font-weight:900;color:#085041;margin-bottom:8px;">步驟一：複製提示詞給 Gemini</div>
-  <pre style="font-size:11px;line-height:1.7;color:#2d4a3e;background:#e4f4ed;border-radius:8px;padding:10px;overflow-x:auto;white-space:pre-wrap;word-break:break-all;max-height:160px;overflow-y:auto;margin-bottom:10px;">${esc(PROMPT)}</pre>
-  <button class="btn bp" style="width:100%;padding:9px;font-size:13px;" id="copy-prompt-btn" onclick="copyPrompt()">📋 複製提示詞</button>
+<div class="ai-step-box">
+  <div class="ai-step-title">步驟一：填好目的地，複製提示詞給 Gemini / ChatGPT / Claude</div>
+  <div class="mobile-stack" style="display:grid;grid-template-columns:1.3fr .7fr 1fr;gap:8px;margin-bottom:10px;">
+    <div><label class="fl">目的地</label><input id="ai-dest" type="text" placeholder="例：東京" value="${esc(defaultDest)}"></div>
+    <div><label class="fl">天數</label><input id="ai-days" type="number" min="1" max="30" inputmode="numeric" placeholder="5"></div>
+    <div><label class="fl">出發日（選填）</label><input id="ai-date" type="date"></div>
+  </div>
+  <button class="btn bp" style="width:100%;padding:10px;font-size:13px;" id="copy-prompt-btn" onclick="copyPrompt()">📋 複製提示詞</button>
+  <details class="ai-prompt-details" style="margin-top:8px;"><summary>查看提示詞內容</summary><pre>${esc(AI_ITIN_PROMPT)}</pre></details>
 </div>
-<div style="font-size:12px;font-weight:900;color:#085041;margin-bottom:6px;">步驟二：貼入 Gemini 的回覆</div>
-<textarea class="import-area" id="ai-import-box" placeholder="貼入 Gemini 輸出的行程文字，例如：
+<div class="ai-step-title" style="color:#085041;margin-bottom:8px;">步驟二：把 AI 的回覆貼回來</div>
+<button class="btn" style="width:100%;margin-bottom:8px;padding:9px;" onclick="pasteClipboard('ai-import-box','onImportInput')">📥 從剪貼簿貼上</button>
+<textarea class="import-area" id="ai-import-box" placeholder="或在這裡手動貼上 AI 輸出的行程文字，例如：
 
 第1天 | 2026-09-11 | 東京初到與新宿夜晚 | 東京
 09:00 | 淺草寺 | 東京都台東区浅草2丁目3-1 |  | 東京最古老寺廟 | 景點
-12:00 | 壽司大 | 東京都中央区築地4-13-9 | 03-3547-6797 | 場外市場必吃 | 餐飲
 ..." oninput="onImportInput()"></textarea>
 <div id="import-preview"></div>
 <div class="ar" style="margin-top:12px;"><button class="btn bp" style="flex:1;padding:10px;" onclick="confirmImport()">匯入行程</button><button class="btn" style="flex:1;padding:10px;" onclick="setU({modal:null})">取消</button></div>`;
 }
 function copyPrompt(){
-  const text=window._geminiPrompt||'';
+  const text=_buildItinPrompt();
   if(!text)return;
   const doFallback=()=>{
     const ta=document.createElement('textarea');ta.value=text;ta.style.cssText='position:fixed;opacity:0;top:0;left:0;';
     document.body.appendChild(ta);ta.focus();ta.select();
     try{document.execCommand('copy');}catch{}
     document.body.removeChild(ta);
-    const btn=document.getElementById('copy-prompt-btn');
-    if(btn){btn.textContent='✅ 已複製！';setTimeout(()=>{if(btn)btn.textContent='📋 複製提示詞';},2000);}
+    markDone();
   };
   const markDone=()=>{
     const btn=document.getElementById('copy-prompt-btn');
     if(!btn)return;
-    btn.textContent='✅ 已複製！';btn.style.background='#0F6E56';
-    setTimeout(()=>{if(btn){btn.textContent='📋 複製提示詞';btn.style.background='';}},2000);
+    btn.textContent='✅ 已複製！貼給任一 AI 即可';btn.style.background='#0F6E56';
+    setTimeout(()=>{if(btn){btn.textContent='📋 複製提示詞';btn.style.background='';}},2400);
   };
   if(navigator.clipboard?.writeText){
     navigator.clipboard.writeText(text).then(markDone).catch(doFallback);
@@ -1838,7 +1892,22 @@ function dragEnd(){
   document.querySelectorAll('.dragging,.drag-over').forEach(el=>el.classList.remove('dragging','drag-over'));
   dragState={dayId:null,locId:null};
 }
-function dLoc(dayId,locId){const days=JSON.parse(JSON.stringify(S.days));const day=days.find(d=>d.id===dayId);day.locations=day.locations.filter(l=>l.id!==locId);setD({days});}
+function dLoc(dayId,locId){
+  const days=JSON.parse(JSON.stringify(S.days));
+  const day=days.find(d=>d.id===dayId);
+  if(!day)return;
+  const idx=day.locations.findIndex(l=>l.id===locId);
+  if(idx<0)return;
+  const [removed]=day.locations.splice(idx,1);
+  setD({days});
+  undoToast(`已刪除「${_trunc(removed.name)}」`,()=>{
+    const days2=JSON.parse(JSON.stringify(S.days));
+    const d2=days2.find(d=>d.id===dayId);
+    if(!d2)return;
+    d2.locations.splice(Math.min(idx,d2.locations.length),0,removed);
+    setD({days:days2});
+  });
+}
 function mvLoc(dayId,locId,dir){
   const days=JSON.parse(JSON.stringify(S.days)),day=days.find(d=>d.id===dayId),i=day.locations.findIndex(l=>l.id===locId),j=i+dir;
   if(i<0||j<0||j>=day.locations.length)return;
@@ -1999,18 +2068,19 @@ ${sec('📝','行前備忘錄',[
   ['✅','出發前的打勾清單，分成 🪪 證件、🧳 行李、📅 預訂、📌 其他 四類。'],
   ['＋','下方輸入框選分類、輸入文字後按「新增」或 Enter 加入。'],
   ['☑️','點左側方框切換已完成／未完成，完成項目會顯示刪除線。進度條顯示完成比例。'],
-  ['×','點右側 × 刪除該項目。'],
+  ['×','點右側 × 刪除該項目，刪錯了 6 秒內可按「復原」救回。'],
 ])}
 ${sec('🗺','行程規劃',[
-  ['📅','上方分頁選擇天數，可新增、編輯、刪除天數，每天可設定日期與城市（用於查天氣）。'],
-  ['＋','點標題列「＋ 快速新增」下拉選單，選分類快捷（餐廳、飯店、交通等）或 ✨ AI 匯入整份行程；也可點底部「＋ 新增地點」開啟空白表單。'],
+  ['📅','上方分頁選擇天數；再點一次目前的分頁（或點當天標題）即可編輯日期、城市，編輯視窗內也能刪除整天。'],
+  ['＋','點右下角 ＋ 按鈕新增：可選快速範本（餐廳、飯店、交通等）、空白地點，或 ✨ AI 匯入整份行程。'],
   ['📍','每個地點可填：名稱、地址、電話、分類、時間、訂位狀態、確認碼、備註。'],
   ['🌤','天氣資訊以小膠囊顯示在天數標題旁，點擊可展開當日完整天氣（溫度、體感、濕度、風速、紫外線）。'],
   ['🕐','系統自動跳到最近的行程，並以彩色橫條標記「目前最近」。點標題列 🕐 按鈕可手動跳到當下。'],
   ['💬','備註欄位點「展開 ›」會從卡片原位放大展開（App Store 動畫效果），點空白處或下滑可關閉。'],
   ['🗺️','點「地圖」以名稱＋地址搜尋 Google Maps；「導航」直接開啟導航。'],
   ['📞','電話號碼旁的 📞 可直接撥打。'],
-  ['⠿ ↑ ↓','右上角排序工具列（膠囊樣式）：拖曳 ⠿ 或點 ↑↓ 調整地點順序，操作後頁面位置不會跳回頂部。'],
+  ['⠿ ↑ ↓','點「排序」進入排序模式：拖曳 ⠿ 或點 ↑↓ 調整地點順序。'],
+  ['⋯','點地點卡片的 ⋯（或長按卡片）可編輯、存到清單、刪除；刪除後 6 秒內可按「復原」救回。'],
 ])}
 ${sec('🌟','旅遊清單',[
   ['📋','在「清單」頁籤收藏想去的地方，分類有：☕ 咖啡廳、🍜 美食、🎁 伴手禮、🎫 景點、🛍️ 購物、🏨 住宿、📌 其他。'],
@@ -2037,7 +2107,7 @@ ${sec('🔗','分享與同步',[
   ['☁️','同一代碼對應同一份旅程，所有旅伴修改即時同步。建議使用不易猜到的代碼。'],
 ])}
 ${sec('✨','AI 功能',[
-  ['🗺','匯入行程：點「＋ 快速新增」→「✨ AI 匯入行程」，複製提示詞給 Gemini／ChatGPT，貼回回覆一鍵建立所有天數與地點。'],
+  ['🗺','匯入行程：點右下角 ＋ →「✨ AI 匯入行程」，填好目的地與天數，複製提示詞給 Gemini／ChatGPT／Claude，按「從剪貼簿貼上」一鍵建立所有天數與地點。'],
   ['🌟','匯入清單：在「清單」頁籤點「✨ AI 匯入清單」，複製提示詞，AI 會推薦咖啡廳、美食、伴手禮等，貼回後批次加入清單。'],
   ['💬','所有彈窗採用 App Store 風格 Hero 動畫，從按鈕原位放大展開，手指下滑可關閉。'],
 ])}
@@ -2104,10 +2174,76 @@ function cancelEditMemo(){
 }
 
 function delMemo(id){
+  const removed=(S.memo||[]).find(m=>m.id===id);
+  if(!removed)return;
   setD({memo:(S.memo||[]).filter(m=>m.id!==id)});
+  undoToast(`已刪除「${_trunc(removed.text)}」`,()=>setD({memo:[...(S.memo||[]),removed]}));
 }
-function dDay(dayId){if(S.days.length<=1)return;setD({days:S.days.filter(d=>d.id!==dayId),dayIdx:Math.max(0,S.dayIdx-1)});}
-function dExp(id){setD({expenses:S.expenses.filter(e=>e.id!==id)});}
+// ── Undo 刪除系統：刪除後 6 秒內可一鍵復原 ─────────────
+let _undoTimer=null;
+function _trunc(s,n=14){s=String(s||'');return s.length>n?s.slice(0,n)+'…':s;}
+function undoToast(msg,undoFn){
+  document.getElementById('_undoToast')?.remove();
+  if(_undoTimer){clearTimeout(_undoTimer);_undoTimer=null;}
+  const t=document.createElement('div');
+  t.id='_undoToast';t.className='undo-toast';
+  t.innerHTML=`<span class="undo-msg">${esc(msg)}</span><button class="undo-btn">復原</button>`;
+  t.querySelector('.undo-btn').onclick=()=>{if(_undoTimer){clearTimeout(_undoTimer);_undoTimer=null;}t.remove();undoFn();};
+  document.body.appendChild(t);
+  _undoTimer=setTimeout(()=>{t.remove();_undoTimer=null;},6000);
+}
+function dDay(dayId){
+  if(S.days.length<=1)return;
+  const idx=S.days.findIndex(d=>d.id===dayId);
+  if(idx<0)return;
+  const snapshot=JSON.parse(JSON.stringify(S.days));
+  const prevIdx=S.dayIdx;
+  const title=S.days[idx].title||`Day ${idx+1}`;
+  setD({days:S.days.filter(d=>d.id!==dayId),dayIdx:Math.max(0,S.dayIdx-1)});
+  undoToast(`已刪除「${_trunc(title)}」整天行程`,()=>setD({days:snapshot,dayIdx:prevIdx}));
+}
+function dDayFromModal(){
+  const id=S.modal?.dayId;
+  if(!id)return;
+  setU({modal:null});
+  setTimeout(()=>dDay(id),380);
+}
+function dExp(id){
+  const removed=(S.expenses||[]).find(e=>e.id===id);
+  if(!removed)return;
+  setD({expenses:S.expenses.filter(e=>e.id!==id)});
+  undoToast(`已刪除「${_trunc(removed.item)}」`,()=>setD({expenses:[...S.expenses,removed]}));
+}
+// Day 分頁：點其他天切換，再點目前這天直接編輯
+function openDayEdit(el){
+  const si=Math.min(S.dayIdx,S.days.length-1);
+  const d=S.days[si];
+  if(!d)return;
+  FM={title:d.title,date:d.date||'',city:d.city||''};
+  openModal(el,{t:'ed',dayId:d.id});
+}
+function dayTabClick(i,el){
+  if(i===S.dayIdx)openDayEdit(el);
+  else setU({dayIdx:i});
+}
+function fabTmpl(el,i){
+  S.wlFabOpen=false;
+  _heroOrigin=el.getBoundingClientRect();
+  oLoc('',i);
+}
+// 通用：從剪貼簿貼入指定 textarea
+async function pasteClipboard(boxId,cbName){
+  try{
+    const t=await navigator.clipboard.readText();
+    if(t&&t.trim()){
+      const el=document.getElementById(boxId);
+      if(el){el.value=t;if(cbName&&typeof window[cbName]==='function')window[cbName]();return;}
+    }
+  }catch{}
+  const el=document.getElementById(boxId);
+  if(el)el.focus();
+  alert('無法自動讀取剪貼簿，請在輸入框內長按貼上。');
+}
 function cleanName(v){
   v=String(v||'').trim();
   const half=v.length/2;
@@ -2321,7 +2457,10 @@ function wlSaveEdit(id){
 }
 
 function wlDelete(id){
+  const removed=wlItems().find(i=>i.id===id);
+  if(!removed)return;
   setD({wishlist:wlItems().filter(i=>i.id!==id)});
+  undoToast(`已刪除「${_trunc(removed.name)}」`,()=>setD({wishlist:[...wlItems(),removed]}));
 }
 
 function wlIsInItinerary(item){
@@ -2414,27 +2553,26 @@ const WL_IMPORT_PROMPT=`請幫我推薦 [目的地] 的旅遊必去清單，包�
 購物|東大門夜市|花蓮縣花蓮市自強路一段1號||四個區域各有特色，阿美麻糬必吃`;
 
 function buildWlImportModal(){
-  window._wlGeminiPrompt=WL_IMPORT_PROMPT;
-  return`<div class="mol" onclick="if(event.target===this)setU({modal:null})">
-    <div class="msh">
-      <div class="mhd"><div class="mt">✨ AI 匯入清單</div><div class="mcl" onclick="setU({modal:null})">✕</div></div>
-      <div style="background:#f0f0fc;border:1px solid #c8b8f0;border-radius:var(--r);padding:12px;margin-bottom:14px;">
-        <div style="font-size:12px;font-weight:900;color:#3d1fa8;margin-bottom:8px;">步驟一：複製提示詞給 Gemini / ChatGPT</div>
-        <pre style="font-size:11px;line-height:1.65;color:#2d1a6e;background:#e8e4f8;border-radius:8px;padding:10px;overflow-x:auto;white-space:pre-wrap;word-break:break-all;max-height:150px;overflow-y:auto;margin-bottom:10px;">${esc(WL_IMPORT_PROMPT)}</pre>
-        <button class="btn bp" style="width:100%;padding:9px;font-size:13px;background:#5b3fc4;border-color:#5b3fc4;" id="wl-copy-prompt-btn" onclick="wlCopyPrompt()">📋 複製提示詞</button>
+  const curDay=S.days[Math.min(S.dayIdx,S.days.length-1)]||{};
+  return`<div class="mhd"><div class="mt">✨ AI 匯入清單</div><div class="mcl" onclick="setU({modal:null})">✕</div></div>
+      <div class="ai-step-box" style="background:#f0f0fc;border-color:#c8b8f0;">
+        <div class="ai-step-title" style="color:#3d1fa8;">步驟一：填好目的地，複製提示詞給 Gemini / ChatGPT / Claude</div>
+        <div class="fg" style="margin-bottom:10px;"><label class="fl">目的地</label><input id="wl-ai-dest" type="text" placeholder="例：花蓮" value="${esc(curDay.city||'')}"></div>
+        <button class="btn bp" style="width:100%;padding:10px;font-size:13px;background:#5b3fc4;border-color:#5b3fc4;" id="wl-copy-prompt-btn" onclick="wlCopyPrompt()">📋 複製提示詞</button>
+        <details class="ai-prompt-details" style="margin-top:8px;"><summary>查看提示詞內容</summary><pre style="background:#e8e4f8;color:#2d1a6e;">${esc(WL_IMPORT_PROMPT)}</pre></details>
       </div>
-      <div style="font-size:12px;font-weight:900;color:#3d1fa8;margin-bottom:6px;">步驟二：貼入 AI 的回覆</div>
-      <textarea class="import-area" id="wl-import-box" placeholder="貼入 AI 輸出的推薦清單，例如：
+      <div class="ai-step-title" style="color:#3d1fa8;margin-bottom:8px;">步驟二：把 AI 的回覆貼回來</div>
+      <button class="btn" style="width:100%;margin-bottom:8px;padding:9px;" onclick="pasteClipboard('wl-import-box','wlPreviewImport')">📥 從剪貼簿貼上</button>
+      <textarea class="import-area" id="wl-import-box" placeholder="或在這裡手動貼上 AI 輸出的推薦清單，例如：
 咖啡廳|曙光咖啡|花蓮縣花蓮市中山路74號|03-831-3888|老屋改造必訪
 美食|公正包子|花蓮縣花蓮市公正街94號||老字號必吃..." oninput="wlPreviewImport()" style="height:130px;"></textarea>
       <div id="wl-import-preview" style="font-size:12px;color:#0f5e5e;margin:6px 0;font-weight:700;min-height:18px;"></div>
-      <div class="ar"><button class="btn" onclick="setU({modal:null})">取消</button><button class="btn bp" style="background:#5b3fc4;border-color:#5b3fc4;" onclick="wlConfirmImport()">匯入清單</button></div>
-    </div>
-  </div>`;
+      <div class="ar"><button class="btn" onclick="setU({modal:null})">取消</button><button class="btn bp" style="background:#5b3fc4;border-color:#5b3fc4;" onclick="wlConfirmImport()">匯入清單</button></div>`;
 }
 
 function wlCopyPrompt(){
-  const text=window._wlGeminiPrompt||'';
+  const dest=(document.getElementById('wl-ai-dest')?.value||'').trim();
+  const text=dest?WL_IMPORT_PROMPT.replace('[目的地]',dest):WL_IMPORT_PROMPT;
   const btn=document.getElementById('wl-copy-prompt-btn');
   const done=()=>{if(btn){btn.textContent='✅ 已複製！';setTimeout(()=>{if(btn)btn.textContent='📋 複製提示詞';},2000);}};
   if(navigator.clipboard?.writeText){navigator.clipboard.writeText(text).then(done).catch(()=>{_wlCopyFallback(text);done();});}
@@ -3000,21 +3138,24 @@ function _parseMemoImport(text){
 }
 
 function buildMemoImportModal(){
-  window._memoGeminiPrompt=MEMO_IMPORT_PROMPT;
+  const curDay=S.days[Math.min(S.dayIdx,S.days.length-1)]||{};
   return`<div class="mhd"><div class="mt">✨ AI 產生備忘清單</div><div class="mcl" onclick="setU({modal:null})">✕</div></div>
-<div style="background:#f0f0fc;border:1px solid #c8b8f0;border-radius:var(--r);padding:12px;margin-bottom:14px;">
-  <div style="font-size:12px;font-weight:900;color:#3d1fa8;margin-bottom:8px;">步驟一：複製提示詞給 Gemini / ChatGPT</div>
-  <pre style="font-size:11px;line-height:1.65;color:#2d1a6e;background:#e8e4f8;border-radius:8px;padding:10px;overflow-x:auto;white-space:pre-wrap;word-break:break-all;max-height:160px;overflow-y:auto;margin-bottom:10px;">${esc(MEMO_IMPORT_PROMPT)}</pre>
-  <button class="btn bp" style="width:100%;padding:9px;font-size:13px;background:#5b3fc4;border-color:#5b3fc4;" id="memo-copy-prompt-btn" onclick="memoCopyPrompt()">📋 複製提示詞</button>
+<div class="ai-step-box" style="background:#f0f0fc;border-color:#c8b8f0;">
+  <div class="ai-step-title" style="color:#3d1fa8;">步驟一：填好目的地，複製提示詞給 Gemini / ChatGPT / Claude</div>
+  <div class="fg" style="margin-bottom:10px;"><label class="fl">目的地</label><input id="memo-ai-dest" type="text" placeholder="例：日本" value="${esc(curDay.city||'')}"></div>
+  <button class="btn bp" style="width:100%;padding:10px;font-size:13px;background:#5b3fc4;border-color:#5b3fc4;" id="memo-copy-prompt-btn" onclick="memoCopyPrompt()">📋 複製提示詞</button>
+  <details class="ai-prompt-details" style="margin-top:8px;"><summary>查看提示詞內容</summary><pre style="background:#e8e4f8;color:#2d1a6e;">${esc(MEMO_IMPORT_PROMPT)}</pre></details>
 </div>
-<div style="font-size:12px;font-weight:900;color:#3d1fa8;margin-bottom:6px;">步驟二：貼入 AI 的回覆</div>
-<textarea class="import-area" id="memo-import-box" placeholder="貼入 AI 輸出的備忘清單，例如：\n證件|護照（6個月以上效期）\n行李|薄外套\n預訂|機票電子檔..." oninput="memoPreviewImport()" style="height:140px;"></textarea>
+<div class="ai-step-title" style="color:#3d1fa8;margin-bottom:8px;">步驟二：把 AI 的回覆貼回來</div>
+<button class="btn" style="width:100%;margin-bottom:8px;padding:9px;" onclick="pasteClipboard('memo-import-box','memoPreviewImport')">📥 從剪貼簿貼上</button>
+<textarea class="import-area" id="memo-import-box" placeholder="或在這裡手動貼上 AI 輸出的備忘清單，例如：\n證件|護照（6個月以上效期）\n行李|薄外套\n預訂|機票電子檔..." oninput="memoPreviewImport()" style="height:140px;"></textarea>
 <div id="memo-import-preview" style="font-size:12px;color:#0f5e5e;margin:6px 0;font-weight:700;min-height:18px;"></div>
 <div class="ar"><button class="btn" onclick="setU({modal:null})">取消</button><button class="btn bp" style="background:#5b3fc4;border-color:#5b3fc4;" onclick="memoConfirmImport()">匯入備忘</button></div>`;
 }
 
 function memoCopyPrompt(){
-  const text=window._memoGeminiPrompt||'';
+  const dest=(document.getElementById('memo-ai-dest')?.value||'').trim();
+  const text=dest?MEMO_IMPORT_PROMPT.replace('[目的地]',dest):MEMO_IMPORT_PROMPT;
   const btn=document.getElementById('memo-copy-prompt-btn');
   const done=()=>{if(btn){btn.textContent='✅ 已複製！';setTimeout(()=>{if(btn)btn.textContent='📋 複製提示詞';},2000);}};
   if(navigator.clipboard?.writeText){navigator.clipboard.writeText(text).then(done).catch(()=>{_memoCopyFallback(text);done();});}
