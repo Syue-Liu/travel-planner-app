@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <meta name="theme-color" content="#0f5e5e">
 <title>互動旅遊行程規劃器</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.31.0/dist/tabler-icons.min.css">
 <style>
 :root{
   --font-sans:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans TC","PingFang TC",Arial,sans-serif;
@@ -51,7 +52,7 @@ a{text-decoration:none}
 .tni::placeholder{color:rgba(255,255,255,.62)}
 .quick{display:none}
 .nav{position:sticky;top:0;z-index:20;display:flex;gap:6px;padding:8px;background:rgba(255,255,255,.92);backdrop-filter:blur(14px);border-bottom:1px solid rgba(217,226,223,.8)}
-.nav-btn{flex:1;min-height:42px;padding:8px 6px;font-size:14px;color:var(--muted);border:0;background:transparent;border-radius:999px;cursor:pointer}
+.nav-btn{flex:1;min-height:42px;padding:8px 4px;font-size:13.5px;color:var(--muted);border:0;background:transparent;border-radius:999px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:5px;font-weight:700}
 .nav-btn.on{color:#fff;background:var(--teal);font-weight:700;box-shadow:0 7px 18px rgba(15,94,94,.22)}
 .body{padding:14px 14px calc(24px + env(safe-area-inset-bottom))}
 .day-tabs{display:flex;gap:8px;overflow-x:auto;padding:2px 2px 10px;margin-bottom:12px;scrollbar-width:none}
@@ -85,12 +86,12 @@ a{text-decoration:none}
 .itin-map-name{font-size:13px;font-weight:900;color:var(--ink);line-height:1.35;word-break:break-word}
 .itin-map-meta{font-size:11px;color:var(--muted);margin-top:2px;line-height:1.45;word-break:break-word}
 .itin-map-empty{padding:14px;color:var(--muted);font-size:13px;text-align:center}
-.card{background:var(--paper);border-radius:var(--r);border:1px solid rgba(217,226,223,.9);margin-bottom:10px;overflow:hidden;box-shadow:0 8px 24px rgba(31,59,53,.06)}
-.loc-wrap{display:grid;grid-template-columns:56px minmax(0,1fr);gap:10px;padding:14px}
+.card{background:var(--paper);border-radius:var(--r);border:1px solid rgba(217,226,223,.9);margin-bottom:10px;overflow:hidden;box-shadow:0 2px 12px rgba(31,59,53,.05)}
+.loc-wrap{display:block;padding:12px 14px}
 .loc-time{font-size:12px;font-weight:800;color:#0f6e56;padding-top:2px;width:56px;min-width:56px;white-space:nowrap;font-variant-numeric:tabular-nums}
 .loc-time-text{line-height:1.2}
-.loc-name{font-weight:800;font-size:15px;margin-bottom:3px;word-break:break-word}
-.loc-addr,.loc-phone{font-size:13px;color:var(--muted);margin-bottom:6px;word-break:break-word}
+.loc-name{font-weight:800;font-size:16px;margin-bottom:3px;word-break:break-word;line-height:1.4}
+.loc-addr,.loc-phone{font-size:12.5px;color:var(--muted);margin-bottom:6px;word-break:break-word}
 .loc-phone{display:flex;align-items:center;gap:6px}
 .loc-phone a{color:#0c447c;font-weight:800}
 .loc-note-wrap{margin-bottom:8px;}
@@ -282,7 +283,8 @@ input:focus,select:focus,textarea:focus{border-color:#42a787;box-shadow:0 0 0 3p
 .import-loc-name{font-size:13px;font-weight:700}
 .import-loc-cat{font-size:10px;padding:1px 6px;border-radius:999px}
 .import-err{color:#a32d2d;font-size:13px;padding:10px;background:#fff5f5;border-radius:var(--r);border:1px solid #f2baba;margin-top:8px}
-.loc-card-wrap .card{border-left-width:3px;border-left-style:solid;position:relative}
+.tl-card{position:relative;margin-bottom:0}
+.loc-card-wrap.loc-now>.tl-card{border-width:1.5px}
 .loc-card-wrap.dragging{opacity:.35;transform:scale(.98)}
 .loc-card-wrap.drag-over .card{border-color:#42a787!important;box-shadow:0 0 0 2px rgba(66,167,135,.25)!important}
 .budget-card{padding:14px;background:#fff;border:1px solid var(--line);border-radius:var(--r);margin-bottom:12px;box-shadow:0 8px 24px rgba(31,59,53,.05)}
@@ -326,9 +328,10 @@ input:focus,select:focus,textarea:focus{border-color:#42a787;box-shadow:0 0 0 3p
   .itin-map-body{grid-template-columns:1fr}
   .itin-map-canvas{min-height:220px}
   .itin-map-list{border-left:0;border-top:1px solid rgba(207,227,245,.75);max-height:190px}
-  .loc-wrap{grid-template-columns:68px minmax(0,1fr);gap:8px;padding:13px 12px}
-  .loc-time{width:68px;min-width:68px;font-size:15px;line-height:1.2;text-align:left}
+  .loc-wrap{padding:12px 13px}
   .loc-body{min-width:0}
+  .tl-item{grid-template-columns:44px 20px minmax(0,1fr)}
+  .tl-time{font-size:14px}
   .loc-name{font-size:17px;line-height:1.35}
   .loc-addr,.loc-phone{font-size:14px;line-height:1.45}
   .loc-note-pill{width:100%;max-width:100%}
@@ -570,6 +573,19 @@ input:focus,select:focus,textarea:focus{border-color:#42a787;box-shadow:0 0 0 3p
   .avatar-pick-grid{grid-template-columns:repeat(6,1fr);max-height:200px;}
 }
 
+/* ── v13 時間軸版型 ─────────────────────────── */
+.tl-list{position:relative;padding-top:2px}
+.tl-item{display:grid;grid-template-columns:48px 22px minmax(0,1fr);gap:0 6px;margin-bottom:12px;position:relative}
+.tl-time{font-size:15px;font-weight:800;text-align:right;padding-top:13px;font-variant-numeric:tabular-nums;color:var(--muted);letter-spacing:-.01em;line-height:1.2;white-space:nowrap}
+.tl-time-empty{color:#c2cdc8;font-weight:700}
+.tl-item.loc-now .tl-time{color:#0F6E56;font-weight:900}
+.tl-rail{position:relative;display:flex;justify-content:center;align-items:flex-start}
+.tl-rail::before{content:'';position:absolute;top:-6px;bottom:-12px;left:50%;transform:translateX(-50%);width:2px;background:#dde7e2;border-radius:0}
+.tl-item:first-child .tl-rail::before{top:16px}
+.tl-item:last-child .tl-rail::before{bottom:auto;height:22px}
+.tl-item:first-child:last-child .tl-rail::before{display:none}
+.tl-dot{position:relative;z-index:1;width:12px;height:12px;border-radius:50%;background:#fff;border:2.5px solid #b9cfc7;margin-top:15px;flex-shrink:0;box-sizing:border-box}
+.tl-item.loc-now .tl-dot{width:16px;height:16px;margin-top:13px;box-shadow:0 0 0 4px rgba(29,158,117,.14);animation:now-pulse 1.8s ease-in-out infinite}
 /* ── v12 UX 強化 ─────────────────────────────── */
 .dtab-date{font-size:11px;opacity:.72;font-weight:800;margin-left:5px}
 .dtab.on .dtab-date{opacity:.85}
@@ -644,6 +660,9 @@ function getTvColor(name){
 }
 
 const CE={交通:'🚗',餐飲:'🍜',住宿:'🏨',景點:'🎫',購物:'🛍️',其他:'📌'};
+// Tabler 線條圖示:HTML 介面用(emoji 版 CE 保留給 <option> 等純文字情境)
+const CTI={交通:'car',餐飲:'tools-kitchen-2',住宿:'bed',景點:'ticket',購物:'shopping-bag',其他:'map-pin'};
+const TI=(n,s)=>`<i class="ti ti-${n}" aria-hidden="true" style="font-size:${s||16}px;line-height:1;vertical-align:-2px;"></i>`;
 const CB={交通:'#E6F1FB',餐飲:'#FAEEDA',住宿:'#EEEDFE',景點:'#E1F5EE',購物:'#FBEAF0',其他:'#F1EFE8'};
 const CF={交通:'#0C447C',餐飲:'#633806',住宿:'#3C3489',景點:'#085041',購物:'#4B1528',其他:'#444441'};
 const CBr={交通:'#378ADD',餐飲:'#EF9F27',住宿:'#534AB7',景點:'#1D9E75',購物:'#D4537E',其他:'#888780'};
@@ -700,10 +719,41 @@ const MAP_FALLBACKS=[
   {re:/山中湖平野|平野沙洲|山中湖村平野/i,lat:35.4202,lng:138.9059},
   {re:/金太郎富士見線|縣道 366|県道 366|県道366/i,lat:35.3505,lng:138.9433}
 ];
-const GEO_CACHE_VERSION='v4';
+const GEO_CACHE_VERSION='v6';
 const GEO_FAIL_TTL=24*60*60*1000;
 const GEO_TIMEOUT_MS=2600;
-function looksJapan(q){return /東京都|大阪府|京都府|北海道|山梨県|千葉県|神奈川県|埼玉県|静岡県|新宿区|渋谷区|成田市|富士河口湖|山中湖|[ぁ-んァ-ヶ一-龯]/.test(q);}
+function looksJapan(q){return /[ぁ-んァ-ヶ]|東京都|大阪府|京都府|北海道|[一-龯]{1,3}県|[一-龯]{1,3}区(?![一-龯])|丁目/.test(q);}
+function looksTaiwan(q){return /台灣|臺灣|[一-龯]{1,3}縣|台北市|臺北市|新北市|桃園市|台中市|臺中市|台南市|臺南市|高雄市|基隆市|新竹市|新竹縣|嘉義市|[一-龯]{1,3}[鄉鎮][一-龯]|[一-龯]+[路街巷][0-9０-９]+(之[0-9０-９]+)?號/.test(q);}
+// ── 城市定位上下文：用當天的「城市」欄位解析出國家與座標 ──
+// 在日本旅遊就限定日本、在台灣就限定台灣，其他國家比照辦理；並偏好城市周邊的搜尋結果
+const _cityCtx={};
+async function cityContext(city){
+  city=String(city||'').trim();
+  if(!city)return null;
+  if(_cityCtx[city]!==undefined)return _cityCtx[city];
+  const key='geocity:'+GEO_CACHE_VERSION+':'+city;
+  try{
+    const cached=localStorage.getItem(key);
+    if(cached){
+      const o=JSON.parse(cached);
+      if(o?.missUntil&&o.missUntil>Date.now()){_cityCtx[city]=null;return null;}
+      if(o?.cc){_cityCtx[city]=o;return o;}
+    }
+  }catch{}
+  try{
+    const url='https://nominatim.openstreetmap.org/search?format=json&limit=1&addressdetails=1&accept-language=zh-TW&q='+encodeURIComponent(city);
+    const data=await fetchJsonTimeout(url);
+    if(data?.length&&data[0].address?.country_code){
+      const o={lat:Number(data[0].lat),lng:Number(data[0].lon),cc:String(data[0].address.country_code).toLowerCase()};
+      _cityCtx[city]=o;
+      try{localStorage.setItem(key,JSON.stringify(o));}catch{}
+      return o;
+    }
+  }catch{}
+  _cityCtx[city]=null;
+  try{localStorage.setItem(key,JSON.stringify({missUntil:Date.now()+GEO_FAIL_TTL}));}catch{}
+  return null;
+}
 function fallbackCoord(l){
   const q=[l?.name,l?.address,l?.notes].filter(Boolean).join(' ');
   const m=MAP_FALLBACKS.find(x=>x.re.test(q));
@@ -719,12 +769,29 @@ async function fetchJsonTimeout(url,ms=GEO_TIMEOUT_MS){
     clearTimeout(timer);
   }
 }
-async function geocodeLoc(l){
+async function geocodeLoc(l,city){
   const fb=fallbackCoord(l);
   if(fb)return fb;
-  const qs=[mqLoc(l),l?.address,l?.name].map(s=>String(s||'').trim()).filter(Boolean);
-  for(const q of [...new Set(qs)]){
-    const key='geo:'+GEO_CACHE_VERSION+':'+q;
+  const ctx=await cityContext(city);
+  const addr=String(l?.address||'').trim();
+  const name=String(l?.name||'').trim();
+  // 台灣地址常因門牌格式查不到，準備「去掉門牌號」的降級查詢（例：中正路247號 → 中正路）
+  const noNum=addr.replace(/[0-9０-９]+(之[0-9０-９]+)?號.*$/,'').trim();
+  const qs=[mqLoc(l),addr,name];
+  if(noNum&&noNum!==addr)qs.push([name,noNum].filter(Boolean).join(' '),noNum);
+  if(city&&name)qs.push(name+' '+city); // 最後再用「名稱＋城市」搜一次
+  const cleaned=qs.map(s=>String(s||'').trim()).filter(Boolean);
+  for(const q of [...new Set(cleaned)]){
+    // 國家判斷：地址文字本身的特徵優先（同一天可能混到別國地點，如出發機場），
+    // 否則採用當天城市所在的國家；都沒有就不限定
+    let cc='';
+    if(looksJapan(q))cc='jp';
+    else if(looksTaiwan(q))cc='tw';
+    else if(ctx?.cc)cc=ctx.cc;
+    const ccParam=cc?'&countrycodes='+cc:'';
+    // 城市周邊優先（不強制邊界）：避免同名路名/店名跑到別的城市
+    const bias=(ctx&&(!cc||cc===ctx.cc))?`&viewbox=${(ctx.lng-0.6).toFixed(3)},${(ctx.lat+0.6).toFixed(3)},${(ctx.lng+0.6).toFixed(3)},${(ctx.lat-0.6).toFixed(3)}&bounded=0`:'';
+    const key='geo:'+GEO_CACHE_VERSION+':'+cc+':'+q;
     try{
       const cached=localStorage.getItem(key);
       if(cached){
@@ -734,8 +801,7 @@ async function geocodeLoc(l){
       }
     }catch{}
     try{
-      const jp=looksJapan(q)?'&countrycodes=jp':'';
-      const url='https://nominatim.openstreetmap.org/search?format=json&limit=1&accept-language=zh-TW'+jp+'&q='+encodeURIComponent(q);
+      const url='https://nominatim.openstreetmap.org/search?format=json&limit=1&accept-language=zh-TW'+ccParam+bias+'&q='+encodeURIComponent(q);
       const data=await fetchJsonTimeout(url);
       if(!data?.length){
         try{localStorage.setItem(key,JSON.stringify({missUntil:Date.now()+GEO_FAIL_TTL}));}catch{}
@@ -778,7 +844,7 @@ async function mountItinMap(day){
   const ok=await ensureLeaflet();
   if(!ok){el.innerHTML='<div class="itin-map-loading">地圖載入失敗，請先使用右上方「開啟路線」。</div>';return;}
   const pts=(await Promise.all(locs.map(async(l,i)=>{
-    const p=await geocodeLoc(l);
+    const p=await geocodeLoc(l,day.city);
     return p?{loc:l,idx:i,lat:p.lat,lng:p.lng}:null;
   }))).filter(Boolean);
   if(!document.body.contains(el))return;
@@ -961,22 +1027,22 @@ function render(){
 function fabConfig(){
   if(S.modal||S.editTN||S.view==='split')return null;
   const cfg={
-    itinerary:{manual:'手動新增地點',manualSub:'新增一個行程地點',manualIcon:'＋',ai:'AI 匯入行程',aiSub:'貼上 AI 行程一次建立',aiIcon:'✨'},
-    wishlist:{manual:'手動新增清單',manualSub:'加入想去的店家或景點',manualIcon:'＋',ai:'AI 匯入清單',aiSub:'批次加入推薦地點',aiIcon:'✨'},
-    expenses:{manual:'新增記帳',manualSub:'手動輸入日常花費',manualIcon:'💰',ai:'AI 收據記帳',aiSub:'上傳收據自動帶入金額分類',aiIcon:'📷'},
-    memo:{manual:'新增備忘',manualSub:'加入行前清單項目',manualIcon:'📝',ai:'AI 產生備忘',aiSub:'自動產生旅行待辦清單',aiIcon:'✨'}
+    itinerary:{manual:'手動新增地點',manualSub:'新增一個行程地點',manualIcon:TI('plus',20),ai:'AI 匯入行程',aiSub:'貼上 AI 行程一次建立',aiIcon:TI('sparkles',19)},
+    wishlist:{manual:'手動新增清單',manualSub:'加入想去的店家或景點',manualIcon:TI('plus',20),ai:'AI 匯入清單',aiSub:'批次加入推薦地點',aiIcon:TI('sparkles',19)},
+    expenses:{manual:'新增記帳',manualSub:'手動輸入日常花費',manualIcon:TI('coin',20),ai:'AI 收據記帳',aiSub:'上傳收據自動帶入金額分類',aiIcon:TI('camera',19)},
+    memo:{manual:'新增備忘',manualSub:'加入行前清單項目',manualIcon:TI('checklist',20),ai:'AI 產生備忘',aiSub:'自動產生旅行待辦清單',aiIcon:TI('sparkles',19)}
   };
   return cfg[S.view]||null;
 }
 function globalFab(){
   const cfg=fabConfig();
   if(!cfg)return'';
-  const tmplRow=(S.view==='itinerary'&&S.wlFabOpen)?`<div class="app-fab-tmpls">${TMPL.map((t,i)=>`<button class="app-fab-tmpl" style="background:${CB[t.cat]};color:${CF[t.cat]};" onclick="fabTmpl(this,${i})">${CE[t.cat]} ${esc(t.name)}</button>`).join('')}</div>`:'';
+  const tmplRow=(S.view==='itinerary'&&S.wlFabOpen)?`<div class="app-fab-tmpls">${TMPL.map((t,i)=>`<button class="app-fab-tmpl" style="background:${CB[t.cat]};color:${CF[t.cat]};" onclick="fabTmpl(this,${i})">${TI(CTI[t.cat]||'map-pin',13)} ${esc(t.name)}</button>`).join('')}</div>`:'';
   const sheet=S.wlFabOpen?`<div class="app-fab-backdrop" onclick="closeWlFab()"></div><div class="app-fab-sheet">${tmplRow}
     <button class="app-fab-action" onclick="fabManual(this)"><span class="app-fab-action-ic">${cfg.manualIcon}</span><span><div class="app-fab-action-title">${cfg.manual}</div><div class="app-fab-action-sub">${cfg.manualSub}</div></span></button>
     <button class="app-fab-action ai" onclick="fabAi(this)"><span class="app-fab-action-ic">${cfg.aiIcon}</span><span><div class="app-fab-action-title">${cfg.ai}</div><div class="app-fab-action-sub">${cfg.aiSub}</div></span></button>
   </div>`:'';
-  return`<div class="app-fab-wrap${S.wlFabOpen?' open':''}">${sheet}<button class="app-fab-main" onclick="toggleWlFab(event)" aria-label="新增">＋</button></div>`;
+  return`<div class="app-fab-wrap${S.wlFabOpen?' open':''}">${sheet}<button class="app-fab-main" onclick="toggleWlFab(event)" aria-label="新增">${TI('plus',26)}</button></div>`;
 }
 function fabManual(el){
   S.wlFabOpen=false;
@@ -996,18 +1062,18 @@ function hdr(te){
   const statsStrip='';
   const coverStyle=`--cover:url('${esc(S.cover)}');--cover-pos:${S.coverPos||'30%'}`;
   if(S.editTN)return`<header class="cover" style="${coverStyle}"><div class="topbar"></div><div class="cover-bottom"><div class="title-edit"><input class="tni" id="tn-in" value="${esc(S.tnDraft)}" placeholder="行程名稱" oninput="S.tnDraft=this.value" onkeydown="if(event.key==='Enter')saveTN()" autofocus><button class="btn glass" onclick="saveTN()">完成</button></div></div></header>${statsStrip}`;
-  const menu=S.menuOpen?`<div class="cover-menu-backdrop" onclick="setU({menuOpen:false})"></div><div class="cover-menu" onclick="event.stopPropagation()"><button onclick="copyShareLink();setU({menuOpen:false})"><span class="mi">🔗</span>分享連結</button><button onclick="S.menuOpen=false;openModal(this,{t:'tools'})"><span class="mi">☰</span>旅程工具</button><button onclick="S.menuOpen=false;openModal(this,{t:'cover'})"><span class="mi">📷</span>更換封面</button><button onclick="S.menuOpen=false;openModal(this,{t:'tv'})"><span class="mi">👥</span>旅伴管理</button><button onclick="S.menuOpen=false;openModal(this,{t:'help'})"><span class="mi">📖</span>使用說明</button></div>`:'';
+  const menu=S.menuOpen?`<div class="cover-menu-backdrop" onclick="setU({menuOpen:false})"></div><div class="cover-menu" onclick="event.stopPropagation()"><button onclick="copyShareLink();setU({menuOpen:false})"><span class="mi">${TI('link',16)}</span>分享連結</button><button onclick="S.menuOpen=false;openModal(this,{t:'tools'})"><span class="mi">${TI('tool',16)}</span>旅程工具</button><button onclick="S.menuOpen=false;openModal(this,{t:'cover'})"><span class="mi">${TI('photo',16)}</span>更換封面</button><button onclick="S.menuOpen=false;openModal(this,{t:'tv'})"><span class="mi">${TI('users',16)}</span>旅伴管理</button><button onclick="S.menuOpen=false;openModal(this,{t:'help'})"><span class="mi">${TI('book',16)}</span>使用說明</button></div>`:'';
   const syncChip=cloud.tripId?`<span class="hdr-sub-chip">🔗 ${esc(cloud.tripId)}</span><button class="hdr-sync-switch" title="切換同步代碼" aria-label="切換同步代碼" onclick="event.stopPropagation();openModal(this,{t:'tools'})">⇄</button>`:'';
-  return`<header class="cover" style="${coverStyle}"><div class="topbar"><div></div><div class="cover-menu-wrap"><button class="hamb" aria-label="開啟選單" onclick="event.stopPropagation();setU({menuOpen:!S.menuOpen})"><span></span><span></span><span></span></button>${menu}</div></div><div class="cover-bottom"><div class="hdr-title" onclick="setU({editTN:true,tnDraft:'${esc(S.tripName)}'})"><span>${esc(S.tripName)}</span><span class="hdr-title-edit-icon">✏️</span></div><div class="hdr-sub"><span>${esc(cloud.status||'本機儲存')}</span>${syncChip}</div>${!cloud.ready?`<div class="sync-quick"><span style="font-size:14px;">🔗</span><input id="hdr-sync-inp" type="text" placeholder="輸入同步代碼，Enter 跳轉" autocomplete="off" autocapitalize="none" spellcheck="false" onkeydown="if(event.key==='Enter'){var v=this.value.trim();if(v){var el=document.getElementById('trip-code');if(el)el.value=v;else{S._quickCode=v;}switchTrip(false);}}"><button class="sync-quick-btn" onclick="var v=document.getElementById('hdr-sync-inp').value.trim();if(v){var el=document.getElementById('trip-code');if(el)el.value=v;switchTrip(false);}">跳轉</button></div>`:''}</div></header>${statsStrip}`;
+  return`<header class="cover" style="${coverStyle}"><div class="topbar"><div></div><div class="cover-menu-wrap"><button class="hamb" aria-label="開啟選單" onclick="event.stopPropagation();setU({menuOpen:!S.menuOpen})"><span></span><span></span><span></span></button>${menu}</div></div><div class="cover-bottom"><div class="hdr-title" onclick="setU({editTN:true,tnDraft:'${esc(S.tripName)}'})"><span>${esc(S.tripName)}</span><span class="hdr-title-edit-icon">${TI('pencil',16)}</span></div><div class="hdr-sub"><span>${esc(cloud.status||'本機儲存')}</span>${syncChip}</div>${!cloud.ready?`<div class="sync-quick"><span style="font-size:14px;">🔗</span><input id="hdr-sync-inp" type="text" placeholder="輸入同步代碼，Enter 跳轉" autocomplete="off" autocapitalize="none" spellcheck="false" onkeydown="if(event.key==='Enter'){var v=this.value.trim();if(v){var el=document.getElementById('trip-code');if(el)el.value=v;else{S._quickCode=v;}switchTrip(false);}}"><button class="sync-quick-btn" onclick="var v=document.getElementById('hdr-sync-inp').value.trim();if(v){var el=document.getElementById('trip-code');if(el)el.value=v;switchTrip(false);}">跳轉</button></div>`:''}</div></header>${statsStrip}`;
 }
 function saveTN(){const v=document.getElementById('tn-in')?.value?.trim()||S.tnDraft.trim()||'未命名旅程';setD({tripName:v,editTN:false});}
 function gnav(){
-  const ts=[['memo','📝 備忘'],['itinerary','🗺 行程'],['wishlist','🌟 清單'],['expenses','💰 記帳'],['split','⚖ 分帳']];
-  return`<nav class="nav">${ts.map(([k,l])=>`<button class="nav-btn${S.view===k?' on':''}" onclick="switchTab('${k}')">${l}</button>`).join('')}</nav>`;
+  const ts=[['memo','checklist','備忘'],['itinerary','route','行程'],['wishlist','star','清單'],['expenses','coin','記帳'],['split','scale','分帳']];
+  return`<nav class="nav">${ts.map(([k,ic,l])=>`<button class="nav-btn${S.view===k?' on':''}" onclick="switchTab('${k}')">${TI(ic,15)} ${l}</button>`).join('')}</nav>`;
 }
 function itineraryMap(day){
   const locs=dayMapLocs(day);
-  if(!locs.length)return`<div class="itin-map-card"><div class="itin-map-empty">🗺️ 這一天還沒有可定位的地址，填入地點名稱或地址後就會出現地圖。</div></div>`;
+  if(!locs.length)return`<div class="itin-map-card"><div class="itin-map-empty">${TI('map-2',15)} 這一天還沒有可定位的地址，填入地點名稱或地址後就會出現地圖。</div></div>`;
   const open=S.mapOpen!==false;
   const routeUrl=dayRouteUrl(locs);
   const points=locs.map((l,i)=>{
@@ -1017,41 +1083,38 @@ function itineraryMap(day){
     return`<a class="itin-map-point" href="${mu(q)}" target="_blank" rel="noopener"><span class="itin-map-pin" style="background:${color};">${i+1}</span><span><span class="itin-map-name">${l.time?`${esc(l.time)} · `:''}${esc(l.name)}</span><span class="itin-map-meta">${esc(l.address||'以地點名稱搜尋')}</span></span></a>`;
   }).join('');
   const routeBtn=routeUrl?`<a href="${routeUrl}" target="_blank" rel="noopener"><button class="btn bp" style="min-height:32px;padding:6px 10px;">開啟路線</button></a>`:'';
-  return`<section class="itin-map-card"><div class="itin-map-head"><div class="itin-map-title"><span>🗺️</span><span>今日地圖 · ${locs.length} 個地點</span></div><div class="itin-map-actions">${routeBtn}<button class="itin-map-toggle" title="${open?'收合地圖':'展開地圖'}" onclick="setU({mapOpen:${open?'false':'true'}})">${open?'⌃':'⌄'}</button></div></div>${open?`<div class="itin-map-body"><div class="itin-map-canvas" id="itin-map-${esc(day.id)}"><div class="itin-map-loading">🗺️ 正在整理地圖位置...</div></div><div class="itin-map-list">${points}</div></div>`:''}</section>`;
+  return`<section class="itin-map-card"><div class="itin-map-head"><div class="itin-map-title"><span>${TI('map-2',16)}</span><span>今日地圖 · ${locs.length} 個地點</span></div><div class="itin-map-actions">${routeBtn}<button class="itin-map-toggle" title="${open?'收合地圖':'展開地圖'}" onclick="setU({mapOpen:${open?'false':'true'}})">${open?TI('chevron-up',16):TI('chevron-down',16)}</button></div></div>${open?`<div class="itin-map-body"><div class="itin-map-canvas" id="itin-map-${esc(day.id)}"><div class="itin-map-loading">🗺️ 正在整理地圖位置...</div></div><div class="itin-map-list">${points}</div></div>`:''}</section>`;
 }
 function itin(day,si){
   if(!day)return'';
   const tabs=S.days.map((d,i)=>{
     const on=i===si;
     const dshort=d.date?`<span class="dtab-date">${Number(d.date.slice(5,7))}/${Number(d.date.slice(8,10))}</span>`:'';
-    return`<button class="dtab${on?' on':''}" title="${esc(d.title)}${d.date?` · ${esc(d.date)}`:''}${on?'（再點一次可編輯）':''}" onclick="dayTabClick(${i},this)">Day ${i+1}${dshort}${on?'<span class="dtab-edit">✎</span>':''}</button>`;
+    return`<button class="dtab${on?' on':''}" title="${esc(d.title)}${d.date?` · ${esc(d.date)}`:''}${on?'（再點一次可編輯）':''}" onclick="dayTabClick(${i},this)">Day ${i+1}${dshort}${on?`<span class="dtab-edit">${TI('pencil',11)}</span>`:''}</button>`;
   }).join('');
   const nd=S.days.length+1;
   const nowLocId=getNowLocId(day.locations);
-  const locs=!day.locations.length?`<div class="empty"><div style="font-size:30px;margin-bottom:8px;">📍</div><div style="font-weight:800;margin-bottom:14px;">這一天還沒有行程</div><div class="empty-cta"><button class="btn bp" onclick="_heroOrigin=this.getBoundingClientRect();oLoc('')">＋ 新增地點</button><button class="btn" style="background:#5b3fc4;border-color:#5b3fc4;color:#fff;" onclick="openModal(this,{t:'import'})">✨ AI 匯入行程</button></div></div>`:day.locations.map((l,i)=>{
+  const locs=!day.locations.length?`<div class="empty"><div style="margin-bottom:8px;color:#9fb4ac;">${TI('map-pin',34)}</div><div style="font-weight:800;margin-bottom:14px;">這一天還沒有行程</div><div class="empty-cta"><button class="btn bp" onclick="_heroOrigin=this.getBoundingClientRect();oLoc('')">${TI('plus',15)} 新增地點</button><button class="btn" style="background:#5b3fc4;border-color:#5b3fc4;color:#fff;" onclick="openModal(this,{t:'import'})">${TI('sparkles',15)} AI 匯入行程</button></div></div>`:day.locations.map((l,i)=>{
     const cat=l.category||ac(`${l.name} ${l.notes||''} ${l.address||''}`);
-    const hasCat=cat!=='其他';
-    const badge=hasCat?`<span class="loc-cat-badge" style="background:${CB[cat]};color:${CF[cat]};">${CE[cat]} ${cat}</span>`:`<span class="loc-cat-badge" style="background:#F1EFE8;color:#666;">${CE['其他']} 其他</span>`;
-    const borderColor=hasCat?CBr[cat]:'#d9e2df';
-    const RES_LABEL={booked:'✅ 已訂位',pending:'⏳ 待確認',no_need:'—— 不需訂位'};
+    const badge=`<span class="loc-cat-badge" style="background:${CB[cat]||CB['其他']};color:${CF[cat]||CF['其他']};">${TI(CTI[cat]||'map-pin',12)} ${cat}</span>`;
+    const RES_LABEL={booked:'已訂位',pending:'待確認',no_need:'不需訂位'};
+    const RES_ICON={booked:'circle-check',pending:'clock',no_need:'minus'};
     const RES_COLOR={booked:'#e7f6f0',pending:'#fff8ec',no_need:'#f5f5f5'};
     const RES_TEXT={booked:'#085041',pending:'#8b540c',no_need:'#888'};
-    const resBadge=l.reservation&&RES_LABEL[l.reservation]?`<span class="loc-cat-badge" style="background:${RES_COLOR[l.reservation]};color:${RES_TEXT[l.reservation]};">${RES_LABEL[l.reservation]}${l.resCode?` · ${esc(l.resCode)}`:''}</span>`:'';
+    const resBadge=l.reservation&&RES_LABEL[l.reservation]?`<span class="loc-cat-badge" style="background:${RES_COLOR[l.reservation]};color:${RES_TEXT[l.reservation]};">${TI(RES_ICON[l.reservation],12)} ${RES_LABEL[l.reservation]}${l.resCode?` · ${esc(l.resCode)}`:''}</span>`:'';
     const isNow=l.id===nowLocId;
     const catBg=CBr[cat]||'#1D9E75';
     const catLight=CB[cat]||'#E1F5EE';
-    const catDark=CF[cat]||'#085041';
-    const nowBadge=isNow?`<span class="loc-now-badge" style="background:${catBg};color:#fff;">🕐 現在</span>`:'';
-    const nowBar=isNow?`<div class="loc-now-bar" style="background:${catBg};color:#fff;">🕐 目前最近的行程 <span style="opacity:.85;font-size:11px;">${CE[cat]||''} ${cat}</span></div>`:'';
+    const nowBadge=isNow?`<span class="loc-now-badge" style="background:${catBg};color:#fff;">● 進行中</span>`:'';
     // Notes: always show as pill → modal on click
     const notesEl=l.notes?`<div class="loc-note-wrap"><div class="loc-note-pill" onclick="showNoteSheet('${l.id}','${esc(l.name)}',this)"><span class="loc-note-pill-text">${esc(l.notes)}</span><span class="loc-note-pill-hint">展開 ›</span></div></div>`:'';
     // Phone inline with call button
-    const phoneEl=l.phone?`<div class="loc-phone"><a href="tel:${esc(l.phone)}">${esc(l.phone)}</a><a href="tel:${esc(l.phone)}"><button class="btn-ic" style="width:28px;height:28px;font-size:13px;" title="打電話">📞</button></a></div>`:'';
+    const phoneEl=l.phone?`<div class="loc-phone"><a href="tel:${esc(l.phone)}">${TI('phone',13)} ${esc(l.phone)}</a></div>`:'';
     // Map uses name + address for better Google Maps accuracy
     const mapQuery=l.address?`${l.name} ${l.address}`:l.name;
-    const mapBtns=l.address||l.name?`<a href="${mu(mapQuery)}" target="_blank" rel="noopener"><button class="btn bp" style="font-size:12px;min-height:30px;padding:5px 10px;">地圖</button></a><a href="${nu(l.address||l.name)}" target="_blank" rel="noopener"><button class="btn ba" style="font-size:12px;min-height:30px;padding:5px 10px;">導航</button></a>`:'';
-    const sortBtns=S.sortMode?`<div class="loc-sort-ctrl${isNow?' sort-below':''}"><button class="sort-btn sort-grip" title="拖曳排序" aria-label="拖曳排序" onpointerdown="event.stopPropagation();startTouchDrag(event,'${day.id}','${l.id}')">⠿</button><button class="sort-btn" title="上移" aria-label="上移" onclick="event.stopPropagation();mvLoc('${day.id}','${l.id}',-1)" ${i===0?'disabled':''}>↑</button><button class="sort-btn" title="下移" aria-label="下移" onclick="event.stopPropagation();mvLoc('${day.id}','${l.id}',1)" ${i===day.locations.length-1?'disabled':''}>↓</button></div>`:'';
-    return`<div class="loc-card-wrap${isNow?' loc-now':''}" data-locid="${l.id}" data-dayid="${day.id}" ondragover="dragOver(event)" ondragleave="dragLeave(event)" ondrop="dragDrop(event,'${day.id}','${l.id}')" ondragend="dragEnd()" oncontextmenu="locActionSheet(event,'${day.id}','${l.id}');return false;" data-lpress-t="" ontouchstart="_lpStart(event,'${day.id}','${l.id}')" ontouchend="_lpCancel()" ontouchmove="_lpCancel()"><div class="card" style="border-left-color:${isNow?catBg:borderColor};border-left-width:${isNow?'5':'3'}px;${isNow?`--now-bg:${catLight};`:''}">${sortBtns}${nowBar}<div class="loc-wrap"><div class="loc-time"><span class="loc-time-text" style="${isNow?`color:${catDark};font-weight:900;`:''}">${esc(l.time||'--:--')}</span></div><div class="loc-body"><div class="loc-name">${esc(l.name)} ${badge}${resBadge}${nowBadge}</div>${l.address?`<div class="loc-addr">${esc(l.address)}</div>`:''}${phoneEl}${notesEl}<div class="act-row">${mapBtns}<button class="btn-ic" title="編輯" onclick="_heroOrigin=this.getBoundingClientRect();oLoc('${l.id}')">✏️</button><button class="btn-ic" title="更多選項" aria-label="更多選項" onclick="locActionSheet(event,'${day.id}','${l.id}')">⋯</button></div></div></div></div></div>`;
+    const mapBtns=l.address||l.name?`<a href="${mu(mapQuery)}" target="_blank" rel="noopener"><button class="btn bp" style="font-size:12px;min-height:30px;padding:5px 11px;">${TI('map-pin',13)} 地圖</button></a><a href="${nu(l.address||l.name)}" target="_blank" rel="noopener"><button class="btn ba" style="font-size:12px;min-height:30px;padding:5px 11px;">${TI('navigation',13)} 導航</button></a>`:'';
+    const sortBtns=S.sortMode?`<div class="loc-sort-ctrl"><button class="sort-btn sort-grip" title="拖曳排序" aria-label="拖曳排序" onpointerdown="event.stopPropagation();startTouchDrag(event,'${day.id}','${l.id}')">${TI('grip-vertical',15)}</button><button class="sort-btn" title="上移" aria-label="上移" onclick="event.stopPropagation();mvLoc('${day.id}','${l.id}',-1)" ${i===0?'disabled':''}>${TI('arrow-up',14)}</button><button class="sort-btn" title="下移" aria-label="下移" onclick="event.stopPropagation();mvLoc('${day.id}','${l.id}',1)" ${i===day.locations.length-1?'disabled':''}>${TI('arrow-down',14)}</button></div>`:'';
+    return`<div class="tl-item loc-card-wrap${isNow?' loc-now':''}" data-locid="${l.id}" data-dayid="${day.id}" ondragover="dragOver(event)" ondragleave="dragLeave(event)" ondrop="dragDrop(event,'${day.id}','${l.id}')" ondragend="dragEnd()" oncontextmenu="locActionSheet(event,'${day.id}','${l.id}');return false;" data-lpress-t="" ontouchstart="_lpStart(event,'${day.id}','${l.id}')" ontouchend="_lpCancel()" ontouchmove="_lpCancel()"><div class="tl-time${l.time?'':' tl-time-empty'}">${esc(l.time||'--:--')}</div><div class="tl-rail"><span class="tl-dot" style="border-color:${catBg};${isNow?`background:${catBg};`:''}"></span></div><div class="card tl-card" style="${isNow?`--now-bg:${catLight};border-color:${catBg};`:''}">${sortBtns}<div class="loc-wrap"><div class="loc-body"><div class="loc-name">${esc(l.name)} ${badge}${resBadge}${nowBadge}</div>${l.address?`<div class="loc-addr">${esc(l.address)}</div>`:''}${phoneEl}${notesEl}<div class="act-row">${mapBtns}<button class="btn-ic" title="編輯" aria-label="編輯" onclick="_heroOrigin=this.getBoundingClientRect();oLoc('${l.id}')">${TI('pencil',15)}</button><button class="btn-ic" title="更多選項" aria-label="更多選項" onclick="locActionSheet(event,'${day.id}','${l.id}')">${TI('dots',16)}</button></div></div></div></div></div>`;
   }).join('');
   const wx=getWx(day.city);
   let weatherBadge='';
@@ -1068,7 +1131,7 @@ function itin(day,si){
   }
   // Store detail for sheet
   if(weatherDetail)window['_wx_'+day.id]=weatherDetail;
-  return`<div class="day-tabs">${tabs}<button class="dtab dtab-add" onclick="FM={title:'第${nd}天',date:'',city:''};openModal(this,{t:'nd'})">+ 新增</button></div><div class="section-head"><div class="section-title-wrap"><div class="section-title" title="點擊編輯這一天" onclick="openDayEdit(this)">${esc(day.title)}<span class="hdr-title-edit-icon" style="color:var(--muted);">✏️</span></div>${(day.date||weatherBadge)?`<div class="section-meta">${day.date?`<span class="section-meta-date">📅 ${day.date}</span>`:''}${weatherBadge}</div>`:''}</div><div class="section-actions"><div class="action-group primary"><button class="btn" title="跳到現在的行程" onclick="jumpToNow()">🕐 現在</button><button class="btn" title="排序行程" style="${S.sortMode?'background:#183b40;border-color:#183b40;color:#fff;':''}" onclick="setU({sortMode:!S.sortMode})">${S.sortMode?'✓ 完成排序':'排序'}</button></div></div></div>${itineraryMap(day)}${locs}`;
+  return`<div class="day-tabs">${tabs}<button class="dtab dtab-add" onclick="FM={title:'第${nd}天',date:'',city:''};openModal(this,{t:'nd'})">${TI('plus',13)} 新增</button></div><div class="section-head"><div class="section-title-wrap"><div class="section-title" title="點擊編輯這一天" onclick="openDayEdit(this)">${esc(day.title)}<span class="hdr-title-edit-icon" style="color:var(--muted);">${TI('pencil',14)}</span></div>${(day.date||weatherBadge)?`<div class="section-meta">${day.date?`<span class="section-meta-date">${TI('calendar',13)} ${day.date}</span>`:''}${weatherBadge}</div>`:''}</div><div class="section-actions"><div class="action-group primary"><button class="btn" title="跳到現在的行程" onclick="jumpToNow()">${TI('clock-play',14)} 現在</button><button class="btn" title="排序行程" style="${S.sortMode?'background:#183b40;border-color:#183b40;color:#fff;':''}" onclick="setU({sortMode:!S.sortMode})">${S.sortMode?TI('check',14)+' 完成排序':TI('arrows-sort',14)+' 排序'}</button></div></div></div>${itineraryMap(day)}${day.locations.length?`<div class="tl-list">${locs}</div>`:locs}`;
 }
 function exps(te){
   const cs=CATS.map(c=>({c,t:S.expenses.filter(e=>e.category===c).reduce((s,e)=>s+expValue(e),0)})).filter(x=>x.t>0);
