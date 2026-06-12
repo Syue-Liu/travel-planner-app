@@ -94,11 +94,11 @@ a{text-decoration:none}
 .loc-addr,.loc-phone{font-size:12.5px;color:var(--muted);margin-bottom:6px;word-break:break-word}
 .loc-phone{display:flex;align-items:center;gap:6px}
 .loc-phone a{color:#0c447c;font-weight:800}
-.loc-note-wrap{margin-bottom:8px;}
-.loc-note-pill{font-size:12px;color:#56635f;background:#f3f7f5;padding:6px 10px;border-left:3px solid #8ad5b6;cursor:pointer;border-radius:0 6px 6px 0;display:flex;align-items:center;gap:6px;user-select:none;transition:background .15s;}
-.loc-note-pill:hover{background:#e6f4ed;}
-.loc-note-pill-text{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-.loc-note-pill-hint{font-size:11px;font-weight:800;color:#42a787;flex-shrink:0;}
+.loc-note{margin-bottom:8px;background:#f3f7f5;border-left:3px solid #8ad5b6;border-radius:0 8px 8px 0;padding:8px 11px}
+.loc-note-text{font-size:12.5px;color:#4a5955;line-height:1.7;white-space:pre-wrap;word-break:break-word}
+.loc-note-text.clamp{display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.loc-note-toggle{margin-top:5px;border:0;background:none;color:#0F6E56;font-size:12px;font-weight:800;cursor:pointer;padding:2px 0;display:inline-flex;align-items:center;gap:3px}
+.note-link{color:#0c5fb8;font-weight:700;text-decoration:underline;word-break:break-all}
 /* ── Hero card expand (App Store style) ── */
 .note-hero-backdrop{position:fixed;inset:0;z-index:80;pointer-events:none;
   background:rgba(0,0,0,0);transition:background .35s ease;-webkit-backdrop-filter:blur(0px);backdrop-filter:blur(0px);
@@ -573,9 +573,6 @@ input:focus,select:focus,textarea:focus{border-color:#42a787;box-shadow:0 0 0 3p
   .avatar-pick-grid{grid-template-columns:repeat(6,1fr);max-height:200px;}
 }
 
-/* ── 封面數據摘要 ───────────────────────────── */
-.hdr-stats{display:flex;gap:7px;margin-top:10px;flex-wrap:wrap}
-.hdr-stat{display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:800;color:#fff;background:rgba(255,255,255,.16);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,.28);border-radius:999px;padding:5px 11px;white-space:nowrap;text-shadow:0 1px 6px rgba(0,0,0,.25)}
 /* ── v13 時間軸版型 ─────────────────────────── */
 .tl-list{position:relative;padding-top:2px}
 .tl-item{display:grid;grid-template-columns:48px 22px minmax(0,1fr);gap:0 6px;margin-bottom:12px;position:relative}
@@ -666,6 +663,24 @@ const CE={交通:'🚗',餐飲:'🍜',住宿:'🏨',景點:'🎫',購物:'🛍�
 // Tabler 線條圖示:HTML 介面用(emoji 版 CE 保留給 <option> 等純文字情境)
 const CTI={交通:'car',餐飲:'tools-kitchen-2',住宿:'bed',景點:'ticket',購物:'shopping-bag',其他:'map-pin'};
 const TI=(n,s)=>`<i class="ti ti-${n}" aria-hidden="true" style="font-size:${s||16}px;line-height:1;vertical-align:-2px;"></i>`;
+// 將文字中的網址轉成可點選的超連結(先 escape 再比對,避免 XSS)
+function linkify(t){
+  return esc(String(t||'')).replace(/(https?:\/\/[^\s<]+|www\.[^\s<]+)/g,m=>{
+    let url=m,tail='';
+    const tm=url.match(/[)\]）】」.,。，、;；!?！？]+$/);
+    if(tm){tail=tm[0];url=url.slice(0,-tail.length);}
+    if(!url)return m;
+    const href=url.startsWith('http')?url:'https://'+url;
+    return `<a href="${href}" target="_blank" rel="noopener" class="note-link" onclick="event.stopPropagation()">${url}</a>`+tail;
+  });
+}
+// 備註展開/收合
+function toggleNote(id,btn){
+  const el=document.getElementById('note-text-'+id);
+  if(!el)return;
+  const clamped=el.classList.toggle('clamp');
+  btn.innerHTML=clamped?'展開全文 '+TI('chevron-down',12):'收合 '+TI('chevron-up',12);
+}
 const CB={交通:'#E6F1FB',餐飲:'#FAEEDA',住宿:'#EEEDFE',景點:'#E1F5EE',購物:'#FBEAF0',其他:'#F1EFE8'};
 const CF={交通:'#0C447C',餐飲:'#633806',住宿:'#3C3489',景點:'#085041',購物:'#4B1528',其他:'#444441'};
 const CBr={交通:'#378ADD',餐飲:'#EF9F27',住宿:'#534AB7',景點:'#1D9E75',購物:'#D4537E',其他:'#888780'};
@@ -722,7 +737,7 @@ const MAP_FALLBACKS=[
   {re:/山中湖平野|平野沙洲|山中湖村平野/i,lat:35.4202,lng:138.9059},
   {re:/金太郎富士見線|縣道 366|県道 366|県道366/i,lat:35.3505,lng:138.9433}
 ];
-const GEO_CACHE_VERSION='v8';
+const GEO_CACHE_VERSION='v9';
 const GEO_FAIL_TTL=6*60*60*1000;   // 「查無結果」快取 6 小時
 const GEO_TIMEOUT_MS=9000;          // OSM 回應常見 3~6 秒，逾時放寬到 9 秒
 // ── 定位請求排隊器:OpenStreetMap 規定每秒最多 1 次查詢,超過會被擋 ──
@@ -800,12 +815,22 @@ async function geocodeLoc(l,city){
   const name=String(l?.name||'').trim();
   // 台灣地址常因門牌格式查不到，準備「去掉門牌號」的降級查詢（例：中正路247號 → 中正路）
   const noNum=addr.replace(/[0-9０-９]+(之[0-9０-９]+)?號.*$/,'').trim();
+  // 從地址擷取台灣的縣市與鄉鎮區（例：桃園市 / 復興區），用來驗證查詢結果是否在正確縣市
+  const _norm=t=>String(t||'').replace(/臺/g,'台');
+  const twCity=(addr.match(/([一-龯]{1,3}[縣市])/)||[])[1]||'';
+  let twDist='';
+  if(twCity){
+    const after=addr.slice(addr.indexOf(twCity)+twCity.length);
+    twDist=(after.match(/^([一-龯]{1,3}[區鄉鎮市])/)||[])[1]||'';
+  }
   // street:true = 純地址查詢（路名極易撞名，需用「離當天城市的距離」把關）
   const qs=[{q:mqLoc(l)},{q:addr,street:true},{q:name}];
   if(noNum&&noNum!==addr){
     qs.push({q:[name,noNum].filter(Boolean).join(' ')},{q:noNum,street:true});
   }
-  if(city&&name)qs.push({q:name+' '+city}); // 最後再用「名稱＋城市」搜一次
+  if(city&&name)qs.push({q:name+' '+city}); // 再用「名稱＋城市」搜一次
+  // 最後降級：用「縣市＋鄉鎮區」行政區中心點，至少標在正確區域
+  if(twCity&&twDist)qs.push({q:twCity+twDist,admin:true});
   const seen=new Set();
   for(const v of qs){
     const q=String(v.q||'').trim();
@@ -839,12 +864,18 @@ async function geocodeLoc(l,city){
         try{localStorage.setItem(key,JSON.stringify({missUntil:Date.now()+GEO_FAIL_TTL}));}catch{}
         continue;
       }
-      // 多筆候選:剔除「離當天城市超過 90 公里的道路類結果」(路名撞名的典型錯誤),
-      // 再挑離當天城市最近的一筆;地標類(車站/景點/店家)不設距離限制,跨城市行程仍可定位
+      // 多筆候選的三道篩選:
+      // 1) 縣市驗證:地址寫了「桃園市」,結果的所在縣市就必須含「桃園」,否則就是撞名抓錯
+      // 2) 道路類結果離當天城市超過 90 公里 → 剔除(路名撞名的典型錯誤)
+      // 3) 通過篩選者中,挑離當天城市最近的一筆;地標類不設距離限制,跨城市行程仍可定位
       let best=null;
       for(const d of data){
         const c={lat:Number(d.lat),lng:Number(d.lon)};
         if(!Number.isFinite(c.lat)||!Number.isFinite(c.lng))continue;
+        if(twCity&&cc==='tw'&&!v.admin){
+          const dn=_norm(d.display_name||'');
+          if(dn&&!dn.includes(_norm(twCity)))continue;
+        }
         c._d=ctxUsable?_geoDist(c,ctx):0;
         const roadish=d.class==='highway'||v.street;
         if(ctxUsable&&roadish&&c._d>90)continue;
@@ -1117,14 +1148,11 @@ function fabAi(el){
 }
 function hdr(te){
   const statsStrip='';
-  const locCount=S.days.reduce((a,d)=>a+(d.locations?.length||0),0);
-  const spent=(S.expenses||[]).reduce((a,e)=>a+expValue(e),0);
-  const statsChips=`<div class="hdr-stats"><span class="hdr-stat">${TI('calendar',12)} ${S.days.length} 天</span><span class="hdr-stat">${TI('map-pin',12)} ${locCount} 個地點</span>${spent>0?`<span class="hdr-stat">${TI('coin',12)} 已花 ${fmt(spent)}</span>`:(Number(S.budget)>0?`<span class="hdr-stat">${TI('coin',12)} 預算 ${fmt(convertAmount(Number(S.budget),'TWD',S.settleCurrency||'TWD'))}</span>`:'')}</div>`;
   const coverStyle=`--cover:url('${esc(S.cover)}');--cover-pos:${S.coverPos||'30%'}`;
   if(S.editTN)return`<header class="cover" style="${coverStyle}"><div class="topbar"></div><div class="cover-bottom"><div class="title-edit"><input class="tni" id="tn-in" value="${esc(S.tnDraft)}" placeholder="行程名稱" oninput="S.tnDraft=this.value" onkeydown="if(event.key==='Enter')saveTN()" autofocus><button class="btn glass" onclick="saveTN()">完成</button></div></div></header>${statsStrip}`;
   const menu=S.menuOpen?`<div class="cover-menu-backdrop" onclick="setU({menuOpen:false})"></div><div class="cover-menu" onclick="event.stopPropagation()"><button onclick="copyShareLink();setU({menuOpen:false})"><span class="mi">${TI('link',16)}</span>分享連結</button><button onclick="S.menuOpen=false;openModal(this,{t:'tools'})"><span class="mi">${TI('tool',16)}</span>旅程工具</button><button onclick="S.menuOpen=false;openModal(this,{t:'cover'})"><span class="mi">${TI('photo',16)}</span>更換封面</button><button onclick="S.menuOpen=false;openModal(this,{t:'tv'})"><span class="mi">${TI('users',16)}</span>旅伴管理</button><button onclick="S.menuOpen=false;openModal(this,{t:'help'})"><span class="mi">${TI('book',16)}</span>使用說明</button></div>`:'';
   const syncChip=cloud.tripId?`<span class="hdr-sub-chip">${TI('link',12)} ${esc(cloud.tripId)}</span><button class="hdr-sync-switch" title="切換同步代碼" aria-label="切換同步代碼" onclick="event.stopPropagation();openModal(this,{t:'tools'})">⇄</button>`:'';
-  return`<header class="cover" style="${coverStyle}"><div class="topbar"><div></div><div class="cover-menu-wrap"><button class="hamb" aria-label="開啟選單" onclick="event.stopPropagation();setU({menuOpen:!S.menuOpen})"><span></span><span></span><span></span></button>${menu}</div></div><div class="cover-bottom"><div class="hdr-title" onclick="setU({editTN:true,tnDraft:'${esc(S.tripName)}'})"><span>${esc(S.tripName)}</span><span class="hdr-title-edit-icon">${TI('pencil',16)}</span></div><div class="hdr-sub"><span>${esc(cloud.status||'本機儲存')}</span>${syncChip}</div>${statsChips}${!cloud.ready?`<div class="sync-quick"><span style="color:rgba(255,255,255,.85);">${TI('link',15)}</span><input id="hdr-sync-inp" type="text" placeholder="輸入同步代碼，Enter 跳轉" autocomplete="off" autocapitalize="none" spellcheck="false" onkeydown="if(event.key==='Enter'){var v=this.value.trim();if(v){var el=document.getElementById('trip-code');if(el)el.value=v;else{S._quickCode=v;}switchTrip(false);}}"><button class="sync-quick-btn" onclick="var v=document.getElementById('hdr-sync-inp').value.trim();if(v){var el=document.getElementById('trip-code');if(el)el.value=v;switchTrip(false);}">跳轉</button></div>`:''}</div></header>${statsStrip}`;
+  return`<header class="cover" style="${coverStyle}"><div class="topbar"><div></div><div class="cover-menu-wrap"><button class="hamb" aria-label="開啟選單" onclick="event.stopPropagation();setU({menuOpen:!S.menuOpen})"><span></span><span></span><span></span></button>${menu}</div></div><div class="cover-bottom"><div class="hdr-title" onclick="setU({editTN:true,tnDraft:'${esc(S.tripName)}'})"><span>${esc(S.tripName)}</span><span class="hdr-title-edit-icon">${TI('pencil',16)}</span></div><div class="hdr-sub"><span>${esc(cloud.status||'本機儲存')}</span>${syncChip}</div>${!cloud.ready?`<div class="sync-quick"><span style="color:rgba(255,255,255,.85);">${TI('link',15)}</span><input id="hdr-sync-inp" type="text" placeholder="輸入同步代碼，Enter 跳轉" autocomplete="off" autocapitalize="none" spellcheck="false" onkeydown="if(event.key==='Enter'){var v=this.value.trim();if(v){var el=document.getElementById('trip-code');if(el)el.value=v;else{S._quickCode=v;}switchTrip(false);}}"><button class="sync-quick-btn" onclick="var v=document.getElementById('hdr-sync-inp').value.trim();if(v){var el=document.getElementById('trip-code');if(el)el.value=v;switchTrip(false);}">跳轉</button></div>`:''}</div></header>${statsStrip}`;
 }
 function saveTN(){const v=document.getElementById('tn-in')?.value?.trim()||S.tnDraft.trim()||'未命名旅程';setD({tripName:v,editTN:false});}
 function gnav(){
@@ -1167,7 +1195,8 @@ function itin(day,si){
     const catLight=CB[cat]||'#E1F5EE';
     const nowBadge=isNow?`<span class="loc-now-badge" style="background:${catBg};color:#fff;">● 進行中</span>`:'';
     // Notes: always show as pill → modal on click
-    const notesEl=l.notes?`<div class="loc-note-wrap"><div class="loc-note-pill" onclick="showNoteSheet('${l.id}','${esc(l.name)}',this)"><span class="loc-note-pill-text">${esc(l.notes)}</span><span class="loc-note-pill-hint">展開 ›</span></div></div>`:'';
+    const noteLong=l.notes&&(l.notes.split('\n').length>3||l.notes.length>90);
+    const notesEl=l.notes?`<div class="loc-note"><div class="loc-note-text${noteLong?' clamp':''}" id="note-text-${l.id}">${linkify(l.notes)}</div>${noteLong?`<button class="loc-note-toggle" onclick="event.stopPropagation();toggleNote('${l.id}',this)">展開全文 ${TI('chevron-down',12)}</button>`:''}</div>`:'';
     // Phone inline with call button
     const phoneEl=l.phone?`<div class="loc-phone"><a href="tel:${esc(l.phone)}">${TI('phone',13)} ${esc(l.phone)}</a></div>`:'';
     // Map uses name + address for better Google Maps accuracy
@@ -2078,7 +2107,7 @@ function showNoteSheet(locId, _name, triggerEl){
         <div class="note-hero-title">${esc(l.name)}</div>
         <button class="note-hero-close" onclick="closeNoteSheet()">✕</button>
       </div>
-      <div class="note-hero-body">${esc(l.notes)}</div>
+      <div class="note-hero-body">${linkify(l.notes)}</div>
       <div class="note-hero-actions">
         <button class="btn bp" style="width:100%;padding:13px;font-size:14px;" onclick="closeNoteSheet();_heroOrigin=null;setTimeout(()=>oLoc('${l.id}'),320)">✏️ 編輯備註</button>
       </div>
@@ -2154,7 +2183,7 @@ function buildModal(){if(S.modal?.t==='wl_add')return buildWlAddModal();if(S.mod
 function mNote(){
   const m=S.modal;
   return`<div class="mhd"><div class="mt">${TI('notes',16)} ${esc(m.name||'備注')}</div><div class="mcl" onclick="setU({modal:null})">✕</div></div>
-<div class="note-modal-body">${esc(m.notes||'')}</div>
+<div class="note-modal-body">${linkify(m.notes||'')}</div>
 <div class="ar"><button class="btn bp" style="flex:1;padding:10px;" onclick="oLoc('${m.locId}');void 0">${TI('pencil',14)} 編輯地點</button><button class="btn" style="flex:1;padding:10px;" onclick="setU({modal:null})">關閉</button></div>`;
 }
 // ── Memo tab ──────────────────────────────────────────
@@ -2202,7 +2231,7 @@ ${sec(TI('route',19),'行程規劃',[
   [TI('map-pin',15),'每個地點可填：名稱、地址、電話、分類、時間、訂位狀態、確認碼、備註。'],
   [TI('sun',15),'天氣資訊以小膠囊顯示在天數標題旁，點擊可展開當日完整天氣（溫度、體感、濕度、風速、紫外線）。'],
   [TI('clock-play',15),'系統會以「● 進行中」標示目前最近的行程。點標題列「現在」按鈕可手動跳到當下。'],
-  [TI('message-circle',15),'備註欄位點「展開 ›」會從卡片原位放大展開（App Store 動畫效果），點空白處或下滑可關閉。'],
+  [TI('message-circle',15),'備註支援多行排版，網址會自動變成可點選的連結；超過三行會自動收合，點「展開全文」查看完整內容。'],
   [TI('map-2',15),'點「地圖」以名稱＋地址搜尋 Google Maps；「導航」直接開啟導航。'],
   [TI('phone',15),'點電話號碼可直接撥打。'],
   [TI('arrows-sort',15),'點「排序」進入排序模式：拖曳把手或點上下箭頭調整地點順序。'],
@@ -2524,7 +2553,7 @@ function wlCardHtml(item){
     <div class="wl-card-name">${esc(item.name)}</div>
     ${addrEl}
     ${item.phone?`<div class="wl-card-note">${TI('phone',12)} <a href="tel:${esc(item.phone)}" style="color:#1a5fa8;font-weight:700;">${esc(item.phone)}</a></div>`:''}
-    ${item.note?`<div class="wl-card-note">${esc(item.note)}</div>`:''}
+    ${item.note?`<div class="wl-card-note" style="white-space:pre-wrap;">${linkify(item.note)}</div>`:''}
     <div class="wl-card-actions">${dayBtns}${done}</div>
   </div>`;
 }
