@@ -396,6 +396,7 @@ input:focus,select:focus,textarea:focus{border-color:#42a787;box-shadow:0 0 0 3p
 .wl-card{background:#fff;border-radius:14px;border:1.5px solid var(--line);padding:13px 14px;margin-bottom:8px;position:relative;box-shadow:0 4px 14px rgba(31,59,53,.05);}
 .wl-card-name{font-weight:900;font-size:15px;margin-bottom:3px;padding-right:28px;line-height:1.3;}
 .wl-card-note{font-size:12px;color:var(--muted);margin-bottom:9px;line-height:1.5;}
+.wl-card-note a{color:#1a5fa8;font-weight:800;text-decoration:underline;text-underline-offset:2px;word-break:break-all;}
 .wl-card-actions{display:flex;flex-wrap:wrap;gap:6px;align-items:center;}
 .wl-day-btn{font-size:11px;padding:4px 10px;border-radius:999px;border:1px solid var(--line);background:#f8fbf9;color:#0f5e5e;font-weight:800;cursor:pointer;white-space:nowrap;}
 .wl-day-btn:active,.wl-day-btn:hover{background:#e4f4ec;border-color:#42a787;}
@@ -880,6 +881,21 @@ async function mountItinMap(day){
   _itinMapCache={sig,holder,map};
 }
 function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
+function linkify(s){
+  const text=String(s||'');
+  const urlRe=/((?:https?:\/\/|www\.)[^\s<>"'，。；、]+)/gi;
+  let out='',last=0;
+  for(const m of text.matchAll(urlRe)){
+    const raw=m[0].replace(/[),.，。]+$/,'');
+    const tail=m[0].slice(raw.length);
+    const start=m.index,end=m.index+m[0].length;
+    out+=esc(text.slice(last,start));
+    const href=/^https?:\/\//i.test(raw)?raw:`https://${raw}`;
+    out+=`<a href="${esc(href)}" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()">${esc(raw)}</a>${esc(tail)}`;
+    last=end;
+  }
+  return out+esc(text.slice(last));
+}
 function money(n){return'NT$'+(Math.round(n)||0).toLocaleString();}
 function ntd(n){return money(n);}
 function expBase(e){return Number(e.amountBase ?? e.amount ?? 0);}
@@ -2463,7 +2479,7 @@ function wlCardHtml(item){
     <div class="wl-card-name">${esc(item.name)}</div>
     ${addrEl}
     ${item.phone?`<div class="wl-card-note">📞 <a href="tel:${esc(item.phone)}" style="color:#1a5fa8;font-weight:700;">${esc(item.phone)}</a></div>`:''}
-    ${item.note?`<div class="wl-card-note">${esc(item.note)}</div>`:''}
+    ${item.note?`<div class="wl-card-note">${linkify(item.note)}</div>`:''}
     <div class="wl-card-actions">${dayBtns}${done}</div>
   </div>`;
 }
