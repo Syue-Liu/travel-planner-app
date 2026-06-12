@@ -396,11 +396,6 @@ input:focus,select:focus,textarea:focus{border-color:#42a787;box-shadow:0 0 0 3p
 .wl-card{background:#fff;border-radius:14px;border:1.5px solid var(--line);padding:13px 14px;margin-bottom:8px;position:relative;box-shadow:0 4px 14px rgba(31,59,53,.05);}
 .wl-card-name{font-weight:900;font-size:15px;margin-bottom:3px;padding-right:28px;line-height:1.3;}
 .wl-card-note{font-size:12px;color:var(--muted);margin-bottom:9px;line-height:1.5;}
-.wl-card-note a{color:#1a5fa8;font-weight:800;text-decoration:underline;text-underline-offset:2px;word-break:break-all;}
-.wl-note-box{background:#f7faf8;border:1px solid #e3ece8;border-left:3px solid #8ad5b6;border-radius:10px;padding:8px 10px;color:#53615d;line-height:1.7;white-space:pre-wrap;word-break:break-word;overflow:hidden;position:relative}
-.wl-note-box.is-collapsed{max-height:6.8em}
-.wl-note-box.is-collapsed::after{content:'';position:absolute;left:0;right:0;bottom:0;height:2.4em;background:linear-gradient(180deg,rgba(247,250,248,0),#f7faf8)}
-.wl-note-more{border:0;background:transparent;color:#0f5e5e;font-size:11px;font-weight:900;padding:2px 0 0;cursor:pointer}
 .wl-card-actions{display:flex;flex-wrap:wrap;gap:6px;align-items:center;}
 .wl-day-btn{font-size:11px;padding:4px 10px;border-radius:999px;border:1px solid var(--line);background:#f8fbf9;color:#0f5e5e;font-weight:800;cursor:pointer;white-space:nowrap;}
 .wl-day-btn:active,.wl-day-btn:hover{background:#e4f4ec;border-color:#42a787;}
@@ -578,6 +573,9 @@ input:focus,select:focus,textarea:focus{border-color:#42a787;box-shadow:0 0 0 3p
   .avatar-pick-grid{grid-template-columns:repeat(6,1fr);max-height:200px;}
 }
 
+/* ── 封面數據摘要 ───────────────────────────── */
+.hdr-stats{display:flex;gap:7px;margin-top:10px;flex-wrap:wrap}
+.hdr-stat{display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:800;color:#fff;background:rgba(255,255,255,.16);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,.28);border-radius:999px;padding:5px 11px;white-space:nowrap;text-shadow:0 1px 6px rgba(0,0,0,.25)}
 /* ── v13 時間軸版型 ─────────────────────────── */
 .tl-list{position:relative;padding-top:2px}
 .tl-item{display:grid;grid-template-columns:48px 22px minmax(0,1fr);gap:0 6px;margin-bottom:12px;position:relative}
@@ -724,9 +722,27 @@ const MAP_FALLBACKS=[
   {re:/山中湖平野|平野沙洲|山中湖村平野/i,lat:35.4202,lng:138.9059},
   {re:/金太郎富士見線|縣道 366|県道 366|県道366/i,lat:35.3505,lng:138.9433}
 ];
-const GEO_CACHE_VERSION='v6';
-const GEO_FAIL_TTL=24*60*60*1000;
-const GEO_TIMEOUT_MS=2600;
+const GEO_CACHE_VERSION='v7';
+const GEO_FAIL_TTL=6*60*60*1000;   // 「查無結果」快取 6 小時
+const GEO_TIMEOUT_MS=9000;          // OSM 回應常見 3~6 秒，逾時放寬到 9 秒
+// ── 定位請求排隊器:OpenStreetMap 規定每秒最多 1 次查詢,超過會被擋 ──
+let _geoChain=Promise.resolve(),_geoLast=0;
+function geoFetch(url){
+  const run=_geoChain.then(async()=>{
+    const wait=Math.max(0,_geoLast+1100-Date.now());
+    if(wait>0)await new Promise(r=>setTimeout(r,wait));
+    _geoLast=Date.now();
+    const ctl=new AbortController();
+    const timer=setTimeout(()=>ctl.abort(),GEO_TIMEOUT_MS);
+    try{
+      const res=await fetch(url,{signal:ctl.signal});
+      if(!res.ok)throw new Error('http '+res.status);
+      return await res.json();
+    }finally{clearTimeout(timer);}
+  });
+  _geoChain=run.catch(()=>{});
+  return run;
+}
 function looksJapan(q){return /[ぁ-んァ-ヶ]|東京都|大阪府|京都府|北海道|[一-龯]{1,3}県|[一-龯]{1,3}区(?![一-龯])|丁目/.test(q);}
 function looksTaiwan(q){return /台灣|臺灣|[一-龯]{1,3}縣|台北市|臺北市|新北市|桃園市|台中市|臺中市|台南市|臺南市|高雄市|基隆市|新竹市|新竹縣|嘉義市|[一-龯]{1,3}[鄉鎮][一-龯]|[一-龯]+[路街巷][0-9０-９]+(之[0-9０-９]+)?號/.test(q);}
 // ── 城市定位上下文：用當天的「城市」欄位解析出國家與座標 ──
@@ -747,16 +763,17 @@ async function cityContext(city){
   }catch{}
   try{
     const url='https://nominatim.openstreetmap.org/search?format=json&limit=1&addressdetails=1&accept-language=zh-TW&q='+encodeURIComponent(city);
-    const data=await fetchJsonTimeout(url);
+    const data=await geoFetch(url);
     if(data?.length&&data[0].address?.country_code){
       const o={lat:Number(data[0].lat),lng:Number(data[0].lon),cc:String(data[0].address.country_code).toLowerCase()};
       _cityCtx[city]=o;
       try{localStorage.setItem(key,JSON.stringify(o));}catch{}
       return o;
     }
-  }catch{}
+    // 真的查無此城市 → 短期記錄,避免重複查
+    try{localStorage.setItem(key,JSON.stringify({missUntil:Date.now()+GEO_FAIL_TTL}));}catch{}
+  }catch{/* 網路錯誤/被限流:不寫快取,下次再試 */}
   _cityCtx[city]=null;
-  try{localStorage.setItem(key,JSON.stringify({missUntil:Date.now()+GEO_FAIL_TTL}));}catch{}
   return null;
 }
 function fallbackCoord(l){
@@ -807,17 +824,16 @@ async function geocodeLoc(l,city){
     }catch{}
     try{
       const url='https://nominatim.openstreetmap.org/search?format=json&limit=1&accept-language=zh-TW'+ccParam+bias+'&q='+encodeURIComponent(q);
-      const data=await fetchJsonTimeout(url);
+      const data=await geoFetch(url);
       if(!data?.length){
+        // 真的查無結果 → 快取,避免重複查
         try{localStorage.setItem(key,JSON.stringify({missUntil:Date.now()+GEO_FAIL_TTL}));}catch{}
         continue;
       }
       const p={lat:Number(data[0].lat),lng:Number(data[0].lon)};
       try{localStorage.setItem(key,JSON.stringify(p));}catch{}
       return p;
-    }catch{
-      try{localStorage.setItem(key,JSON.stringify({missUntil:Date.now()+GEO_FAIL_TTL}));}catch{}
-    }
+    }catch{/* 逾時/限流/網路錯誤:不汙染快取,直接試下一組關鍵字 */}
   }
   return null;
 }
@@ -831,6 +847,17 @@ function groupMapPoints(pts){
   return [...groups.values()];
 }
 let _itinMapCache={sig:null,holder:null,map:null};
+function retryGeo(){
+  // 清除所有「查無結果」的失敗快取(保留成功座標)
+  for(let i=localStorage.length-1;i>=0;i--){
+    const k=localStorage.key(i);
+    if(k&&(k.startsWith('geo:')||k.startsWith('geocity:'))){
+      try{const o=JSON.parse(localStorage.getItem(k));if(o&&o.missUntil)localStorage.removeItem(k);}catch{}
+    }
+  }
+  _itinMapCache={sig:null,holder:null,map:null};
+  render();
+}
 async function mountItinMap(day){
   if(!day||S.view!=='itinerary'||S.mapOpen===false)return;
   const el=document.getElementById(`itin-map-${day.id}`);
@@ -845,16 +872,19 @@ async function mountItinMap(day){
     setTimeout(()=>{try{_itinMapCache.map.invalidateSize();}catch{}},80);
     return;
   }
-  el.innerHTML='<div class="itin-map-loading">🗺️ 正在整理地圖位置...<br><span style="font-size:11px;color:#8a9894;">第一次會稍慢，之後會使用快取加速</span></div>';
+  el.innerHTML='<div class="itin-map-loading">'+TI('map-2',14)+' 正在整理地圖位置...<br><span style="font-size:11px;color:#8a9894;">第一次會稍慢，之後會使用快取加速</span></div>';
   const ok=await ensureLeaflet();
   if(!ok){el.innerHTML='<div class="itin-map-loading">地圖載入失敗，請先使用右上方「開啟路線」。</div>';return;}
-  const pts=(await Promise.all(locs.map(async(l,i)=>{
-    const p=await geocodeLoc(l,day.city);
-    return p?{loc:l,idx:i,lat:p.lat,lng:p.lng}:null;
-  }))).filter(Boolean);
-  if(!document.body.contains(el))return;
+  const pts=[];
+  for(let i=0;i<locs.length;i++){
+    const ld=el.querySelector('.itin-map-loading');
+    if(ld)ld.innerHTML=TI('map-2',14)+` 定位中 ${i+1}/${locs.length}：${esc(locs[i].name)}...<br><span style="font-size:11px;color:#8a9894;">第一次每個地點約需 1~3 秒，之後會使用快取加速</span>`;
+    const p=await geocodeLoc(locs[i],day.city);
+    if(p)pts.push({loc:locs[i],idx:i,lat:p.lat,lng:p.lng});
+    if(!document.body.contains(el))return;
+  }
   if(!pts.length){
-    el.innerHTML='<div class="itin-map-loading">目前無法自動定位這些地址，請用「開啟路線」查看 Google Maps。</div>';
+    el.innerHTML=`<div class="itin-map-loading">目前無法自動定位這些地址。<br><button class="btn" style="margin-top:10px;min-height:34px;padding:6px 14px;" onclick="retryGeo()">${TI('refresh',14)} 重試定位</button><span style="display:block;margin-top:8px;font-size:11px;color:#8a9894;">也可以用右上「開啟路線」直接查看 Google Maps</span></div>`;
     return;
   }
   el.innerHTML='';
@@ -885,21 +915,6 @@ async function mountItinMap(day){
   _itinMapCache={sig,holder,map};
 }
 function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
-function linkify(s){
-  const text=String(s||'');
-  const urlRe=/((?:https?:\/\/|www\.)[^\s<>"'，。；、]+)/gi;
-  let out='',last=0;
-  for(const m of text.matchAll(urlRe)){
-    const raw=m[0].replace(/[),.，。]+$/,'');
-    const tail=m[0].slice(raw.length);
-    const start=m.index,end=m.index+m[0].length;
-    out+=esc(text.slice(last,start));
-    const href=/^https?:\/\//i.test(raw)?raw:`https://${raw}`;
-    out+=`<a href="${esc(href)}" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()">${esc(raw)}</a>${esc(tail)}`;
-    last=end;
-  }
-  return out+esc(text.slice(last));
-}
 function money(n){return'NT$'+(Math.round(n)||0).toLocaleString();}
 function ntd(n){return money(n);}
 function expBase(e){return Number(e.amountBase ?? e.amount ?? 0);}
@@ -1080,11 +1095,14 @@ function fabAi(el){
 }
 function hdr(te){
   const statsStrip='';
+  const locCount=S.days.reduce((a,d)=>a+(d.locations?.length||0),0);
+  const spent=(S.expenses||[]).reduce((a,e)=>a+expValue(e),0);
+  const statsChips=`<div class="hdr-stats"><span class="hdr-stat">${TI('calendar',12)} ${S.days.length} 天</span><span class="hdr-stat">${TI('map-pin',12)} ${locCount} 個地點</span>${spent>0?`<span class="hdr-stat">${TI('coin',12)} 已花 ${fmt(spent)}</span>`:(Number(S.budget)>0?`<span class="hdr-stat">${TI('coin',12)} 預算 ${fmt(convertAmount(Number(S.budget),'TWD',S.settleCurrency||'TWD'))}</span>`:'')}</div>`;
   const coverStyle=`--cover:url('${esc(S.cover)}');--cover-pos:${S.coverPos||'30%'}`;
   if(S.editTN)return`<header class="cover" style="${coverStyle}"><div class="topbar"></div><div class="cover-bottom"><div class="title-edit"><input class="tni" id="tn-in" value="${esc(S.tnDraft)}" placeholder="行程名稱" oninput="S.tnDraft=this.value" onkeydown="if(event.key==='Enter')saveTN()" autofocus><button class="btn glass" onclick="saveTN()">完成</button></div></div></header>${statsStrip}`;
   const menu=S.menuOpen?`<div class="cover-menu-backdrop" onclick="setU({menuOpen:false})"></div><div class="cover-menu" onclick="event.stopPropagation()"><button onclick="copyShareLink();setU({menuOpen:false})"><span class="mi">${TI('link',16)}</span>分享連結</button><button onclick="S.menuOpen=false;openModal(this,{t:'tools'})"><span class="mi">${TI('tool',16)}</span>旅程工具</button><button onclick="S.menuOpen=false;openModal(this,{t:'cover'})"><span class="mi">${TI('photo',16)}</span>更換封面</button><button onclick="S.menuOpen=false;openModal(this,{t:'tv'})"><span class="mi">${TI('users',16)}</span>旅伴管理</button><button onclick="S.menuOpen=false;openModal(this,{t:'help'})"><span class="mi">${TI('book',16)}</span>使用說明</button></div>`:'';
-  const syncChip=cloud.tripId?`<span class="hdr-sub-chip">🔗 ${esc(cloud.tripId)}</span><button class="hdr-sync-switch" title="切換同步代碼" aria-label="切換同步代碼" onclick="event.stopPropagation();openModal(this,{t:'tools'})">⇄</button>`:'';
-  return`<header class="cover" style="${coverStyle}"><div class="topbar"><div></div><div class="cover-menu-wrap"><button class="hamb" aria-label="開啟選單" onclick="event.stopPropagation();setU({menuOpen:!S.menuOpen})"><span></span><span></span><span></span></button>${menu}</div></div><div class="cover-bottom"><div class="hdr-title" onclick="setU({editTN:true,tnDraft:'${esc(S.tripName)}'})"><span>${esc(S.tripName)}</span><span class="hdr-title-edit-icon">${TI('pencil',16)}</span></div><div class="hdr-sub"><span>${esc(cloud.status||'本機儲存')}</span>${syncChip}</div>${!cloud.ready?`<div class="sync-quick"><span style="font-size:14px;">🔗</span><input id="hdr-sync-inp" type="text" placeholder="輸入同步代碼，Enter 跳轉" autocomplete="off" autocapitalize="none" spellcheck="false" onkeydown="if(event.key==='Enter'){var v=this.value.trim();if(v){var el=document.getElementById('trip-code');if(el)el.value=v;else{S._quickCode=v;}switchTrip(false);}}"><button class="sync-quick-btn" onclick="var v=document.getElementById('hdr-sync-inp').value.trim();if(v){var el=document.getElementById('trip-code');if(el)el.value=v;switchTrip(false);}">跳轉</button></div>`:''}</div></header>${statsStrip}`;
+  const syncChip=cloud.tripId?`<span class="hdr-sub-chip">${TI('link',12)} ${esc(cloud.tripId)}</span><button class="hdr-sync-switch" title="切換同步代碼" aria-label="切換同步代碼" onclick="event.stopPropagation();openModal(this,{t:'tools'})">⇄</button>`:'';
+  return`<header class="cover" style="${coverStyle}"><div class="topbar"><div></div><div class="cover-menu-wrap"><button class="hamb" aria-label="開啟選單" onclick="event.stopPropagation();setU({menuOpen:!S.menuOpen})"><span></span><span></span><span></span></button>${menu}</div></div><div class="cover-bottom"><div class="hdr-title" onclick="setU({editTN:true,tnDraft:'${esc(S.tripName)}'})"><span>${esc(S.tripName)}</span><span class="hdr-title-edit-icon">${TI('pencil',16)}</span></div><div class="hdr-sub"><span>${esc(cloud.status||'本機儲存')}</span>${syncChip}</div>${statsChips}${!cloud.ready?`<div class="sync-quick"><span style="color:rgba(255,255,255,.85);">${TI('link',15)}</span><input id="hdr-sync-inp" type="text" placeholder="輸入同步代碼，Enter 跳轉" autocomplete="off" autocapitalize="none" spellcheck="false" onkeydown="if(event.key==='Enter'){var v=this.value.trim();if(v){var el=document.getElementById('trip-code');if(el)el.value=v;else{S._quickCode=v;}switchTrip(false);}}"><button class="sync-quick-btn" onclick="var v=document.getElementById('hdr-sync-inp').value.trim();if(v){var el=document.getElementById('trip-code');if(el)el.value=v;switchTrip(false);}">跳轉</button></div>`:''}</div></header>${statsStrip}`;
 }
 function saveTN(){const v=document.getElementById('tn-in')?.value?.trim()||S.tnDraft.trim()||'未命名旅程';setD({tripName:v,editTN:false});}
 function gnav(){
@@ -1165,7 +1183,7 @@ function exps(te){
     const personal=isPersonalExp(e);
     const dt=formatExpenseDate(e.date);
     const meta=(dt?`${dt} · `:'')+(personal?'純記帳':`${esc(e.paidBy||'未選付款人')} · ${e.shares?'自訂分擔':`${e.splitWith?.length||0}人分`}`);
-    return`<div class="card"><div class="exp-row"><div class="cat-ic" style="background:${CB[e.category]||'#F1EFE8'}">${CE[e.category]||'📌'}</div><div class="exp-inf"><div class="exp-nm">${esc(e.item)}</div><div class="exp-mt">${meta} · <span style="color:${CF[e.category]||'#444'};">${e.category||'其他'}</span>${e.currency&&e.currency!=='TWD'?` · ${esc(e.currency)} ${Number(e.amount||0).toLocaleString()}`:''}</div></div><div class="exp-rt"><div class="exp-am">${fmt(expValue(e))}</div><div class="brow" style="margin-top:7px;justify-content:flex-end;"><button class="btn" style="min-height:30px;padding:4px 8px;" onclick="_heroOrigin=this.getBoundingClientRect();oExp('${e.id}')">編輯</button></div></div></div></div>`;
+    return`<div class="card"><div class="exp-row"><div class="cat-ic" style="background:${CB[e.category]||'#F1EFE8'};color:${CF[e.category]||'#444'};">${TI(CTI[e.category]||'map-pin',17)}</div><div class="exp-inf"><div class="exp-nm">${esc(e.item)}</div><div class="exp-mt">${meta} · <span style="color:${CF[e.category]||'#444'};">${e.category||'其他'}</span>${e.currency&&e.currency!=='TWD'?` · ${esc(e.currency)} ${Number(e.amount||0).toLocaleString()}`:''}</div></div><div class="exp-rt"><div class="exp-am">${fmt(expValue(e))}</div><div class="brow" style="margin-top:7px;justify-content:flex-end;"><button class="btn" style="min-height:30px;padding:4px 8px;" onclick="_heroOrigin=this.getBoundingClientRect();oExp('${e.id}')">編輯</button></div></div></div></div>`;
   };
   const group=(key,items)=>{
     const total=items.reduce((s,e)=>s+expValue(e),0);
@@ -1175,7 +1193,7 @@ function exps(te){
   if(S.expenses.length){
     if(active==='all')list=keys.filter(k=>k!=='all').map(k=>group(k,expenseByDay(k))).join('');
     else list=group(active,expenseByDay(active));
-  }else list=`<div class="empty"><div style="font-size:30px;margin-bottom:8px;">💰</div>尚無記帳記錄</div>`;
+  }else list=`<div class="empty"><div style="margin-bottom:8px;color:#9fb4ac;">${TI('coin',34)}</div>尚無記帳記錄</div>`;
   return`<div class="tool-row"><button class="btn bp mobile-fab-replaced" onclick="_heroOrigin=this.getBoundingClientRect();oExp('')">新增記帳</button><button class="btn" onclick="setU({modal:{t:'tools'}})">預算 / 匯出</button></div><div class="stats"><div class="stat"><div class="stat-n">${fmt(te)}</div><div class="stat-l">總花費</div></div><div class="stat"><div class="stat-n">${S.travelers.length?fmt(te/S.travelers.length):'-'}</div><div class="stat-l">人均</div></div></div>${bud}${bars}${dayTabs}${list}<button class="add-btn mobile-fab-replaced" onclick="oExp('')">+ 新增記帳</button>`;
 }
 function splt(b,tx,te){
@@ -1192,33 +1210,33 @@ function splt(b,tx,te){
     const related=sharedExpenses.filter(e=>e.paidBy===t||personShare(e,t)>0);
     const detail=related.length?`<div class="split-detail-title">相關分帳明細</div>${related.map(e=>{
       const share=personShare(e,t),isPayer=e.paidBy===t;
-      return`<div class="split-exp-mini"><div class="split-exp-line"><div class="split-exp-name">${CE[e.category]||'📌'} ${esc(e.item)}</div><div style="font-weight:900;">${fmt(expValue(e))}</div></div><div class="split-exp-meta">${isPayer?'我先付款':'我有分擔'}${share?` · 負擔 ${fmt(convertAmount(share,e.currency||'TWD',S.settleCurrency||'TWD'))}`:''}${e.paidBy?` · 付款人 ${esc(S.travelerIcons?.[e.paidBy]||'')} ${esc(e.paidBy)}`:''}</div></div>`;
+      return`<div class="split-exp-mini"><div class="split-exp-line"><div class="split-exp-name">${TI(CTI[e.category]||'map-pin',13)} ${esc(e.item)}</div><div style="font-weight:900;">${fmt(expValue(e))}</div></div><div class="split-exp-meta">${isPayer?'我先付款':'我有分擔'}${share?` · 負擔 ${fmt(convertAmount(share,e.currency||'TWD',S.settleCurrency||'TWD'))}`:''}${e.paidBy?` · 付款人 ${esc(S.travelerIcons?.[e.paidBy]||'')} ${esc(e.paidBy)}`:''}</div></div>`;
     }).join('')}`:`<div class="split-detail-title">相關分帳明細</div><div class="mini">目前沒有共同分帳明細</div>`;
     return`<div class="split-person${open?' open':''}" style="--tv-bg:${c.bg};--tv-fg:${c.fg};--tv-ac:${c.accent};" onclick="toggleSplitPerson('${esc(t)}')">
-      <div class="split-person-head"><div class="split-avatar">${ic}</div><div style="min-width:0;flex:1;"><div class="split-name-row"><div class="split-name">${esc(t)}</div>${meta.role?`<div class="split-role">${esc(meta.role)}</div>`:''}</div>${meta.bio?`<div class="split-bio-inline">💬 ${esc(meta.bio)}</div>`:''}</div><div class="split-toggle">⌄</div></div>
+      <div class="split-person-head"><div class="split-avatar">${ic}</div><div style="min-width:0;flex:1;"><div class="split-name-row"><div class="split-name">${esc(t)}</div>${meta.role?`<div class="split-role">${esc(meta.role)}</div>`:''}</div>${meta.bio?`<div class="split-bio-inline">${TI('message-circle',12)} ${esc(meta.bio)}</div>`:''}</div><div class="split-toggle">⌄</div></div>
       <div class="split-balance ${pos?'receive':'pay'}">${pos?`+ ${fmt(Math.abs(v))} 應收`:`${fmt(Math.abs(v))} 應付`}</div>
       ${open?`<div class="split-detail"><div class="split-metrics"><div class="split-metric"><div class="split-metric-n">${fmt(paid)}</div><div class="split-metric-l">共同分帳已付</div></div><div class="split-metric"><div class="split-metric-n">${count} / ${shared}</div><div class="split-metric-l">付款 / 分擔筆數</div></div></div>${detail}</div>`:''}
     </div>`;
   }).join('');
-  const tc=tx.length?tx.map(t=>`<div class="split-txn">${personMini(t.from)}<div><div style="font-size:12px;color:#854F0B;font-weight:800;">轉帳給</div><div style="font-size:16px;font-weight:900;color:#633806;">${fmt(t.amount)}</div></div>${personMini(t.to)}</div>`).join(''):`<div style="text-align:center;padding:16px;color:var(--muted);font-size:14px;background:#fff;border-radius:var(--r);border:1px solid var(--line);">${sharedExpenses.length?'✅ 共同分帳已平衡！':'尚無共同分帳記錄'}</div>`;
+  const tc=tx.length?tx.map(t=>`<div class="split-txn">${personMini(t.from)}<div><div style="font-size:12px;color:#854F0B;font-weight:800;">轉帳給</div><div style="font-size:16px;font-weight:900;color:#633806;">${fmt(t.amount)}</div></div>${personMini(t.to)}</div>`).join(''):`<div style="text-align:center;padding:16px;color:var(--muted);font-size:14px;background:#fff;border-radius:var(--r);border:1px solid var(--line);">${sharedExpenses.length?TI('circle-check',14)+' 共同分帳已平衡！':'尚無共同分帳記錄'}</div>`;
   return`<div class="sh">旅伴結算</div><div class="split-people">${br}</div><div class="sh">付款方式</div>${tc}`;
 }
 // buildModal defined below with note support
 function mTripGate(){
-  return`<div class="mhd"><div class="mt">🌍 開始你的旅程</div><div class="mcl" onclick="skipTripGate()" title="略過">✕</div></div>
+  return`<div class="mhd"><div class="mt">${TI('world',17)} 開始你的旅程</div><div class="mcl" onclick="skipTripGate()" title="略過">✕</div></div>
 <div style="text-align:center;font-size:13px;color:var(--muted);line-height:1.7;margin-bottom:18px;">輸入同步代碼，可以和旅伴<br>共同編輯同一份旅程。</div>
 <div class="fg">
   <label class="fl">同步代碼</label>
   <input type="text" id="trip-code" placeholder="例：tokyo-2026、family-trip" autocomplete="off" autocapitalize="none" onkeydown="if(event.key==='Enter')switchTrip(false)" autofocus>
   <div class="tip">建議使用英文、數字、短橫線。第一次使用可自己取一個。</div>
 </div>
-<button class="btn bp" style="width:100%;padding:13px;font-size:15px;" onclick="switchTrip(false)">🔗 進入旅程</button>
+<button class="btn bp" style="width:100%;padding:13px;font-size:15px;" onclick="switchTrip(false)">${TI('link',15)} 進入旅程</button>
 <div style="display:flex;align-items:center;gap:10px;margin:16px 0;color:var(--muted);font-size:11px;">
   <div style="flex:1;height:1px;background:var(--line);"></div>
   <span>或</span>
   <div style="flex:1;height:1px;background:var(--line);"></div>
 </div>
-<button class="btn" style="width:100%;padding:11px;font-size:13px;" onclick="skipTripGate()">👤 先用本機儲存（不開雲端同步）</button>
+<button class="btn" style="width:100%;padding:11px;font-size:13px;" onclick="skipTripGate()">${TI('user',14)} 先用本機儲存（不開雲端同步）</button>
 <div class="tip" style="margin-top:10px;text-align:center;">日後也可以從右上角選單 → 旅程工具，再切換到雲端同步。</div>`;
 }
 
@@ -1229,7 +1247,7 @@ function skipTripGate(){
 }
 function mLoc(){
   const locCatOpts=[['','自動偵測'],...CATS.map(c=>[c,`${CE[c]} ${c}`])].map(([v,l])=>`<option value="${v}"${(FM.category||'')===v?' selected':''}>${l}</option>`).join('');
-  const resOpts=[['','—'],['booked','✅ 已訂位'],['pending','⏳ 待確認'],['no_need','—— 不需訂位']].map(([v,l])=>`<option value="${v}"${(FM.reservation||'')===v?' selected':''}>${l}</option>`).join('');
+  const resOpts=[['','—'],['booked','已訂位 ✓'],['pending','待確認'],['no_need','不需訂位']].map(([v,l])=>`<option value="${v}"${(FM.reservation||'')===v?' selected':''}>${l}</option>`).join('');
   return`<div class="mhd"><div class="mt">${S.modal.locId?'編輯地點':'新增地點'}</div><div class="mcl" onclick="setU({modal:null})">✕</div></div>
 <div class="fg"><label class="fl">地點名稱 *</label><input type="text" value="${esc(FM.name||'')}" placeholder="例：故宮博物院" oninput="FM.name=this.value"></div>
 <div class="fg"><label class="fl">地址（用於地圖 / 導航）</label><input type="text" value="${esc(FM.address||'')}" placeholder="例：台北市士林區至善路二段221號" oninput="FM.address=this.value"></div>
@@ -1245,7 +1263,7 @@ function mDay(){
 <div class="fg"><label class="fl">標題 *</label><input type="text" value="${esc(FM.title||'')}" placeholder="例：第一天" oninput="FM.title=this.value"></div>
 <div class="mobile-stack" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;"><div><label class="fl">日期</label><input type="date" value="${esc(FM.date||'')}" oninput="FM.date=this.value"></div><div><label class="fl">城市（查天氣用）</label><input type="text" value="${esc(FM.city||'')}" placeholder="例：Tokyo、大阪、台北" oninput="FM.city=this.value"></div></div>
 <div class="ar"><button class="btn bp" style="flex:1;padding:10px;" onclick="sDay()">儲存</button><button class="btn" style="flex:1;padding:10px;" onclick="setU({modal:null})">取消</button></div>
-${isE&&S.days.length>1?`<button class="btn br" style="width:100%;margin-top:12px;padding:10px;" onclick="dDayFromModal()">🗑️ 刪除這一天（含當天所有地點）</button>`:''}`;
+${isE&&S.days.length>1?`<button class="btn br" style="width:100%;margin-top:12px;padding:10px;" onclick="dDayFromModal()">${TI('trash',14)} 刪除這一天（含當天所有地點）</button>`:''}`;
 }
 function mExp(){
   const tOpts=`<option value=""${!FM.paidBy?' selected':''}>無 / 請選擇</option>`+S.travelers.map(t=>`<option value="${esc(t)}"${FM.paidBy===t?' selected':''}>${esc(t)}</option>`).join('');
@@ -1289,13 +1307,13 @@ function mTv(){
     const stats=getTvStats(t);
     const isOpen=expandedId===t;
     const role=meta.role?`<span class="tv-role">${esc(meta.role)}</span>`:'';
-    const bio=meta.bio?`<div class="tv-bio">💬 ${esc(meta.bio)}</div>`:'';
+    const bio=meta.bio?`<div class="tv-bio">${TI('message-circle',12)} ${esc(meta.bio)}</div>`:'';
     return`<div class="tv-card${isOpen?' open':''}" style="--tv-bg:${c.bg};--tv-fg:${c.fg};--tv-ac:${c.accent};">
       <div class="tv-head" onclick="toggleTvExpand('${esc(t)}')">
         <div class="tv-avatar">${ic}</div>
         <div class="tv-info">
           <div class="tv-name">${esc(t)}${role}</div>
-          <div class="tv-mini-stats">${stats.paidCount?'💰 付了 '+stats.paidCount+' 筆 · '+(CUR_LABEL[cur]||'')+fmt(stats.paidTotal):'尚未記帳'}</div>
+          <div class="tv-mini-stats">${stats.paidCount?TI('coin',12)+' 付了 '+stats.paidCount+' 筆 · '+(CUR_LABEL[cur]||'')+fmt(stats.paidTotal):'尚未記帳'}</div>
         </div>
         <button class="tv-del" onclick="event.stopPropagation();rmTv('${esc(t)}')" title="移除">✕</button>
       </div>
@@ -1308,7 +1326,7 @@ function mTv(){
           <div class="tv-stat-cell"><div class="tv-stat-n">${stats.sharedCount}</div><div class="tv-stat-l">分擔筆數</div></div>
           <div class="tv-stat-cell"><div class="tv-stat-n">${stats.paidCount?(CUR_LABEL[cur]||'')+fmt(stats.avg):'-'}</div><div class="tv-stat-l">平均/筆</div></div>
         </div>
-        <button class="btn" style="width:100%;font-size:13px;padding:8px;margin-top:10px;" onclick="event.stopPropagation();editTvProfile('${esc(t)}')">✏️ 編輯角色與自介</button>
+        <button class="btn" style="width:100%;font-size:13px;padding:8px;margin-top:10px;" onclick="event.stopPropagation();editTvProfile('${esc(t)}')">${TI('pencil',13)} 編輯角色與自介</button>
       </div>`:''}
     </div>`;
   }).join('');
@@ -1318,7 +1336,7 @@ function mTv(){
   const pc=getTvColor(previewName);
   const avatars=AVATARS.map(a=>`<button class="avatar-btn${icon===a?' on':''}" onclick="pickAvatar('${a}',this)">${a}</button>`).join('');
 
-  return`<div class="mhd"><div class="mt">👥 旅伴管理</div><div class="mcl" onclick="setU({modal:null})">✕</div></div>
+  return`<div class="mhd"><div class="mt">${TI('users',17)} 旅伴管理</div><div class="mcl" onclick="setU({modal:null})">✕</div></div>
 ${cards||'<div style="text-align:center;color:var(--muted);font-size:13px;padding:24px 0;">尚無旅伴<br><span style="font-size:11px;">在下方新增第一位</span></div>'}
 
 <div class="tv-add-section">
@@ -1410,8 +1428,8 @@ function mCover(){
 <div class="cover-grid">${choices}</div>
 <div class="fg"><label class="fl">上傳自己的封面</label><input type="file" id="cover-file" accept="image/*" onchange="uploadCover(this.files?.[0])">
 <div style="margin-top:8px;padding:10px 12px;background:#f0f8f4;border-radius:10px;border:1px solid #c5e5d5;">
-  <div style="font-size:12px;font-weight:900;color:#085041;margin-bottom:5px;">📐 推薦圖片比例</div>
-  <div style="font-size:12px;color:#2d5a4a;line-height:1.7;">✅ 最佳：<b>16:9</b>（1920×1080px）手機＋電腦都完美<br>✅ 次佳：<b>4:3</b>（1200×900px）適合風景照<br>⚠️ 避免：直式照片（會在電腦被嚴重裁切）</div>
+  <div style="font-size:12px;font-weight:900;color:#085041;margin-bottom:5px;">${TI('aspect-ratio',13)} 推薦圖片比例</div>
+  <div style="font-size:12px;color:#2d5a4a;line-height:1.7;">${TI('circle-check',12)} 最佳：<b>16:9</b>（1920×1080px）手機＋電腦都完美<br>${TI('circle-check',12)} 次佳：<b>4:3</b>（1200×900px）適合風景照<br>${TI('alert-triangle',12)} 避免：直式照片（會在電腦被嚴重裁切）</div>
 </div></div>
 <div class="fg"><label class="fl">或貼上圖片網址</label><input type="url" id="cover-url" placeholder="https://..." value="${S.cover&&!COVERS.some(c=>c[1]===S.cover)&&!S.cover.startsWith('data:')?esc(S.cover):''}"></div>
 <div class="fg"><label class="fl">焦點位置（照片主體在哪裡？）</label><div style="display:flex;flex-direction:column;gap:4px;">${posRadios}</div><div class="tip" style="margin-top:6px;">調整後封面會即時預覽，找到最好的裁切位置再關閉。</div></div>
@@ -1801,8 +1819,8 @@ function onImportInput(){
     if(!days.length){prev.innerHTML=`<div class="import-err">未能辨識任何行程，請確認格式中有天數標題（如「第一天」、「Day 1」）和地點名稱。</div>`;return;}
     const total=days.reduce((s,d)=>s+d.locations.length,0);
     const withAddr=days.reduce((s,d)=>s+d.locations.filter(l=>l.address).length,0);
-    prev.innerHTML=`<div style="font-weight:900;font-size:13px;color:#085041;margin-bottom:8px;">✅ 解析成功：${days.length} 天 · ${total} 個地點 · ${withAddr} 個含地址</div>`
-      +days.map(d=>`<div class="import-day-hd">📅 ${esc(d.title)}${d.date?` <span style="font-size:10px;background:#eef4ff;color:#0c447c;padding:1px 6px;border-radius:999px;">${esc(d.date)}</span>`:''}${d.city?` <span style="font-size:10px;background:#e1f5ee;color:#085041;padding:1px 6px;border-radius:999px;">🌤 ${esc(d.city)}</span>`:''}</div>`
+    prev.innerHTML=`<div style="font-weight:900;font-size:13px;color:#085041;margin-bottom:8px;">${TI('circle-check',13)} 解析成功：${days.length} 天 · ${total} 個地點 · ${withAddr} 個含地址</div>`
+      +days.map(d=>`<div class="import-day-hd">${TI('calendar',12)} ${esc(d.title)}${d.date?` <span style="font-size:10px;background:#eef4ff;color:#0c447c;padding:1px 6px;border-radius:999px;">${esc(d.date)}</span>`:''}${d.city?` <span style="font-size:10px;background:#e1f5ee;color:#085041;padding:1px 6px;border-radius:999px;">🌤 ${esc(d.city)}</span>`:''}</div>`
         +d.locations.map(l=>`<div class="import-loc-row"><span class="import-loc-time">${l.time||'--:--'}</span><div style="flex:1;min-width:0;"><div style="display:flex;align-items:center;gap:5px;flex-wrap:wrap;"><span class="import-loc-name">${esc(l.name)}</span><span class="import-loc-cat" style="background:${CB[l.category]};color:${CF[l.category]};">${CE[l.category]} ${l.category}</span></div>${l.address?`<div style="font-size:10px;color:#0c447c;margin-top:2px;">📍 ${esc(l.address)}</div>`:''}${l.phone?`<div style="font-size:10px;color:#444;margin-top:1px;">📞 ${esc(l.phone)}</div>`:''}</div></div>`).join('')
       ).join('');
   }catch(e){prev.innerHTML=`<div class="import-err">解析發生錯誤：${esc(String(e))}</div>`;}
@@ -1853,7 +1871,7 @@ function _buildItinPrompt(){
 function mImport(){
   const curDay=S.days[Math.min(S.dayIdx,S.days.length-1)]||{};
   const defaultDest=curDay.city||'';
-  return`<div class="mhd"><div class="mt">✨ AI 行程匯入</div><div class="mcl" onclick="setU({modal:null})">✕</div></div>
+  return`<div class="mhd"><div class="mt">${TI('sparkles',17)} AI 行程匯入</div><div class="mcl" onclick="setU({modal:null})">✕</div></div>
 <div class="ai-step-box">
   <div class="ai-step-title">步驟一：填好目的地，複製提示詞給 Gemini / ChatGPT / Claude</div>
   <div class="mobile-stack" style="display:grid;grid-template-columns:1.3fr .7fr 1fr;gap:8px;margin-bottom:10px;">
@@ -1861,11 +1879,11 @@ function mImport(){
     <div><label class="fl">天數</label><input id="ai-days" type="number" min="1" max="30" inputmode="numeric" placeholder="5"></div>
     <div><label class="fl">出發日（選填）</label><input id="ai-date" type="date"></div>
   </div>
-  <button class="btn bp" style="width:100%;padding:10px;font-size:13px;" id="copy-prompt-btn" onclick="copyPrompt()">📋 複製提示詞</button>
+  <button class="btn bp" style="width:100%;padding:10px;font-size:13px;" id="copy-prompt-btn" onclick="copyPrompt()">${TI('copy',14)} 複製提示詞</button>
   <details class="ai-prompt-details" style="margin-top:8px;"><summary>查看提示詞內容</summary><pre>${esc(AI_ITIN_PROMPT)}</pre></details>
 </div>
 <div class="ai-step-title" style="color:#085041;margin-bottom:8px;">步驟二：把 AI 的回覆貼回來</div>
-<button class="btn" style="width:100%;margin-bottom:8px;padding:9px;" onclick="pasteClipboard('ai-import-box','onImportInput')">📥 從剪貼簿貼上</button>
+<button class="btn" style="width:100%;margin-bottom:8px;padding:9px;" onclick="pasteClipboard('ai-import-box','onImportInput')">${TI('clipboard-text',14)} 從剪貼簿貼上</button>
 <textarea class="import-area" id="ai-import-box" placeholder="或在這裡手動貼上 AI 輸出的行程文字，例如：
 
 第1天 | 2026-09-11 | 東京初到與新宿夜晚 | 東京
@@ -1887,8 +1905,8 @@ function copyPrompt(){
   const markDone=()=>{
     const btn=document.getElementById('copy-prompt-btn');
     if(!btn)return;
-    btn.textContent='✅ 已複製！貼給任一 AI 即可';btn.style.background='#0F6E56';
-    setTimeout(()=>{if(btn){btn.textContent='📋 複製提示詞';btn.style.background='';}},2400);
+    btn.innerHTML=TI('check',14)+' 已複製！貼給任一 AI 即可';btn.style.background='#0F6E56';
+    setTimeout(()=>{if(btn){btn.innerHTML=TI('copy',14)+' 複製提示詞';btn.style.background='';}},2400);
   };
   if(navigator.clipboard?.writeText){
     navigator.clipboard.writeText(text).then(markDone).catch(doFallback);
@@ -2113,24 +2131,25 @@ function buildModal(){if(S.modal?.t==='wl_add')return buildWlAddModal();if(S.mod
 }
 function mNote(){
   const m=S.modal;
-  return`<div class="mhd"><div class="mt">📝 ${esc(m.name||'備注')}</div><div class="mcl" onclick="setU({modal:null})">✕</div></div>
+  return`<div class="mhd"><div class="mt">${TI('notes',16)} ${esc(m.name||'備注')}</div><div class="mcl" onclick="setU({modal:null})">✕</div></div>
 <div class="note-modal-body">${esc(m.notes||'')}</div>
-<div class="ar"><button class="btn bp" style="flex:1;padding:10px;" onclick="oLoc('${m.locId}');void 0">✏️ 編輯地點</button><button class="btn" style="flex:1;padding:10px;" onclick="setU({modal:null})">關閉</button></div>`;
+<div class="ar"><button class="btn bp" style="flex:1;padding:10px;" onclick="oLoc('${m.locId}');void 0">${TI('pencil',14)} 編輯地點</button><button class="btn" style="flex:1;padding:10px;" onclick="setU({modal:null})">關閉</button></div>`;
 }
 // ── Memo tab ──────────────────────────────────────────
 const MEMO_CATS=['證件','行李','預訂','其他'];
 const MEMO_IC={證件:'🪪',行李:'🧳',預訂:'📅',其他:'📌'};
+const MEMO_TI={證件:'id',行李:'luggage',預訂:'calendar-check',其他:'map-pin'};
 function memoView(){
   const items=S.memo||[];
   const done=items.filter(m=>m.done).length;
   const groups=MEMO_CATS.map(cat=>{
     const its=items.filter(m=>m.cat===cat);
     if(!its.length)return'';
-    return`<div class="memo-cat-hd">${MEMO_IC[cat]} ${cat}</div>${its.map(m=>`<div class="memo-item${m.done?' done':''}" id="memo-${m.id}"><div class="memo-cb${m.done?' on':''}" onclick="toggleMemo('${m.id}')">${m.done?'✓':''}</div><div class="memo-text" onclick="editMemo('${m.id}')">${esc(m.text)}</div><div class="memo-actions"><button class="memo-edit" onclick="editMemo('${m.id}')" title="編輯">✏️</button><button class="memo-del" onclick="delMemo('${m.id}')" title="刪除">×</button></div></div>`).join('')}`;
+    return`<div class="memo-cat-hd">${TI(MEMO_TI[cat]||'map-pin',13)} ${cat}</div>${its.map(m=>`<div class="memo-item${m.done?' done':''}" id="memo-${m.id}"><div class="memo-cb${m.done?' on':''}" onclick="toggleMemo('${m.id}')">${m.done?'✓':''}</div><div class="memo-text" onclick="editMemo('${m.id}')">${esc(m.text)}</div><div class="memo-actions"><button class="memo-edit" onclick="editMemo('${m.id}')" title="編輯">${TI('pencil',13)}</button><button class="memo-del" onclick="delMemo('${m.id}')" title="刪除">×</button></div></div>`).join('')}`;
   }).join('');
   const progress=items.length?`<div style="margin-bottom:14px;"><div style="display:flex;justify-content:space-between;font-size:12px;font-weight:700;color:var(--muted);margin-bottom:5px;"><span>行前清單進度</span><span>${done} / ${items.length} 完成</span></div><div class="budget-line"><div class="budget-fill" style="width:${items.length?Math.round(done/items.length*100):0}%;"></div></div></div>`:'';
   const catSel=MEMO_CATS.map(c=>`<option value="${c}">${MEMO_IC[c]} ${c}</option>`).join('');
-  return`<div class="memo-toolbar mobile-fab-replaced"><button class="memo-ai-btn" onclick="openModal(this,{t:'memo_import'})">✨ AI 產生備忘清單</button></div>${progress}${groups||'<div class="empty"><div style="font-size:30px;margin-bottom:8px;">📝</div>還沒有備忘項目<br><span style="font-size:12px;">點右下角 ＋ 新增備忘，或用 AI 一鍵產生</span></div>'}<div class="memo-add-row mobile-fab-replaced"><select class="memo-cat-sel" id="memo-cat">${catSel}</select><input type="text" id="memo-inp" placeholder="例：護照、訂飯店確認信..." style="flex:1;" onkeydown="if(event.key==='Enter'){event.preventDefault();addMemo();}"><button class="btn bp" style="padding:0 16px;flex-shrink:0;" onclick="addMemo()">新增</button></div>`;
+  return`<div class="memo-toolbar mobile-fab-replaced"><button class="memo-ai-btn" onclick="openModal(this,{t:'memo_import'})">${TI('sparkles',14)} AI 產生備忘清單</button></div>${progress}${groups||'<div class="empty"><div style="font-size:30px;margin-bottom:8px;">📝</div>還沒有備忘項目<br><span style="font-size:12px;">點右下角 ＋ 新增備忘，或用 AI 一鍵產生</span></div>'}<div class="memo-add-row mobile-fab-replaced"><select class="memo-cat-sel" id="memo-cat">${catSel}</select><input type="text" id="memo-inp" placeholder="例：護照、訂飯店確認信..." style="flex:1;" onkeydown="if(event.key==='Enter'){event.preventDefault();addMemo();}"><button class="btn bp" style="padding:0 16px;flex-shrink:0;" onclick="addMemo()">新增</button></div>`;
 }
 function mMemoAdd(){
   const catSel=MEMO_CATS.map(c=>`<option value="${c}">${MEMO_IC[c]} ${c}</option>`).join('');
@@ -2147,59 +2166,59 @@ function saveMemoModal(){
 }
 function mHelp(){
   const sec=(ic,title,items)=>`<div style="margin-bottom:18px;"><div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;padding-bottom:8px;border-bottom:1px solid var(--line);"><span style="font-size:20px;">${ic}</span><span style="font-size:15px;font-weight:900;color:var(--ink);">${title}</span></div><div style="display:flex;flex-direction:column;gap:6px;">${items.map(([icon,txt])=>`<div style="display:flex;gap:10px;align-items:flex-start;"><span style="font-size:16px;flex-shrink:0;margin-top:1px;">${icon}</span><span style="font-size:13px;color:#3a4a45;line-height:1.55;">${txt}</span></div>`).join('')}</div></div>`;
-  return`<div class="mhd"><div class="mt">📖 使用說明</div><div class="mcl" onclick="setU({modal:null})">✕</div></div>
+  return`<div class="mhd"><div class="mt">${TI('book',17)} 使用說明</div><div class="mcl" onclick="setU({modal:null})">✕</div></div>
 <div style="max-height:68vh;overflow-y:auto;padding-right:2px;">
-${sec('📝','行前備忘錄',[
-  ['✅','出發前的打勾清單，分成 🪪 證件、🧳 行李、📅 預訂、📌 其他 四類。'],
+${sec(TI('checklist',19),'行前備忘錄',[
+  [TI('circle-check',15),'出發前的打勾清單，分成證件、行李、預訂、其他四類。'],
   ['＋','下方輸入框選分類、輸入文字後按「新增」或 Enter 加入。'],
-  ['☑️','點左側方框切換已完成／未完成，完成項目會顯示刪除線。進度條顯示完成比例。'],
+  [TI('checkbox',15),'點左側方框切換已完成／未完成，完成項目會顯示刪除線。進度條顯示完成比例。'],
   ['×','點右側 × 刪除該項目，刪錯了 6 秒內可按「復原」救回。'],
 ])}
-${sec('🗺','行程規劃',[
-  ['📅','上方分頁選擇天數；再點一次目前的分頁（或點當天標題）即可編輯日期、城市，編輯視窗內也能刪除整天。'],
-  ['＋','點右下角 ＋ 按鈕新增：可選快速範本（餐廳、飯店、交通等）、空白地點，或 ✨ AI 匯入整份行程。'],
-  ['📍','每個地點可填：名稱、地址、電話、分類、時間、訂位狀態、確認碼、備註。'],
-  ['🌤','天氣資訊以小膠囊顯示在天數標題旁，點擊可展開當日完整天氣（溫度、體感、濕度、風速、紫外線）。'],
-  ['🕐','系統自動跳到最近的行程，並以彩色橫條標記「目前最近」。點標題列 🕐 按鈕可手動跳到當下。'],
-  ['💬','備註欄位點「展開 ›」會從卡片原位放大展開（App Store 動畫效果），點空白處或下滑可關閉。'],
-  ['🗺️','點「地圖」以名稱＋地址搜尋 Google Maps；「導航」直接開啟導航。'],
-  ['📞','電話號碼旁的 📞 可直接撥打。'],
-  ['⠿ ↑ ↓','點「排序」進入排序模式：拖曳 ⠿ 或點 ↑↓ 調整地點順序。'],
-  ['⋯','點地點卡片的 ⋯（或長按卡片）可編輯、存到清單、刪除；刪除後 6 秒內可按「復原」救回。'],
+${sec(TI('route',19),'行程規劃',[
+  [TI('calendar',15),'上方分頁選擇天數；再點一次目前的分頁（或點當天標題）即可編輯日期、城市，編輯視窗內也能刪除整天。'],
+  [TI('plus',15),'點右下角 ＋ 按鈕新增：可選快速範本（餐廳、飯店、交通等）、空白地點，或 AI 匯入整份行程。'],
+  [TI('map-pin',15),'每個地點可填：名稱、地址、電話、分類、時間、訂位狀態、確認碼、備註。'],
+  [TI('sun',15),'天氣資訊以小膠囊顯示在天數標題旁，點擊可展開當日完整天氣（溫度、體感、濕度、風速、紫外線）。'],
+  [TI('clock-play',15),'系統會以「● 進行中」標示目前最近的行程。點標題列「現在」按鈕可手動跳到當下。'],
+  [TI('message-circle',15),'備註欄位點「展開 ›」會從卡片原位放大展開（App Store 動畫效果），點空白處或下滑可關閉。'],
+  [TI('map-2',15),'點「地圖」以名稱＋地址搜尋 Google Maps；「導航」直接開啟導航。'],
+  [TI('phone',15),'點電話號碼可直接撥打。'],
+  [TI('arrows-sort',15),'點「排序」進入排序模式：拖曳把手或點上下箭頭調整地點順序。'],
+  [TI('dots',15),'點地點卡片的「⋯」（或長按卡片）可編輯、存到清單、刪除；刪除後 6 秒內可按「復原」救回。'],
 ])}
-${sec('🌟','旅遊清單',[
-  ['📋','在「清單」頁籤收藏想去的地方，分類有：☕ 咖啡廳、🍜 美食、🎁 伴手禮、🎫 景點、🛍️ 購物、🏨 住宿、📌 其他。'],
+${sec(TI('star',19),'旅遊清單',[
+  [TI('list',15),'在「清單」頁籤收藏想去的地方，分類有咖啡廳、美食、伴手禮、景點、購物、住宿、其他。'],
   ['＋','點「＋ 新增地點」可手動填入名稱、分類、地址、電話、備註。'],
-  ['✨','點「✨ AI 匯入清單」取得提示詞，給 Gemini／ChatGPT，貼回 AI 回覆即可批次匯入地點。'],
-  ['✏️','每張卡片右上角有 ✏️ 編輯、× 刪除按鈕。'],
-  ['🗺️','地址旁的「🗺️ Maps」以名稱＋地址搜尋 Google Maps，定位更準確。'],
-  ['➕','每張卡片下方有「➕ 第X天」按鈕，一鍵將地點（含地址、電話、備註）加入指定天數行程。加入後標示「✅ 已加入行程」。'],
+  [TI('sparkles',15),'點「AI 匯入清單」取得提示詞，給 Gemini／ChatGPT，貼回 AI 回覆即可批次匯入地點。'],
+  [TI('pencil',15),'每張卡片右上角有編輯與刪除按鈕。'],
+  [TI('map-2',15),'地址旁的「Maps」以名稱＋地址搜尋 Google Maps，定位更準確。'],
+  [TI('plus',15),'每張卡片下方有「Day X」按鈕，一鍵將地點（含地址、電話、備註）加入指定天數行程。加入後標示「已加入行程」。'],
 ])}
-${sec('💰','記帳',[
+${sec(TI('coin',19),'記帳',[
   ['＋','點「新增記帳」手動輸入品項與金額，預設為純記帳，不會進入分帳計算。'],
-  ['👤','切換到「共同分帳」後，才需要選擇付款人與分帳對象，支援平均分與自訂金額。'],
-  ['💱','支援多幣別，自動換算為結算幣別（可在旅程工具設定）。'],
-  ['📊','上方顯示總花費、人均費用及各分類消費比例長條圖。'],
-  ['🧾','點「AI 收據記帳」上傳收據照片，自動帶入品項、金額與分類。'],
+  [TI('user',15),'切換到「共同分帳」後，才需要選擇付款人與分帳對象，支援平均分與自訂金額。'],
+  [TI('arrows-exchange',15),'支援多幣別，自動換算為結算幣別（可在旅程工具設定）。'],
+  [TI('chart-bar',15),'上方顯示總花費、人均費用及各分類消費比例長條圖。'],
+  [TI('receipt',15),'點「AI 收據記帳」上傳收據照片，自動帶入品項、金額與分類。'],
 ])}
-${sec('⚖','分帳計算',[
-  ['💰','自動計算每人應收／應付，顯示最少轉帳次數的建議清單。'],
-  ['📋','只會計算「共同分帳」的記錄；純記帳會留在記帳頁，不影響最後分帳。'],
+${sec(TI('scale',19),'分帳計算',[
+  [TI('coin',15),'自動計算每人應收／應付，顯示最少轉帳次數的建議清單。'],
+  [TI('list',15),'只會計算「共同分帳」的記錄；純記帳會留在記帳頁，不影響最後分帳。'],
 ])}
-${sec('🔗','分享與同步',[
-  ['🏠','封面下方「同步代碼輸入框」，輸入代碼後按 Enter 或「跳轉」可直接進入旅程，不用進選單。'],
-  ['🔗','點右上漢堡選單「分享連結」複製完整網址（含代碼），旅伴點連結即可共同編輯、即時同步。'],
-  ['☁️','同一代碼對應同一份旅程，所有旅伴修改即時同步。建議使用不易猜到的代碼。'],
+${sec(TI('link',19),'分享與同步',[
+  [TI('home',15),'封面下方「同步代碼輸入框」，輸入代碼後按 Enter 或「跳轉」可直接進入旅程，不用進選單。'],
+  [TI('link',15),'點右上漢堡選單「分享連結」複製完整網址（含代碼），旅伴點連結即可共同編輯、即時同步。'],
+  [TI('cloud',15),'同一代碼對應同一份旅程，所有旅伴修改即時同步。建議使用不易猜到的代碼。'],
 ])}
-${sec('✨','AI 功能',[
-  ['🗺','匯入行程：點右下角 ＋ →「✨ AI 匯入行程」，填好目的地與天數，複製提示詞給 Gemini／ChatGPT／Claude，按「從剪貼簿貼上」一鍵建立所有天數與地點。'],
-  ['🌟','匯入清單：在「清單」頁籤點「✨ AI 匯入清單」，複製提示詞，AI 會推薦咖啡廳、美食、伴手禮等，貼回後批次加入清單。'],
-  ['💬','所有彈窗採用 App Store 風格 Hero 動畫，從按鈕原位放大展開，手指下滑可關閉。'],
+${sec(TI('sparkles',19),'AI 功能',[
+  [TI('route',15),'匯入行程：點右下角 ＋ →「AI 匯入行程」，填好目的地與天數，複製提示詞給 Gemini／ChatGPT／Claude，按「從剪貼簿貼上」一鍵建立所有天數與地點。'],
+  [TI('star',15),'匯入清單：在「清單」頁籤點「AI 匯入清單」，複製提示詞，AI 會推薦咖啡廳、美食、伴手禮等，貼回後批次加入清單。'],
+  [TI('message-circle',15),'所有彈窗採用 App Store 風格 Hero 動畫，從按鈕原位放大展開，手指下滑可關閉。'],
 ])}
-${sec('📷','封面與主題',[
-  ['🖼️','點漢堡選單「更換封面」可選預設圖片、貼上圖片網址或上傳自己的照片。'],
-  ['📐','建議使用 16:9（1920×1080px）橫式照片，手機和電腦都好看。'],
-  ['🎯','「焦點位置」可調整裁切中心，避免主體被裁掉。'],
+${sec(TI('photo',19),'封面與主題',[
+  [TI('photo',15),'點漢堡選單「更換封面」可選預設圖片、貼上圖片網址或上傳自己的照片。'],
+  [TI('aspect-ratio',15),'建議使用 16:9（1920×1080px）橫式照片，手機和電腦都好看。'],
+  [TI('target',15),'「焦點位置」可調整裁切中心，避免主體被裁掉。'],
 ])}
 </div>
 <button class="btn bp" style="width:100%;padding:11px;margin-top:12px;" onclick="setU({modal:null})">了解了，開始規劃！</button>`;
@@ -2411,14 +2430,14 @@ async function readReceipt(file){
 
 // ── Wishlist tab ──────────────────────────────
 const WL_CATS=[
-  {id:'all',    label:'全部',   emoji:'✨'},
-  {id:'cafe',   label:'咖啡廳', emoji:'☕'},
-  {id:'food',   label:'美食',   emoji:'🍜'},
-  {id:'souvenir',label:'伴手禮',emoji:'🎁'},
-  {id:'attraction',label:'景點',emoji:'🎫'},
-  {id:'shopping',label:'購物',  emoji:'🛍️'},
-  {id:'hotel',  label:'住宿',   emoji:'🏨'},
-  {id:'other',  label:'其他',   emoji:'📌'},
+  {id:'all',    label:'全部',   emoji:'✨', icon:'layout-grid'},
+  {id:'cafe',   label:'咖啡廳', emoji:'☕', icon:'coffee'},
+  {id:'food',   label:'美食',   emoji:'🍜', icon:'tools-kitchen-2'},
+  {id:'souvenir',label:'伴手禮',emoji:'🎁', icon:'gift'},
+  {id:'attraction',label:'景點',emoji:'🎫', icon:'ticket'},
+  {id:'shopping',label:'購物',  emoji:'🛍️', icon:'shopping-bag'},
+  {id:'hotel',  label:'住宿',   emoji:'🏨', icon:'bed'},
+  {id:'other',  label:'其他',   emoji:'📌', icon:'map-pin'},
 ];
 const WL_CAT_MAP={cafe:'餐飲',food:'餐飲',souvenir:'購物',attraction:'景點',shopping:'購物',hotel:'住宿',other:'其他'};
 let _wlFilter='all';
@@ -2430,14 +2449,14 @@ function wishlistView(){
   const filter=_wlFilter;
   const catBtns=WL_CATS.map(c=>{
     const cnt=c.id==='all'?items.length:items.filter(i=>i.cat===c.id).length;
-    return`<button class="wl-filter-btn${filter===c.id?' on':''}" onclick="_wlFilter='${c.id}';setU({})">${c.emoji} ${c.label}${cnt?` <span style="opacity:.6;font-size:10px;">${cnt}</span>`:''}</button>`;
+    return`<button class="wl-filter-btn${filter===c.id?' on':''}" onclick="_wlFilter='${c.id}';setU({})">${TI(c.icon||'map-pin',13)} ${c.label}${cnt?` <span style="opacity:.6;font-size:10px;">${cnt}</span>`:''}</button>`;
   }).join('');
   const topbar=`<div class="wl-topbar"><div class="wl-filter-row">${catBtns}</div></div>`;
 
   const visible=filter==='all'?items:items.filter(i=>i.cat===filter);
   let body='';
   if(!visible.length){
-    body=`<div class="wl-empty"><div style="font-size:32px;margin-bottom:8px;">${filter==='all'?'🌟':'🔍'}</div><div style="font-weight:700;margin-bottom:6px;">${filter==='all'?'清單是空的':'這個分類還沒有項目'}</div><div style="font-size:13px;">${filter==='all'?'點右上角「＋ 新增」加入想去的地方':'切換其他分類或新增項目'}</div></div>`;
+    body=`<div class="wl-empty"><div style="font-size:32px;margin-bottom:8px;">${filter==='all'?TI('star',32):TI('search',32)}</div><div style="font-weight:700;margin-bottom:6px;">${filter==='all'?'清單是空的':'這個分類還沒有項目'}</div><div style="font-size:13px;">${filter==='all'?'點右上角「＋ 新增」加入想去的地方':'切換其他分類或新增項目'}</div></div>`;
   } else {
     // Group by category when showing all
     if(filter==='all'){
@@ -2445,7 +2464,7 @@ function wishlistView(){
       visible.forEach(item=>{ const g=item.cat||'other'; if(!groups[g])groups[g]=[]; groups[g].push(item); });
       body=WL_CATS.filter(c=>c.id!=='all'&&groups[c.id]?.length).map(c=>{
         const cards=groups[c.id].map(item=>wlCardHtml(item)).join('');
-        return`<div class="wl-group"><div class="wl-group-label">${c.emoji} ${c.label}</div>${cards}</div>`;
+        return`<div class="wl-group"><div class="wl-group-label">${TI(c.icon||'map-pin',14)} ${c.label}</div>${cards}</div>`;
       }).join('');
     } else {
       body=visible.map(item=>wlCardHtml(item)).join('');
@@ -2460,42 +2479,32 @@ function wlCardHtml(item){
   const color=CBr[appCat]||'#888780';
   const bg=CB[appCat]||'#F1EFE8';
   const fg=CF[appCat]||'#444441';
-  const badge=`<span class="wl-badge" style="background:${bg};color:${fg};">${catMeta.emoji} ${catMeta.label}</span>`;
-  const dayBtns=S.days.map((d,i)=>`<button class="wl-day-btn" title="${esc(d.title)}${d.date?` · ${esc(d.date)}`:''}" onclick="wlOpenAddToDay('${item.id}',${i},this)">➕ Day ${i+1}</button>`).join('');
+  const badge=`<span class="wl-badge" style="background:${bg};color:${fg};">${TI(catMeta.icon||'map-pin',12)} ${catMeta.label}</span>`;
+  const dayBtns=S.days.map((d,i)=>`<button class="wl-day-btn" title="${esc(d.title)}${d.date?` · ${esc(d.date)}`:''}" onclick="wlOpenAddToDay('${item.id}',${i},this)">${TI('plus',11)} Day ${i+1}</button>`).join('');
   const added=wlIsInItinerary(item);
-  const done=added?`<span style="font-size:11px;color:#aaa;padding:4px 0;">✅ 已加入行程</span>`:'';
+  const done=added?`<span style="font-size:11px;color:#aaa;padding:4px 0;">${TI('circle-check',12)} 已加入行程</span>`:'';
   const gmQ=encodeURIComponent([item.name,item.address].filter(Boolean).join(' ').trim());
   const gmUrl=`https://www.google.com/maps/search/?api=1&query=${gmQ}`;
-  const noteText=String(item.note||'').trim();
-  const noteLong=noteText.split(/\n/).length>3||noteText.length>95;
-  const noteOpen=!!S.wlNoteExpanded?.[item.id];
-  const noteEl=noteText?`<div class="wl-card-note"><div class="wl-note-box${noteLong&&!noteOpen?' is-collapsed':''}">${linkify(noteText)}</div>${noteLong?`<button class="wl-note-more" onclick="toggleWlNote('${item.id}')">${noteOpen?'收合':'展開更多'}</button>`:''}</div>`:'';
   const addrEl=item.address?`<div class="wl-card-note" style="display:flex;align-items:center;gap:6px;">
-    <span style="color:#1a5fa8;flex:1;">📍 ${esc(item.address)}</span>
+    <span style="color:#1a5fa8;flex:1;">${TI('map-pin',12)} ${esc(item.address)}</span>
     <a href="${gmUrl}" target="_blank" rel="noopener"
       style="flex-shrink:0;display:inline-flex;align-items:center;gap:3px;font-size:11px;font-weight:800;
              background:#e8f0fe;color:#1a5fa8;border-radius:6px;padding:3px 8px;text-decoration:none;border:1px solid #c5d8fb;">
-      🗺️ Maps
+      ${TI('map-2',12)} Maps
     </a>
   </div>`:'';
   return`<div class="wl-card" id="wlc-${item.id}">
     <div style="position:absolute;top:10px;right:10px;display:flex;gap:5px;align-items:center;">
-      <button class="wl-edit-btn" onclick="wlOpenEdit('${item.id}',this)" title="編輯">✏️</button>
+      <button class="wl-edit-btn" onclick="wlOpenEdit('${item.id}',this)" title="編輯">${TI('pencil',14)}</button>
       <button class="wl-del-btn" style="position:static;" onclick="wlDelete('${item.id}')" title="刪除">×</button>
     </div>
     ${badge}
     <div class="wl-card-name">${esc(item.name)}</div>
     ${addrEl}
-    ${item.phone?`<div class="wl-card-note">📞 <a href="tel:${esc(item.phone)}" style="color:#1a5fa8;font-weight:700;">${esc(item.phone)}</a></div>`:''}
-    ${noteEl}
+    ${item.phone?`<div class="wl-card-note">${TI('phone',12)} <a href="tel:${esc(item.phone)}" style="color:#1a5fa8;font-weight:700;">${esc(item.phone)}</a></div>`:''}
+    ${item.note?`<div class="wl-card-note">${esc(item.note)}</div>`:''}
     <div class="wl-card-actions">${dayBtns}${done}</div>
   </div>`;
-}
-
-function toggleWlNote(id){
-  const next={...(S.wlNoteExpanded||{})};
-  if(next[id])delete next[id];else next[id]=true;
-  setU({wlNoteExpanded:next});
 }
 
 function wlOpenAdd(el){
@@ -2526,7 +2535,7 @@ function buildWlEditModal(){
   const item=wlItems().find(i=>i.id===m.itemId);
   if(!item)return buildWlAddModal();
   const catOpts=WL_CATS.filter(c=>c.id!=='all').map(c=>`<option value="${c.id}"${item.cat===c.id?' selected':''}>${c.emoji} ${c.label}</option>`).join('');
-  return`<div class="mhd"><div class="mt">✏️ 編輯清單地點</div><div class="mcl" onclick="setU({modal:null})">✕</div></div>
+  return`<div class="mhd"><div class="mt">${TI('pencil',16)} 編輯清單地點</div><div class="mcl" onclick="setU({modal:null})">✕</div></div>
       <div class="fg"><label class="fl">名稱 *</label><input id="wl-edit-name" class="inp" value="${esc(item.name)}"></div>
       <div class="fg"><label class="fl">分類</label>
         <select id="wl-edit-cat" class="inp" style="appearance:auto;">${catOpts}</select>
@@ -2605,7 +2614,7 @@ function wlAddToDay(itemId, dayIdx, date='', time=''){
   // Toast
   const t=document.createElement('div');
   t.className='wl-toast';
-  t.textContent='✅ 已加入「'+day.title+'」';
+  t.innerHTML=TI('circle-check',13)+' 已加入「'+esc(day.title)+'」';
   document.body.appendChild(t);
   setTimeout(()=>t.remove(),2100);
 }
@@ -2613,7 +2622,7 @@ function wlAddToDay(itemId, dayIdx, date='', time=''){
 // Modal: wl_add
 function buildWlAddModal(){
   const catOpts=WL_CATS.filter(c=>c.id!=='all').map(c=>`<option value="${c.id}">${c.emoji} ${c.label}</option>`).join('');
-  return`<div class="mhd"><div class="mt">＋ 新增到清單</div><div class="mcl" onclick="setU({modal:null})">✕</div></div>
+  return`<div class="mhd"><div class="mt">${TI('plus',16)} 新增到清單</div><div class="mcl" onclick="setU({modal:null})">✕</div></div>
       <div class="fg"><label class="fl">名稱 *</label><input id="wl-name-inp" class="inp" placeholder="例：一之船入 九份老街店" autofocus></div>
       <div class="fg"><label class="fl">分類</label>
         <select id="wl-cat-sel" class="inp" style="appearance:auto;">${catOpts}</select>
@@ -2649,15 +2658,15 @@ const WL_IMPORT_PROMPT=`請幫我推薦 [目的地] 的旅遊必去清單，包�
 
 function buildWlImportModal(){
   const curDay=S.days[Math.min(S.dayIdx,S.days.length-1)]||{};
-  return`<div class="mhd"><div class="mt">✨ AI 匯入清單</div><div class="mcl" onclick="setU({modal:null})">✕</div></div>
+  return`<div class="mhd"><div class="mt">${TI('sparkles',17)} AI 匯入清單</div><div class="mcl" onclick="setU({modal:null})">✕</div></div>
       <div class="ai-step-box" style="background:#f0f0fc;border-color:#c8b8f0;">
         <div class="ai-step-title" style="color:#3d1fa8;">步驟一：填好目的地，複製提示詞給 Gemini / ChatGPT / Claude</div>
         <div class="fg" style="margin-bottom:10px;"><label class="fl">目的地</label><input id="wl-ai-dest" type="text" placeholder="例：花蓮" value="${esc(curDay.city||'')}"></div>
-        <button class="btn bp" style="width:100%;padding:10px;font-size:13px;background:#5b3fc4;border-color:#5b3fc4;" id="wl-copy-prompt-btn" onclick="wlCopyPrompt()">📋 複製提示詞</button>
+        <button class="btn bp" style="width:100%;padding:10px;font-size:13px;background:#5b3fc4;border-color:#5b3fc4;" id="wl-copy-prompt-btn" onclick="wlCopyPrompt()">${TI('copy',14)} 複製提示詞</button>
         <details class="ai-prompt-details" style="margin-top:8px;"><summary>查看提示詞內容</summary><pre style="background:#e8e4f8;color:#2d1a6e;">${esc(WL_IMPORT_PROMPT)}</pre></details>
       </div>
       <div class="ai-step-title" style="color:#3d1fa8;margin-bottom:8px;">步驟二：把 AI 的回覆貼回來</div>
-      <button class="btn" style="width:100%;margin-bottom:8px;padding:9px;" onclick="pasteClipboard('wl-import-box','wlPreviewImport')">📥 從剪貼簿貼上</button>
+      <button class="btn" style="width:100%;margin-bottom:8px;padding:9px;" onclick="pasteClipboard('wl-import-box','wlPreviewImport')">${TI('clipboard-text',14)} 從剪貼簿貼上</button>
       <textarea class="import-area" id="wl-import-box" placeholder="或在這裡手動貼上 AI 輸出的推薦清單，例如：
 咖啡廳|曙光咖啡|花蓮縣花蓮市中山路74號|03-831-3888|老屋改造必訪
 美食|公正包子|花蓮縣花蓮市公正街94號||老字號必吃..." oninput="wlPreviewImport()" style="height:130px;"></textarea>
@@ -2669,7 +2678,7 @@ function wlCopyPrompt(){
   const dest=(document.getElementById('wl-ai-dest')?.value||'').trim();
   const text=dest?WL_IMPORT_PROMPT.replace('[目的地]',dest):WL_IMPORT_PROMPT;
   const btn=document.getElementById('wl-copy-prompt-btn');
-  const done=()=>{if(btn){btn.textContent='✅ 已複製！';setTimeout(()=>{if(btn)btn.textContent='📋 複製提示詞';},2000);}};
+  const done=()=>{if(btn){btn.innerHTML=TI('check',14)+' 已複製！';setTimeout(()=>{if(btn)btn.innerHTML=TI('copy',14)+' 複製提示詞';},2000);}};
   if(navigator.clipboard?.writeText){navigator.clipboard.writeText(text).then(done).catch(()=>{_wlCopyFallback(text);done();});}
   else{_wlCopyFallback(text);done();}
 }
@@ -2698,7 +2707,7 @@ function wlPreviewImport(){
   const text=document.getElementById('wl-import-box')?.value||'';
   const items=_parseWlImport(text);
   const prev=document.getElementById('wl-import-preview');
-  if(prev)prev.textContent=items.length?`✅ 偵測到 ${items.length} 個地點可匯入`:'';
+  if(prev)prev.innerHTML=items.length?TI('circle-check',12)+` 偵測到 ${items.length} 個地點可匯入`:'';
 }
 
 function wlConfirmImport(){
@@ -2709,7 +2718,7 @@ function wlConfirmImport(){
   setD({wishlist,modal:null});
   const t=document.createElement('div');
   t.className='wl-toast';
-  t.textContent=`✅ 已匯入 ${newItems.length} 個地點到清單`;
+  t.innerHTML=TI('circle-check',13)+` 已匯入 ${newItems.length} 個地點到清單`;
   document.body.appendChild(t);setTimeout(()=>t.remove(),2100);
 }
 
@@ -2974,7 +2983,7 @@ function showWxSheet(dayId, triggerEl){
   card.style.cssText=`top:${src.top}px;left:${src.left}px;width:${src.width}px;height:${src.height}px;border-radius:20px;background:linear-gradient(145deg,#0f5e5e,#1a8a6e);`;
   card.innerHTML=`<div class="hero-body" style="padding:0;">
     <div class="wx-sheet-bd" style="color:#fff;">
-      <div class="wx-sheet-city" style="color:rgba(255,255,255,.75);">📍 ${esc(day.city)} 目前天氣</div>
+      <div class="wx-sheet-city" style="color:rgba(255,255,255,.75);">${TI('map-pin',12)} ${esc(day.city)} 目前天氣</div>
       <div class="wx-sheet-temp" style="color:#fff;">${wi.e} ${wx.temp}°C</div>
       <div class="wx-sheet-desc" style="color:rgba(255,255,255,.85);">${wi.d}</div>
       <div class="wx-sheet-grid">
@@ -2984,15 +2993,15 @@ function showWxSheet(dayId, triggerEl){
         </div>
         <div class="wx-sheet-item" style="background:rgba(255,255,255,.15);">
           <div class="wx-sheet-label" style="color:rgba(255,255,255,.7);">濕度</div>
-          <div class="wx-sheet-value" style="color:#fff;">💧 ${wx.humidity}%</div>
+          <div class="wx-sheet-value" style="color:#fff;">${TI('droplet',16)} ${wx.humidity}%</div>
         </div>
         ${wx.wind!=null?`<div class="wx-sheet-item" style="background:rgba(255,255,255,.15);">
           <div class="wx-sheet-label" style="color:rgba(255,255,255,.7);">風速</div>
-          <div class="wx-sheet-value" style="color:#fff;">💨 ${wx.wind} m/s</div>
+          <div class="wx-sheet-value" style="color:#fff;">${TI('wind',16)} ${wx.wind} m/s</div>
         </div>`:''}
         ${wx.uv!=null?`<div class="wx-sheet-item" style="background:rgba(255,255,255,.15);">
           <div class="wx-sheet-label" style="color:rgba(255,255,255,.7);">紫外線</div>
-          <div class="wx-sheet-value" style="color:#fff;">☀️ ${wx.uv}</div>
+          <div class="wx-sheet-value" style="color:#fff;">${TI('sun',16)} ${wx.uv}</div>
         </div>`:''}
       </div>
       <div style="margin-top:18px;font-size:11px;color:rgba(255,255,255,.5);text-align:center;">資料來源：OpenWeather</div>
@@ -3075,17 +3084,17 @@ function locActionSheet(e, dayId, locId){
     <div class="loc-action-sheet">
       <div class="loc-action-title">${esc(loc.name)}</div>
       <button class="loc-action-item" onclick="closeLocActionSheet();_heroOrigin=null;setTimeout(()=>oLoc('${locId}'),30)">
-        ✏️ <span>編輯地點</span>
+        ${TI('pencil',16)} <span>編輯地點</span>
       </button>
       <button class="loc-action-item" onclick="closeLocActionSheet();locSaveToWishlist('${dayId}','${locId}')">
-        🌟 <span>存到清單</span>
+        ${TI('star',16)} <span>存到清單</span>
       </button>
       <button class="loc-action-item" onclick="closeLocActionSheet();locMoveToWishlist('${dayId}','${locId}')">
-        🌟➜🗑️ <span>移到清單並從行程移除</span>
+        ${TI('star',15)}${TI('arrow-right',12)}${TI('trash',15)} <span>移到清單並從行程移除</span>
       </button>
       <div class="loc-action-sep"></div>
       <button class="loc-action-item danger" onclick="closeLocActionSheet();dLoc('${dayId}','${locId}')">
-        🗑️ <span>直接刪除</span>
+        ${TI('trash',16)} <span>直接刪除</span>
       </button>
     </div>`;
   document.body.appendChild(wrap);
@@ -3138,7 +3147,7 @@ function locSaveToWishlist(dayId, locId){
   setD({wishlist});
   const t=document.createElement('div');
   t.className='wl-toast';
-  t.textContent='🌟 已存到清單：'+loc.name;
+  t.innerHTML=TI('star',13)+' 已存到清單：'+esc(loc.name);
   document.body.appendChild(t);
   setTimeout(()=>t.remove(),2200);
 }
@@ -3153,7 +3162,7 @@ function locMoveToWishlist(dayId, locId){
   setD({days,wishlist});
   const t=document.createElement('div');
   t.className='wl-toast';
-  t.textContent='🌟 已移到清單：'+loc.name;
+  t.innerHTML=TI('star',13)+' 已移到清單：'+esc(loc.name);
   document.body.appendChild(t);
   setTimeout(()=>t.remove(),2200);
 }
@@ -3234,15 +3243,15 @@ function _parseMemoImport(text){
 
 function buildMemoImportModal(){
   const curDay=S.days[Math.min(S.dayIdx,S.days.length-1)]||{};
-  return`<div class="mhd"><div class="mt">✨ AI 產生備忘清單</div><div class="mcl" onclick="setU({modal:null})">✕</div></div>
+  return`<div class="mhd"><div class="mt">${TI('sparkles',17)} AI 產生備忘清單</div><div class="mcl" onclick="setU({modal:null})">✕</div></div>
 <div class="ai-step-box" style="background:#f0f0fc;border-color:#c8b8f0;">
   <div class="ai-step-title" style="color:#3d1fa8;">步驟一：填好目的地，複製提示詞給 Gemini / ChatGPT / Claude</div>
   <div class="fg" style="margin-bottom:10px;"><label class="fl">目的地</label><input id="memo-ai-dest" type="text" placeholder="例：日本" value="${esc(curDay.city||'')}"></div>
-  <button class="btn bp" style="width:100%;padding:10px;font-size:13px;background:#5b3fc4;border-color:#5b3fc4;" id="memo-copy-prompt-btn" onclick="memoCopyPrompt()">📋 複製提示詞</button>
+  <button class="btn bp" style="width:100%;padding:10px;font-size:13px;background:#5b3fc4;border-color:#5b3fc4;" id="memo-copy-prompt-btn" onclick="memoCopyPrompt()">${TI('copy',14)} 複製提示詞</button>
   <details class="ai-prompt-details" style="margin-top:8px;"><summary>查看提示詞內容</summary><pre style="background:#e8e4f8;color:#2d1a6e;">${esc(MEMO_IMPORT_PROMPT)}</pre></details>
 </div>
 <div class="ai-step-title" style="color:#3d1fa8;margin-bottom:8px;">步驟二：把 AI 的回覆貼回來</div>
-<button class="btn" style="width:100%;margin-bottom:8px;padding:9px;" onclick="pasteClipboard('memo-import-box','memoPreviewImport')">📥 從剪貼簿貼上</button>
+<button class="btn" style="width:100%;margin-bottom:8px;padding:9px;" onclick="pasteClipboard('memo-import-box','memoPreviewImport')">${TI('clipboard-text',14)} 從剪貼簿貼上</button>
 <textarea class="import-area" id="memo-import-box" placeholder="或在這裡手動貼上 AI 輸出的備忘清單，例如：\n證件|護照（6個月以上效期）\n行李|薄外套\n預訂|機票電子檔..." oninput="memoPreviewImport()" style="height:140px;"></textarea>
 <div id="memo-import-preview" style="font-size:12px;color:#0f5e5e;margin:6px 0;font-weight:700;min-height:18px;"></div>
 <div class="ar"><button class="btn" onclick="setU({modal:null})">取消</button><button class="btn bp" style="background:#5b3fc4;border-color:#5b3fc4;" onclick="memoConfirmImport()">匯入備忘</button></div>`;
@@ -3252,7 +3261,7 @@ function memoCopyPrompt(){
   const dest=(document.getElementById('memo-ai-dest')?.value||'').trim();
   const text=dest?MEMO_IMPORT_PROMPT.replace('[目的地]',dest):MEMO_IMPORT_PROMPT;
   const btn=document.getElementById('memo-copy-prompt-btn');
-  const done=()=>{if(btn){btn.textContent='✅ 已複製！';setTimeout(()=>{if(btn)btn.textContent='📋 複製提示詞';},2000);}};
+  const done=()=>{if(btn){btn.innerHTML=TI('check',14)+' 已複製！';setTimeout(()=>{if(btn)btn.innerHTML=TI('copy',14)+' 複製提示詞';},2000);}};
   if(navigator.clipboard?.writeText){navigator.clipboard.writeText(text).then(done).catch(()=>{_memoCopyFallback(text);done();});}
   else{_memoCopyFallback(text);done();}
 }
@@ -3265,7 +3274,7 @@ function memoPreviewImport(){
   const text=document.getElementById('memo-import-box')?.value||'';
   const items=_parseMemoImport(text);
   const prev=document.getElementById('memo-import-preview');
-  if(prev)prev.textContent=items.length?`✅ 偵測到 ${items.length} 個備忘項目可匯入`:'';
+  if(prev)prev.innerHTML=items.length?TI('circle-check',12)+` 偵測到 ${items.length} 個備忘項目可匯入`:'';
 }
 
 function memoConfirmImport(){
@@ -3276,7 +3285,7 @@ function memoConfirmImport(){
   setD({memo,modal:null});
   const t=document.createElement('div');
   t.className='wl-toast';
-  t.textContent=`✅ 已匯入 ${newItems.length} 個備忘項目`;
+  t.innerHTML=TI('circle-check',13)+` 已匯入 ${newItems.length} 個備忘項目`;
   document.body.appendChild(t);setTimeout(()=>t.remove(),2100);
 }
 
