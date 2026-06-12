@@ -722,10 +722,11 @@ const MAP_FALLBACKS=[
   {re:/山中湖平野|平野沙洲|山中湖村平野/i,lat:35.4202,lng:138.9059},
   {re:/金太郎富士見線|縣道 366|県道 366|県道366/i,lat:35.3505,lng:138.9433}
 ];
-const GEO_CACHE_VERSION='v7';
+const GEO_CACHE_VERSION='v8';
 const GEO_FAIL_TTL=6*60*60*1000;   // 「查無結果」快取 6 小時
 const GEO_TIMEOUT_MS=9000;          // OSM 回應常見 3~6 秒，逾時放寬到 9 秒
 // ── 定位請求排隊器:OpenStreetMap 規定每秒最多 1 次查詢,超過會被擋 ──
+function _geoDist(a,b){const R=6371,dLa=(b.lat-a.lat)*Math.PI/180,dLn=(b.lng-a.lng)*Math.PI/180;const x=Math.sin(dLa/2)**2+Math.cos(a.lat*Math.PI/180)*Math.cos(b.lat*Math.PI/180)*Math.sin(dLn/2)**2;return 2*R*Math.asin(Math.sqrt(x));}
 let _geoChain=Promise.resolve(),_geoLast=0;
 function geoFetch(url){
   const run=_geoChain.then(async()=>{
@@ -799,11 +800,17 @@ async function geocodeLoc(l,city){
   const name=String(l?.name||'').trim();
   // 台灣地址常因門牌格式查不到，準備「去掉門牌號」的降級查詢（例：中正路247號 → 中正路）
   const noNum=addr.replace(/[0-9０-９]+(之[0-9０-９]+)?號.*$/,'').trim();
-  const qs=[mqLoc(l),addr,name];
-  if(noNum&&noNum!==addr)qs.push([name,noNum].filter(Boolean).join(' '),noNum);
-  if(city&&name)qs.push(name+' '+city); // 最後再用「名稱＋城市」搜一次
-  const cleaned=qs.map(s=>String(s||'').trim()).filter(Boolean);
-  for(const q of [...new Set(cleaned)]){
+  // street:true = 純地址查詢（路名極易撞名，需用「離當天城市的距離」把關）
+  const qs=[{q:mqLoc(l)},{q:addr,street:true},{q:name}];
+  if(noNum&&noNum!==addr){
+    qs.push({q:[name,noNum].filter(Boolean).join(' ')},{q:noNum,street:true});
+  }
+  if(city&&name)qs.push({q:name+' '+city}); // 最後再用「名稱＋城市」搜一次
+  const seen=new Set();
+  for(const v of qs){
+    const q=String(v.q||'').trim();
+    if(!q||seen.has(q))continue;
+    seen.add(q);
     // 國家判斷：地址文字本身的特徵優先（同一天可能混到別國地點，如出發機場），
     // 否則採用當天城市所在的國家；都沒有就不限定
     let cc='';
@@ -811,8 +818,10 @@ async function geocodeLoc(l,city){
     else if(looksTaiwan(q))cc='tw';
     else if(ctx?.cc)cc=ctx.cc;
     const ccParam=cc?'&countrycodes='+cc:'';
+    // 城市上下文可用＝有解析到城市，且沒有跟文字判斷的國家衝突
+    const ctxUsable=!!(ctx&&(!cc||cc===ctx.cc));
     // 城市周邊優先（不強制邊界）：避免同名路名/店名跑到別的城市
-    const bias=(ctx&&(!cc||cc===ctx.cc))?`&viewbox=${(ctx.lng-0.6).toFixed(3)},${(ctx.lat+0.6).toFixed(3)},${(ctx.lng+0.6).toFixed(3)},${(ctx.lat-0.6).toFixed(3)}&bounded=0`:'';
+    const bias=ctxUsable?`&viewbox=${(ctx.lng-0.6).toFixed(3)},${(ctx.lat+0.6).toFixed(3)},${(ctx.lng+0.6).toFixed(3)},${(ctx.lat-0.6).toFixed(3)}&bounded=0`:'';
     const key='geo:'+GEO_CACHE_VERSION+':'+cc+':'+q;
     try{
       const cached=localStorage.getItem(key);
@@ -823,28 +832,31 @@ async function geocodeLoc(l,city){
       }
     }catch{}
     try{
-      const url='https://nominatim.openstreetmap.org/search?format=json&limit=1&accept-language=zh-TW'+ccParam+bias+'&q='+encodeURIComponent(q);
+      const url='https://nominatim.openstreetmap.org/search?format=json&limit=5&accept-language=zh-TW'+ccParam+bias+'&q='+encodeURIComponent(q);
       const data=await geoFetch(url);
       if(!data?.length){
         // 真的查無結果 → 快取,避免重複查
         try{localStorage.setItem(key,JSON.stringify({missUntil:Date.now()+GEO_FAIL_TTL}));}catch{}
         continue;
       }
-      const p={lat:Number(data[0].lat),lng:Number(data[0].lon)};
+      // 多筆候選:剔除「離當天城市超過 90 公里的道路類結果」(路名撞名的典型錯誤),
+      // 再挑離當天城市最近的一筆;地標類(車站/景點/店家)不設距離限制,跨城市行程仍可定位
+      let best=null;
+      for(const d of data){
+        const c={lat:Number(d.lat),lng:Number(d.lon)};
+        if(!Number.isFinite(c.lat)||!Number.isFinite(c.lng))continue;
+        c._d=ctxUsable?_geoDist(c,ctx):0;
+        const roadish=d.class==='highway'||v.street;
+        if(ctxUsable&&roadish&&c._d>90)continue;
+        if(!best||c._d<best._d)best=c;
+      }
+      if(!best)continue;
+      const p={lat:best.lat,lng:best.lng};
       try{localStorage.setItem(key,JSON.stringify(p));}catch{}
       return p;
     }catch{/* 逾時/限流/網路錯誤:不汙染快取,直接試下一組關鍵字 */}
   }
   return null;
-}
-function groupMapPoints(pts){
-  const groups=new Map();
-  pts.forEach(p=>{
-    const key=`${p.lat.toFixed(4)},${p.lng.toFixed(4)}`;
-    if(!groups.has(key))groups.set(key,{lat:p.lat,lng:p.lng,items:[]});
-    groups.get(key).items.push(p);
-  });
-  return [...groups.values()];
 }
 let _itinMapCache={sig:null,holder:null,map:null};
 function retryGeo(){
