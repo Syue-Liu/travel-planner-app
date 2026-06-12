@@ -858,6 +858,16 @@ async function geocodeLoc(l,city){
   }
   return null;
 }
+// 將座標相近(50 公尺內)的地點合併為同一個地圖標記,例如同住址的步道與山莊
+function groupMapPoints(pts){
+  const groups=[];
+  for(const p of pts){
+    const g=groups.find(g=>_geoDist(g,p)<0.05);
+    if(g)g.items.push(p);
+    else groups.push({lat:p.lat,lng:p.lng,items:[p]});
+  }
+  return groups;
+}
 let _itinMapCache={sig:null,holder:null,map:null};
 function retryGeo(){
   // 清除所有「查無結果」的失敗快取(保留成功座標)
