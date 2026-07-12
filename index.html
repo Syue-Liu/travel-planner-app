@@ -307,6 +307,7 @@ input:focus,select:focus,textarea:focus{border-color:var(--teal-soft);box-shadow
 .memo-cat-sel{font-size:13px;padding:0 6px;border-radius:var(--r);border:1px solid var(--line);background:var(--card);color:var(--ink);min-height:44px;width:90px;flex-shrink:0}
 .memo-cat-hd{font-size:11px;font-weight:900;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;margin-top:14px;margin-bottom:5px;display:flex;align-items:center;gap:6px}
 .memo-item{display:flex;align-items:flex-start;gap:10px;padding:11px 13px;background:var(--card);border-radius:var(--r);border:1px solid var(--line);margin-bottom:6px}
+.memo-text{white-space:pre-wrap;word-break:break-word}
 .memo-item.done .memo-text{text-decoration:line-through;color:var(--muted);opacity:.55}
 .memo-cb{width:22px;height:22px;border-radius:7px;border:2px solid var(--line-2);background:var(--card);cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px;transition:all .12s;font-size:13px}
 .memo-cb.on{background:var(--teal-fill);border-color:var(--teal);color:#fff}
@@ -1011,7 +1012,7 @@ function retryGeo(){
   render();
 }
 async function mountItinMap(day){
-  if(!day||S.view!=='itinerary'||S.mapOpen===false)return;
+  if(!day||S.view!=='itinerary'||S.mapOpen!==true)return;
   const el=document.getElementById(`itin-map-${day.id}`);
   if(!el)return;
   const locs=dayMapLocs(day);
@@ -1296,7 +1297,7 @@ function render(){
     if(t)t.scrollIntoView({inline:'nearest',block:'nearest',behavior:'instant'});
     if(savedScroll>0)window.scrollTo({top:savedScroll,behavior:'instant'});
   },0);
-  if(S.view==='itinerary'&&S.mapOpen!==false)setTimeout(()=>mountItinMap(ad),0);
+  if(S.view==='itinerary'&&S.mapOpen===true)setTimeout(()=>mountItinMap(ad),0);
   // 保險：若狀態有 modal 但畫面上沒有掛載任何視窗，重新掛回（避免狀態不同步導致 FAB 消失）
   if(S.modal && !document.getElementById('_heroCard') && !document.getElementById('_sheetWrap'))_mountModalOverlay();
 }
@@ -1350,7 +1351,7 @@ function gnav(){
 function itineraryMap(day){
   const locs=dayMapLocs(day);
   if(!locs.length)return`<div class="itin-map-card"><div class="itin-map-empty">${TI('map-2',15)} 這一天還沒有可定位的地址，填入地點名稱或地址後就會出現地圖。</div></div>`;
-  const open=S.mapOpen!==false;
+  const open=S.mapOpen===true;
   const routeUrl=dayRouteUrl(locs);
   const points=locs.map((l,i)=>{
     const cat=l.category||ac(`${l.name} ${l.notes||''} ${l.address||''}`);
@@ -2386,17 +2387,18 @@ function memoView(){
   const groups=MEMO_CATS.map(cat=>{
     const its=items.filter(m=>m.cat===cat);
     if(!its.length)return'';
-    return`<div class="memo-cat-hd">${TI(MEMO_TI[cat]||'map-pin',13)} ${cat}</div>${its.map(m=>`<div class="memo-item${m.done?' done':''}" id="memo-${m.id}"><div class="memo-cb${m.done?' on':''}" onclick="toggleMemo('${m.id}')">${m.done?'✓':''}</div><div class="memo-text" onclick="editMemo('${m.id}')">${esc(m.text)}</div><div class="memo-actions"><button class="memo-edit" onclick="editMemo('${m.id}')" title="編輯">${TI('pencil',13)}</button><button class="memo-del" onclick="delMemo('${m.id}')" title="刪除">×</button></div></div>`).join('')}`;
+    return`<div class="memo-cat-hd">${TI(MEMO_TI[cat]||'map-pin',13)} ${cat}</div>${its.map(m=>`<div class="memo-item${m.done?' done':''}" id="memo-${m.id}"><div class="memo-cb${m.done?' on':''}" onclick="toggleMemo('${m.id}')">${m.done?'✓':''}</div><div class="memo-text" onclick="editMemo('${m.id}')">${linkify(m.text)}</div><div class="memo-actions"><button class="memo-edit" onclick="editMemo('${m.id}')" title="編輯">${TI('pencil',13)}</button><button class="memo-del" onclick="delMemo('${m.id}')" title="刪除">×</button></div></div>`).join('')}`;
   }).join('');
   const progress=items.length?`<div style="margin-bottom:14px;"><div style="display:flex;justify-content:space-between;font-size:12px;font-weight:700;color:var(--muted);margin-bottom:5px;"><span>行前清單進度</span><span>${done} / ${items.length} 完成</span></div><div class="budget-line"><div class="budget-fill" style="width:${items.length?Math.round(done/items.length*100):0}%;"></div></div></div>`:'';
   const catSel=MEMO_CATS.map(c=>`<option value="${c}">${MEMO_IC[c]} ${c}</option>`).join('');
-  return`<div class="memo-toolbar mobile-fab-replaced"><button class="memo-ai-btn" onclick="openModal(this,{t:'memo_import'})">${TI('sparkles',14)} AI 產生備忘清單</button></div>${progress}${groups||'<div class="empty"><div style="font-size:30px;margin-bottom:8px;">📝</div>還沒有備忘項目<br><span style="font-size:12px;">點右下角 ＋ 新增備忘，或用 AI 一鍵產生</span></div>'}<div class="memo-add-row mobile-fab-replaced"><select class="memo-cat-sel" id="memo-cat">${catSel}</select><input type="text" id="memo-inp" placeholder="例：護照、訂飯店確認信..." style="flex:1;" onkeydown="if(event.key==='Enter'){event.preventDefault();addMemo();}"><button class="btn bp" style="padding:0 16px;flex-shrink:0;" onclick="addMemo()">新增</button></div>`;
+  return`<div class="memo-toolbar mobile-fab-replaced"><button class="memo-ai-btn" onclick="openModal(this,{t:'memo_import'})">${TI('sparkles',14)} AI 產生備忘清單</button></div>${progress}${groups||'<div class="empty"><div style="font-size:30px;margin-bottom:8px;">📝</div>還沒有備忘項目<br><span style="font-size:12px;">點右下角 ＋ 新增備忘，或用 AI 一鍵產生</span></div>'}<div class="memo-add-row mobile-fab-replaced"><select class="memo-cat-sel" id="memo-cat">${catSel}</select><textarea id="memo-inp" rows="1" placeholder="例：護照、訂飯店確認信...（可貼網址，Shift+Enter 換行）" style="flex:1;resize:none;overflow:hidden;min-height:44px;line-height:1.5;" oninput="this.style.height='auto';this.style.height=this.scrollHeight+'px'" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();addMemo();}"></textarea><button class="btn bp" style="padding:0 16px;flex-shrink:0;" onclick="addMemo()">新增</button></div>`;
 }
 function mMemoAdd(){
   const catSel=MEMO_CATS.map(c=>`<option value="${c}">${MEMO_IC[c]} ${c}</option>`).join('');
   return`<div class="mhd"><div class="mt">新增備忘</div><div class="mcl" onclick="setU({modal:null})">✕</div></div>
 <div class="fg"><label class="fl">分類</label><select id="memo-modal-cat">${catSel}</select></div>
-<div class="fg"><label class="fl">備忘內容 *</label><input id="memo-modal-inp" type="text" placeholder="例：護照、訂飯店確認信..." onkeydown="if(event.key==='Enter'){event.preventDefault();saveMemoModal();}" autofocus></div>
+<div class="fg"><label class="fl">備忘內容 *</label><textarea id="memo-modal-inp" rows="3" placeholder="例：護照、訂飯店確認信...
+可貼上網站連結，Enter 儲存、Shift+Enter 換行" style="resize:vertical;min-height:88px;line-height:1.6;" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();saveMemoModal();}" autofocus></textarea></div>
 <div class="ar"><button class="btn bp" style="flex:1;padding:10px;" onclick="saveMemoModal()">儲存</button><button class="btn" style="flex:1;padding:10px;" onclick="setU({modal:null})">取消</button></div>`;
 }
 function saveMemoModal(){
@@ -2488,7 +2490,7 @@ function editMemo(id){
     <div style="flex:1;display:flex;flex-direction:column;gap:6px;min-width:0;">
       <div style="display:flex;gap:6px;">
         <select class="memo-cat-sel" id="memo-edit-cat-${id}" style="flex:0 0 auto;">${catOpts}</select>
-        <input type="text" id="memo-edit-inp-${id}" value="${esc(item.text).replace(/"/g,'&quot;')}" style="flex:1;min-width:0;padding:7px 10px;border:1px solid var(--line);border-radius:8px;font-size:14px;font-family:inherit;color:var(--ink);outline:2px solid #0f5e5e;background:var(--paper);" onkeydown="if(event.key==='Enter'){event.preventDefault();saveEditMemo('${id}')}else if(event.key==='Escape'){cancelEditMemo()}">
+        <textarea id="memo-edit-inp-${id}" rows="1" style="flex:1;min-width:0;padding:7px 10px;border:1px solid var(--line);border-radius:8px;font-size:14px;font-family:inherit;color:var(--ink);outline:2px solid var(--teal);background:var(--paper);resize:none;overflow:hidden;line-height:1.5;" oninput="this.style.height='auto';this.style.height=this.scrollHeight+'px'" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();saveEditMemo('${id}')}else if(event.key==='Escape'){cancelEditMemo()}">${esc(item.text)}</textarea>
       </div>
       <div style="display:flex;gap:6px;">
         <button class="btn bp" style="flex:1;padding:7px;font-size:13px;" onclick="saveEditMemo('${id}')">儲存</button>
@@ -2687,6 +2689,8 @@ const WL_CATS=[
 ];
 const WL_CAT_MAP={cafe:'餐飲',food:'餐飲',souvenir:'購物',attraction:'景點',shopping:'購物',hotel:'住宿',other:'其他'};
 let _wlFilter='all';
+let _wlGroup='cat'; // 'cat' 依分類 | 'area' 依地區
+function wlAreas(){return [...new Set(wlItems().map(i=>(i.area||'').trim()).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'zh-Hant'));}
 
 function wlItems(){ return S.wishlist||[]; }
 
@@ -2697,15 +2701,20 @@ function wishlistView(){
     const cnt=c.id==='all'?items.length:items.filter(i=>i.cat===c.id).length;
     return`<button class="wl-filter-btn${filter===c.id?' on':''}" onclick="_wlFilter='${c.id}';setU({})">${TI(c.icon||'map-pin',13)} ${c.label}${cnt?` <span style="opacity:.6;font-size:10px;">${cnt}</span>`:''}</button>`;
   }).join('');
-  const topbar=`<div class="wl-topbar"><div class="wl-filter-row">${catBtns}</div></div>`;
+  const groupBtns=`<div class="wl-filter-row" style="margin-top:6px;"><button class="wl-filter-btn${_wlGroup==='cat'?' on':''}" onclick="_wlGroup='cat';setU({})">${TI('checkbox',13)} 依分類</button><button class="wl-filter-btn${_wlGroup==='area'?' on':''}" onclick="_wlGroup='area';setU({})">${TI('map-pin',13)} 依地區</button></div>`;
+  const topbar=`<div class="wl-topbar"><div class="wl-filter-row">${catBtns}</div>${groupBtns}</div>`;
 
   const visible=filter==='all'?items:items.filter(i=>i.cat===filter);
   let body='';
   if(!visible.length){
     body=`<div class="wl-empty"><div style="font-size:32px;margin-bottom:8px;">${filter==='all'?TI('star',32):TI('search',32)}</div><div style="font-weight:700;margin-bottom:6px;">${filter==='all'?'清單是空的':'這個分類還沒有項目'}</div><div style="font-size:13px;">${filter==='all'?'點右上角「＋ 新增」加入想去的地方':'切換其他分類或新增項目'}</div></div>`;
   } else {
-    // Group by category when showing all
-    if(filter==='all'){
+    if(_wlGroup==='area'){
+      const groups={};
+      visible.forEach(item=>{ const g=(item.area||'').trim()||'未分區'; if(!groups[g])groups[g]=[]; groups[g].push(item); });
+      const keys=Object.keys(groups).sort((a,b)=>a==='未分區'?1:b==='未分區'?-1:a.localeCompare(b,'zh-Hant'));
+      body=keys.map(g=>`<div class="wl-group"><div class="wl-group-label">${TI('map-pin',14)} ${esc(g)} <span style="opacity:.55;font-size:11px;">${groups[g].length}</span></div>${groups[g].map(item=>wlCardHtml(item)).join('')}</div>`).join('');
+    } else if(filter==='all'){
       const groups={};
       visible.forEach(item=>{ const g=item.cat||'other'; if(!groups[g])groups[g]=[]; groups[g].push(item); });
       body=WL_CATS.filter(c=>c.id!=='all'&&groups[c.id]?.length).map(c=>{
@@ -2725,7 +2734,7 @@ function wlCardHtml(item){
   const color=CBr[appCat]||'#888780';
   const bg=CB[appCat]||'var(--t-gray-bg)';
   const fg=CF[appCat]||'var(--t-gray-fg)';
-  const badge=`<span class="wl-badge" style="background:${bg};color:${fg};">${TI(catMeta.icon||'map-pin',12)} ${catMeta.label}</span>`;
+  const badge=`<span class="wl-badge" style="background:${bg};color:${fg};">${TI(catMeta.icon||'map-pin',12)} ${catMeta.label}</span>${item.area?`<span class="wl-badge" style="background:var(--soft);color:var(--muted);border:1px solid var(--line);">${TI('map-pin',11)} ${esc(item.area)}</span>`:''}`;
   const dayBtns=S.days.map((d,i)=>`<button class="wl-day-btn" title="${esc(d.title)}${d.date?` · ${esc(d.date)}`:''}" onclick="wlOpenAddToDay('${item.id}',${i},this)">${TI('plus',11)} Day ${i+1}</button>`).join('');
   const added=wlIsInItinerary(item);
   const done=added?`<span style="font-size:11px;color:var(--muted);padding:4px 0;">${TI('circle-check',12)} 已加入行程</span>`:'';
@@ -2765,7 +2774,8 @@ function wlSaveAdd(){
   const address=(document.getElementById('wl-addr-inp')?.value||'').trim();
   const phone=(document.getElementById('wl-phone-inp')?.value||'').trim();
   const note=(document.getElementById('wl-note-inp')?.value||'').trim();
-  const items=[...wlItems(),{id:uid(),name,cat,address,phone,note,added:false}];
+  const area=(document.getElementById('wl-area-inp')?.value||'').trim();
+  const items=[...wlItems(),{id:uid(),name,cat,address,phone,note,area,added:false}];
   setD({wishlist:items,modal:null});
 }
 
@@ -2786,6 +2796,7 @@ function buildWlEditModal(){
       <div class="fg"><label class="fl">分類</label>
         <select id="wl-edit-cat" class="inp" style="appearance:auto;">${catOpts}</select>
       </div>
+      <div class="fg"><label class="fl">地區</label><input id="wl-edit-area" class="inp" list="wl-area-list-e" value="${esc(item.area||'')}" placeholder="例：淺草、澀谷、九份..."><datalist id="wl-area-list-e">${wlAreas().map(a=>`<option value="${esc(a)}">`).join('')}</datalist></div>
       <div class="fg"><label class="fl">地址</label><input id="wl-edit-addr" class="inp" value="${esc(item.address||'')}"></div>
       <div class="fg"><label class="fl">電話</label><input id="wl-edit-phone" class="inp" type="tel" value="${esc(item.phone||'')}"></div>
       <div class="fg"><label class="fl">備註</label><textarea id="wl-edit-note" class="inp" style="min-height:92px;resize:vertical;">${esc(item.note||'')}</textarea></div>
@@ -2802,7 +2813,8 @@ function wlSaveEdit(id){
   const address=(document.getElementById('wl-edit-addr')?.value||'').trim();
   const phone=(document.getElementById('wl-edit-phone')?.value||'').trim();
   const note=(document.getElementById('wl-edit-note')?.value||'').trim();
-  const wishlist=wlItems().map(i=>i.id===id?{...i,name,cat,address,phone,note}:i);
+  const area=(document.getElementById('wl-edit-area')?.value||'').trim();
+  const wishlist=wlItems().map(i=>i.id===id?{...i,name,cat,address,phone,note,area}:i);
   setD({wishlist,modal:null});
 }
 
@@ -2874,9 +2886,10 @@ function buildWlAddModal(){
       <div class="fg"><label class="fl">分類</label>
         <select id="wl-cat-sel" class="inp" style="appearance:auto;">${catOpts}</select>
       </div>
+      <div class="fg"><label class="fl">地區</label><input id="wl-area-inp" class="inp" list="wl-area-list" placeholder="例：淺草、澀谷、九份..."><datalist id="wl-area-list">${wlAreas().map(a=>`<option value="${esc(a)}">`).join('')}</datalist></div>
       <div class="fg"><label class="fl">地址</label><input id="wl-addr-inp" class="inp" placeholder="例：台北市大安區忠孝東路四段181號"></div>
       <div class="fg"><label class="fl">電話</label><input id="wl-phone-inp" class="inp" type="tel" placeholder="例：02-2771-1234"></div>
-      <div class="fg"><label class="fl">備註</label><input id="wl-note-inp" class="inp" placeholder="例：限定商品、必吃招牌、朋友推薦..."></div>
+      <div class="fg"><label class="fl">備註</label><textarea id="wl-note-inp" class="inp" rows="2" style="resize:vertical;min-height:64px;line-height:1.6;" placeholder="例：限定商品、必吃招牌、朋友推薦...（可貼網址）"></textarea></div>
       <div class="ar"><button class="btn bp" style="flex:1;padding:10px;" onclick="wlSaveAdd()">加入清單</button><button class="btn" style="flex:1;padding:10px;" onclick="setU({modal:null})">取消</button></div>`;
 }
 
@@ -2884,24 +2897,25 @@ function buildWlAddModal(){
 // ── Wishlist AI Import ──────────────────────────────
 const WL_IMPORT_PROMPT=`請幫我推薦 [目的地] 的旅遊必去清單，包含咖啡廳、美食、伴手禮、景點、購物等，請嚴格按照以下格式輸出，不要加任何 Markdown、粗體、標題符號：
 
-分類|名稱|地址|電話|備註
+分類|名稱|地址|電話|備註|地區
 
 分類只能從以下選一個，完全照填：
 咖啡廳、美食、伴手禮、景點、購物、住宿、其他
 
 格式說明：
-- 每行固定用「|」分成五段：分類 | 名稱 | 地址 | 電話 | 備註
+- 每行固定用「|」分成六段：分類 | 名稱 | 地址 | 電話 | 備註 | 地區
+- 地區請填該地點所屬的區域或街區（例：淺草、澀谷、市中心），方便依地區安排行程
 - 地址請填完整地址讓 Google Maps 可準確導航（查不到可留空）
 - 電話：餐廳、咖啡廳請認真查詢；景點若無電話則留空
 - 備註請填推薦理由、注意事項、必點商品等（1-2句話）
 - 不要加粗體 ** 不要加 # 不要加項目符號 - 不要加編號
 
 範例輸出（以花蓮為例）：
-咖啡廳|曙光咖啡|花蓮縣花蓮市中山路74號|03-831-3888|老屋改造，必點手沖單品，假日人多建議早去
-美食|公正包子|花蓮縣花蓮市公正街94號|03-832-7000|老字號必吃，蒸籠香氣濃，建議9點前到
-伴手禮|洄瀾薯道|花蓮縣花蓮市中山路462號|03-833-3000|地瓜系列伴手禮，花蓮限定口味
-景點|七星潭|花蓮縣新城鄉七星街48號||石礫灘日出超美，建議帶保暖衣物
-購物|東大門夜市|花蓮縣花蓮市自強路一段1號||四個區域各有特色，阿美麻糬必吃`;
+咖啡廳|曙光咖啡|花蓮縣花蓮市中山路74號|03-831-3888|老屋改造，必點手沖單品，假日人多建議早去|花蓮市區
+美食|公正包子|花蓮縣花蓮市公正街94號|03-832-7000|老字號必吃，蒸籠香氣濃，建議9點前到|花蓮市區
+伴手禮|洄瀾薯道|花蓮縣花蓮市中山路462號|03-833-3000|地瓜系列伴手禮，花蓮限定口味|花蓮市區
+景點|七星潭|花蓮縣新城鄉七星街48號||石礫灘日出超美，建議帶保暖衣物|新城
+購物|東大門夜市|花蓮縣花蓮市自強路一段1號||四個區域各有特色，阿美麻糬必吃|花蓮市區`;
 
 function buildWlImportModal(){
   const curDay=S.days[Math.min(S.dayIdx,S.days.length-1)]||{};
@@ -2942,10 +2956,10 @@ function _parseWlImport(text){
   for(const line of lines){
     const parts=line.split('|').map(p=>p.trim());
     if(parts.length<2)continue;
-    const [catText,name,address='',phone='',note='']=parts;
+    const [catText,name,address='',phone='',note='',area='']=parts;
     if(!name)continue;
     const cat=WL_CAT_TEXT_MAP[catText]||'other';
-    items.push({id:uid(),name,cat,address,phone,note,added:false});
+    items.push({id:uid(),name,cat,address,phone,note,area,added:false});
   }
   return items;
 }
