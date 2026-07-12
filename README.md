@@ -14,18 +14,40 @@
 - 旅行結束後可封存完整旅程 JSON，日後可匯入還原
 - 帳目可匯出 CSV
 - 可設定旅行總預算
-- 支援常見外幣，會折合成新台幣分帳
+- 支援常見外幣，會折合成新台幣分帳（匯率會快取，離線時沿用上次抓到的匯率）
 - 可上傳收據照片，嘗試 OCR 辨識品項與金額並自動分類
 - 常用地點模板與地點排序
 - 可接 Firebase Firestore 做多人共同編輯
+- **PWA 離線支援**：可加入手機主畫面，出國沒網路也能開啟、查行程、記帳，恢復連線後自動同步
+- **深色模式**：自動跟隨系統的深墨綠夜色主題，也可在右上選單「外觀」手動固定淺色或深色；原生日期/時間選單、地圖圖磚都會一起變暗
 
-## GitHub Pages
+## 部署檔案清單
 
-部署後首頁會是 `index.html`。同一個旅程會用網址中的 `?trip=代碼` 識別，例如：
+部署到 GitHub Pages 時，repo 根目錄需要這些檔案：
 
 ```text
-https://你的帳號.github.io/專案名稱/?trip=summer2026
+index.html          主程式
+manifest.json       PWA 設定
+sw.js               Service Worker（離線快取）
+icon-192.png        App 圖示
+icon-512.png        App 圖示
+firebase-config.js  （選用）多人同步設定，從 example 複製
 ```
+
+同一個旅程用網址中的 `?trip=代碼` 識別：
+
+```text
+https://你的帳號.github.io/專案名稱/?trip=kx7m2p-9qwe-r4tz
+```
+
+## 離線使用（PWA）
+
+第一次用瀏覽器開啟後，Service Worker 會快取頁面與地圖套件。之後：
+
+- iPhone：Safari 分享 → 加入主畫面
+- Android：Chrome 選單 → 安裝應用程式
+
+離線時可以正常瀏覽行程、記帳、看已載入過的地圖區域；資料先存在手機上，恢復網路並開著頁面時會自動同步到雲端。
 
 ## 多人共同編輯設定
 
@@ -38,20 +60,35 @@ GitHub Pages 只負責把網頁放到網路上。若要讓知道連結的人共�
 3. 把 `firebase-config.example.js` 複製成 `firebase-config.js`。
 4. 將裡面的 `YOUR_...` 換成你的 Firebase config。
 5. 在 Firestore 建立 `trips` collection。
+6. 把本專案的 `firestore.rules` 內容貼到 Firestore「規則」並發布。
 
-測試用 Firestore rules 可以先用：
+### 同步機制說明
 
-```js
-rules_version = '2';
-service cloud.firestore {
-  match /databases/{database}/documents {
-    match /trips/{tripId} {
-      allow read, write: if true;
-    }
-  }
-}
-```
+- 寫入會自動合併（debounce）：連續操作只會產生一次雲端寫入，節省 Firestore 免費額度。
+- 多人同時編輯採用**逐筆合併**：行程地點、記帳、備忘、清單都以 id 為單位合併，兩個人同時新增不會互相蓋掉；刪除有「墓碑」記錄，不會被別人的舊資料復活。同一筆資料被兩人同時改時，以較晚修改的版本為準。
+- 離開頁面或切到背景時會強制把未寫出的變更存檔。
 
-注意：這代表知道旅程連結的人都能讀寫該旅程資料，符合「知道連結的人都可以編輯」，但不適合放敏感資訊。
+### 安全性注意事項
+
+`firestore.rules` 已加上欄位白名單、大小限制、禁止刪除文件，並要求同步代碼至少 10 個字元。但這個模式的本質仍然是「**知道代碼就能讀寫**」：
+
+- 請一律用 App 內建的「產生亂數」按鈕產生代碼（例如 `kx7m2p-9qwe-r4tz`），不要用 `tokyo2026` 這種容易被猜到或撞到的名字。
+- 不要在旅程裡放護照號碼、信用卡號等敏感資訊。
+- 封面上傳圖片會壓縮到 300KB 以內，因為 Firestore 單份文件上限是 1MB。
 
 更完整的設定流程請看 `SYNC_SETUP.md`。
+
+## 深色模式說明
+
+- 預設「自動」：跟隨手機/電腦的系統外觀，白天淺色、晚上深色。
+- 右上漢堡選單 →「外觀」可循環切換 自動 → 淺色 → 深色，偏好會記在裝置上。
+- 全站配色已改為 CSS 變數（含旅伴八色、記帳分類色、訂位狀態色），兩種主題下都保持足夠對比。
+
+## 這一版的技術更新
+
+- Tabler Icons 從整包 webfont（每次載入數百 KB）改為只內嵌用到的 62 個 inline SVG（約 9KB），首次開啟速度更快、離線更可靠。
+- 修正旅伴或分頁名稱含引號時可能破壞畫面（並構成 XSS 風險）的 inline handler 字串問題。
+- `uid()` 改用 `crypto.randomUUID()`，避免多人同時新增時 id 碰撞。
+- 移除 `user-scalable=no`，恢復雙指縮放（無障礙）。
+- 所有錯誤不再無聲吞掉，會輸出到 console 方便除錯；同步失敗會區分「資料過大」與一般失敗。
+- 「複製目前旅程到新代碼」現在會完整帶上備忘、清單、幣別設定（原本會遺漏）。
