@@ -1,8 +1,44 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
+
+    // 「知道連結（同步代碼）就能共同編輯」的模式：
+    // 讀寫仍然開放，但加上三道防線 —
+    // 1. 只允許 trips collection，其他 collection 一律拒絕
+    // 2. 欄位白名單：只能寫入 App 會用到的欄位，防止被塞垃圾資料
+    // 3. 大小限制：封面 base64 上限 + 不允許刪除整份文件
+    //
+    // 搭配 App 內「產生亂數」同步代碼（例如 kx7m2p-9qwe-r4tz），
+    // 代碼空間夠大、無法被列舉，就相當於「知道連結才能存取」。
+    // 注意：Firestore 無法阻止有人「猜」代碼，所以請務必用亂數代碼，
+    // 不要用 tokyo2026 這種容易撞到的名字，也不要放護照號碼等敏感資訊。
+
     match /trips/{tripId} {
-      allow read, write: if true;
+      allow read: if true;
+
+      allow create, update: if
+        // 代碼至少 10 字元（鼓勵使用亂數代碼；舊的短代碼旅程仍可讀，只是不能再寫入）
+        tripId.size() >= 10
+        // 只能寫入白名單欄位
+        && request.resource.data.keys().hasOnly([
+             'tripName','cover','coverPos','budget','settleCurrency',
+             'days','travelers','travelerIcons','travelerMeta',
+             'expenses','memo','wishlist','wlCats','trash','updatedAt'
+           ])
+        // 基本型別驗證
+        && request.resource.data.tripName is string
+        && request.resource.data.tripName.size() <= 100
+        && request.resource.data.days is list
+        && request.resource.data.expenses is list
+        // 封面（可能是 base64）上限約 400KB，整份文件天生受 Firestore 1MB 限制
+        && (!('cover' in request.resource.data)
+            || request.resource.data.cover.size() <= 400000);
+
+      allow delete: if false;
+    }
+
+    match /{document=**} {
+      allow read, write: if false;
     }
   }
 }

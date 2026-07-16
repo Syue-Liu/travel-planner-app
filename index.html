@@ -738,7 +738,7 @@ function getTvColor(name){
 const CE={交通:'🚗',餐飲:'🍜',住宿:'🏨',景點:'🎫',購物:'🛍️',其他:'📌'};
 // Tabler 線條圖示:HTML 介面用(emoji 版 CE 保留給 <option> 等純文字情境)
 const CTI={交通:'car',餐飲:'tools-kitchen-2',住宿:'bed',景點:'ticket',購物:'shopping-bag',其他:'map-pin'};
-const _ICONS_EXTRA={moon:"<path d=\"M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454z\" />",'sun-moon':"<path d=\"M9.173 14.83a4 4 0 1 1 5.657 -5.657\" /> <path d=\"M11.294 12.707l.174 .247a7.5 7.5 0 0 0 8.845 2.492a9 9 0 0 1 -14.671 2.914\" /> <path d=\"M3 12h1\" /> <path d=\"M12 3v1\" /> <path d=\"M5.6 5.6l.7 .7\" /> <path d=\"M3 21l18 -18\" />"};
+const _ICONS_EXTRA={"coffee":"<path d=\"M3 14c.83 .642 2.077 1.017 3.5 1c1.423 .017 2.67 -.358 3.5 -1c.83 -.642 2.077 -1.017 3.5 -1c1.423 -.017 2.67 .358 3.5 1\" /> <path d=\"M8 3a2.4 2.4 0 0 0 -1 2a2.4 2.4 0 0 0 1 2\" /> <path d=\"M12 3a2.4 2.4 0 0 0 -1 2a2.4 2.4 0 0 0 1 2\" /> <path d=\"M3 10h14v5a6 6 0 0 1 -6 6h-2a6 6 0 0 1 -6 -6v-5z\" /> <path d=\"M16.746 16.726a3 3 0 1 0 .252 -5.555\" />","gift":"<path d=\"M3 8m0 1a1 1 0 0 1 1 -1h16a1 1 0 0 1 1 1v2a1 1 0 0 1 -1 1h-16a1 1 0 0 1 -1 -1z\" /> <path d=\"M12 8l0 13\" /> <path d=\"M19 12v7a2 2 0 0 1 -2 2h-10a2 2 0 0 1 -2 -2v-7\" /> <path d=\"M7.5 8a2.5 2.5 0 0 1 0 -5a4.8 8 0 0 1 4.5 5a4.8 8 0 0 1 4.5 -5a2.5 2.5 0 0 1 0 5\" />","layout-grid":"<path d=\"M4 4m0 1a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v4a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1z\" /> <path d=\"M14 4m0 1a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v4a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1z\" /> <path d=\"M4 14m0 1a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v4a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1z\" /> <path d=\"M14 14m0 1a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v4a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1z\" />","glass-cocktail":"<path d=\"M8 21h8\" /> <path d=\"M12 15v6\" /> <path d=\"M12 5m-7 0a7 2 0 1 0 14 0a7 2 0 1 0 -14 0\" /> <path d=\"M5 5v.388c0 .432 .126 .853 .362 1.206l5 7.509c.633 .951 1.88 1.183 2.785 .517c.191 -.141 .358 -.316 .491 -.517l5 -7.509c.236 -.353 .362 -.774 .362 -1.206v-.388\" />","beer":"<path d=\"M9 21h6a1 1 0 0 0 1 -1v-3.625c0 -1.397 .29 -2.775 .845 -4.025l.31 -.7c.556 -1.25 .845 -2.253 .845 -3.65v-4a1 1 0 0 0 -1 -1h-10a1 1 0 0 0 -1 1v4c0 1.397 .29 2.4 .845 3.65l.31 .7a9.931 9.931 0 0 1 .845 4.025v3.625a1 1 0 0 0 1 1z\" /> <path d=\"M6 8h12\" />",moon:"<path d=\"M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454z\" />",'sun-moon':"<path d=\"M9.173 14.83a4 4 0 1 1 5.657 -5.657\" /> <path d=\"M11.294 12.707l.174 .247a7.5 7.5 0 0 0 8.845 2.492a9 9 0 0 1 -14.671 2.914\" /> <path d=\"M3 12h1\" /> <path d=\"M12 3v1\" /> <path d=\"M5.6 5.6l.7 .7\" /> <path d=\"M3 21l18 -18\" />"};
 const _ICONS={"alert-triangle":"<path d=\"M12 9v4\" /> <path d=\"M10.363 3.591l-8.106 13.534a1.914 1.914 0 0 0 1.636 2.871h16.214a1.914 1.914 0 0 0 1.636 -2.87l-8.106 -13.536a1.914 1.914 0 0 0 -3.274 0z\" /> <path d=\"M12 16h.01\" />","arrow-down":"<path d=\"M12 5l0 14\" /> <path d=\"M18 13l-6 6\" /> <path d=\"M6 13l6 6\" />","arrow-right":"<path d=\"M5 12l14 0\" /> <path d=\"M13 18l6 -6\" /> <path d=\"M13 6l6 6\" />","arrow-up":"<path d=\"M12 5l0 14\" /> <path d=\"M18 11l-6 -6\" /> <path d=\"M6 11l6 -6\" />","arrows-exchange":"<path d=\"M7 10h14l-4 -4\" /> <path d=\"M17 14h-14l4 4\" />","arrows-sort":"<path d=\"M3 9l4 -4l4 4m-4 -4v14\" /> <path d=\"M21 15l-4 4l-4 -4m4 4v-14\" />","aspect-ratio":"<path d=\"M3 5m0 2a2 2 0 0 1 2 -2h14a2 2 0 0 1 2 2v10a2 2 0 0 1 -2 2h-14a2 2 0 0 1 -2 -2z\" /> <path d=\"M7 12v-3h3\" /> <path d=\"M17 12v3h-3\" />","bed":"<path d=\"M7 9m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0\" /> <path d=\"M22 17v-3h-20\" /> <path d=\"M2 8v9\" /> <path d=\"M12 14h10v-2a3 3 0 0 0 -3 -3h-7v5z\" />","book":"<path d=\"M3 19a9 9 0 0 1 9 0a9 9 0 0 1 9 0\" /> <path d=\"M3 6a9 9 0 0 1 9 0a9 9 0 0 1 9 0\" /> <path d=\"M3 6l0 13\" /> <path d=\"M12 6l0 13\" /> <path d=\"M21 6l0 13\" />","calendar":"<path d=\"M4 7a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v12a2 2 0 0 1 -2 2h-12a2 2 0 0 1 -2 -2v-12z\" /> <path d=\"M16 3v4\" /> <path d=\"M8 3v4\" /> <path d=\"M4 11h16\" /> <path d=\"M11 15h1\" /> <path d=\"M12 15v3\" />","calendar-check":"<path d=\"M11.5 21h-5.5a2 2 0 0 1 -2 -2v-12a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v6\" /> <path d=\"M16 3v4\" /> <path d=\"M8 3v4\" /> <path d=\"M4 11h16\" /> <path d=\"M15 19l2 2l4 -4\" />","camera":"<path d=\"M5 7h1a2 2 0 0 0 2 -2a1 1 0 0 1 1 -1h6a1 1 0 0 1 1 1a2 2 0 0 0 2 2h1a2 2 0 0 1 2 2v9a2 2 0 0 1 -2 2h-14a2 2 0 0 1 -2 -2v-9a2 2 0 0 1 2 -2\" /> <path d=\"M9 13a3 3 0 1 0 6 0a3 3 0 0 0 -6 0\" />","car":"<path d=\"M7 17m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0\" /> <path d=\"M17 17m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0\" /> <path d=\"M5 17h-2v-6l2 -5h9l4 5h1a2 2 0 0 1 2 2v4h-2m-4 0h-6m-6 -6h15m-6 0v-5\" />","chart-bar":"<path d=\"M3 13a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v6a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1z\" /> <path d=\"M15 9a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v10a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1z\" /> <path d=\"M9 5a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v14a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1z\" /> <path d=\"M4 20h14\" />","check":"<path d=\"M5 12l5 5l10 -10\" />","checkbox":"<path d=\"M9 11l3 3l8 -8\" /> <path d=\"M20 12v6a2 2 0 0 1 -2 2h-12a2 2 0 0 1 -2 -2v-12a2 2 0 0 1 2 -2h9\" />","checklist":"<path d=\"M9.615 20h-2.615a2 2 0 0 1 -2 -2v-12a2 2 0 0 1 2 -2h8a2 2 0 0 1 2 2v8\" /> <path d=\"M14 19l2 2l4 -4\" /> <path d=\"M9 8h4\" /> <path d=\"M9 12h2\" />","chevron-down":"<path d=\"M6 9l6 6l6 -6\" />","chevron-up":"<path d=\"M6 15l6 -6l6 6\" />","circle-check":"<path d=\"M12 12m-9 0a9 9 0 1 0 18 0a9 9 0 1 0 -18 0\" /> <path d=\"M9 12l2 2l4 -4\" />","clipboard-text":"<path d=\"M9 5h-2a2 2 0 0 0 -2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2v-12a2 2 0 0 0 -2 -2h-2\" /> <path d=\"M9 3m0 2a2 2 0 0 1 2 -2h2a2 2 0 0 1 2 2v0a2 2 0 0 1 -2 2h-2a2 2 0 0 1 -2 -2z\" /> <path d=\"M9 12h6\" /> <path d=\"M9 16h6\" />","clock-play":"<path d=\"M12 7v5l2 2\" /> <path d=\"M17 22l5 -3l-5 -3z\" /> <path d=\"M13.017 20.943a9 9 0 1 1 7.831 -7.292\" />","cloud":"<path d=\"M6.657 18c-2.572 0 -4.657 -2.007 -4.657 -4.483c0 -2.475 2.085 -4.482 4.657 -4.482c.393 -1.762 1.794 -3.2 3.675 -3.773c1.88 -.572 3.956 -.193 5.444 1c1.488 1.19 2.162 3.007 1.77 4.769h.99c1.913 0 3.464 1.56 3.464 3.486c0 1.927 -1.551 3.487 -3.465 3.487h-11.878\" />","coin":"<path d=\"M12 12m-9 0a9 9 0 1 0 18 0a9 9 0 1 0 -18 0\" /> <path d=\"M14.8 9a2 2 0 0 0 -1.8 -1h-2a2 2 0 1 0 0 4h2a2 2 0 1 1 0 4h-2a2 2 0 0 1 -1.8 -1\" /> <path d=\"M12 7v10\" />","copy":"<path d=\"M7 7m0 2.667a2.667 2.667 0 0 1 2.667 -2.667h8.666a2.667 2.667 0 0 1 2.667 2.667v8.666a2.667 2.667 0 0 1 -2.667 2.667h-8.666a2.667 2.667 0 0 1 -2.667 -2.667z\" /> <path d=\"M4.012 16.737a2.005 2.005 0 0 1 -1.012 -1.737v-10c0 -1.1 .9 -2 2 -2h10c.75 0 1.158 .385 1.5 1\" />","dots":"<path d=\"M5 12m-1 0a1 1 0 1 0 2 0a1 1 0 1 0 -2 0\" /> <path d=\"M12 12m-1 0a1 1 0 1 0 2 0a1 1 0 1 0 -2 0\" /> <path d=\"M19 12m-1 0a1 1 0 1 0 2 0a1 1 0 1 0 -2 0\" />","droplet":"<path d=\"M7.502 19.423c2.602 2.105 6.395 2.105 8.996 0c2.602 -2.105 3.262 -5.708 1.566 -8.546l-4.89 -7.26c-.42 -.625 -1.287 -.803 -1.936 -.397a1.376 1.376 0 0 0 -.41 .397l-4.893 7.26c-1.695 2.838 -1.035 6.441 1.567 8.546z\" />","grip-vertical":"<path d=\"M9 5m-1 0a1 1 0 1 0 2 0a1 1 0 1 0 -2 0\" /> <path d=\"M9 12m-1 0a1 1 0 1 0 2 0a1 1 0 1 0 -2 0\" /> <path d=\"M9 19m-1 0a1 1 0 1 0 2 0a1 1 0 1 0 -2 0\" /> <path d=\"M15 5m-1 0a1 1 0 1 0 2 0a1 1 0 1 0 -2 0\" /> <path d=\"M15 12m-1 0a1 1 0 1 0 2 0a1 1 0 1 0 -2 0\" /> <path d=\"M15 19m-1 0a1 1 0 1 0 2 0a1 1 0 1 0 -2 0\" />","home":"<path d=\"M5 12l-2 0l9 -9l9 9l-2 0\" /> <path d=\"M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2v-7\" /> <path d=\"M9 21v-6a2 2 0 0 1 2 -2h2a2 2 0 0 1 2 2v6\" />","id":"<path d=\"M3 4m0 3a3 3 0 0 1 3 -3h12a3 3 0 0 1 3 3v10a3 3 0 0 1 -3 3h-12a3 3 0 0 1 -3 -3z\" /> <path d=\"M9 10m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0\" /> <path d=\"M15 8l2 0\" /> <path d=\"M15 12l2 0\" /> <path d=\"M7 16l10 0\" />","link":"<path d=\"M9 15l6 -6\" /> <path d=\"M11 6l.463 -.536a5 5 0 0 1 7.071 7.072l-.534 .464\" /> <path d=\"M13 18l-.397 .534a5.068 5.068 0 0 1 -7.127 0a4.972 4.972 0 0 1 0 -7.071l.524 -.463\" />","list":"<path d=\"M9 6l11 0\" /> <path d=\"M9 12l11 0\" /> <path d=\"M9 18l11 0\" /> <path d=\"M5 6l0 .01\" /> <path d=\"M5 12l0 .01\" /> <path d=\"M5 18l0 .01\" />","luggage":"<path d=\"M6 6m0 2a2 2 0 0 1 2 -2h8a2 2 0 0 1 2 2v10a2 2 0 0 1 -2 2h-8a2 2 0 0 1 -2 -2z\" /> <path d=\"M9 6v-1a2 2 0 0 1 2 -2h2a2 2 0 0 1 2 2v1\" /> <path d=\"M6 10h12\" /> <path d=\"M6 16h12\" /> <path d=\"M9 20v1\" /> <path d=\"M15 20v1\" />","map-2":"<path d=\"M12 18.5l-3 -1.5l-6 3v-13l6 -3l6 3l6 -3v7.5\" /> <path d=\"M9 4v13\" /> <path d=\"M15 7v5.5\" /> <path d=\"M21.121 20.121a3 3 0 1 0 -4.242 0c.418 .419 1.125 1.045 2.121 1.879c1.051 -.89 1.759 -1.516 2.121 -1.879z\" /> <path d=\"M19 18v.01\" />","map-pin":"<path d=\"M9 11a3 3 0 1 0 6 0a3 3 0 0 0 -6 0\" /> <path d=\"M17.657 16.657l-4.243 4.243a2 2 0 0 1 -2.827 0l-4.244 -4.243a8 8 0 1 1 11.314 0z\" />","message-circle":"<path d=\"M3 20l1.3 -3.9c-2.324 -3.437 -1.426 -7.872 2.1 -10.374c3.526 -2.501 8.59 -2.296 11.845 .48c3.255 2.777 3.695 7.266 1.029 10.501c-2.666 3.235 -7.615 4.215 -11.574 2.293l-4.7 1\" />","navigation":"<path d=\"M12 18.5l7.265 2.463c.196 .077 .42 .032 .57 -.116a.548 .548 0 0 0 .134 -.572l-7.969 -17.275l-7.97 17.275c-.07 .2 -.017 .424 .135 .572c.15 .148 .374 .193 .57 .116l7.265 -2.463\" />","notes":"<path d=\"M5 3m0 2a2 2 0 0 1 2 -2h10a2 2 0 0 1 2 2v14a2 2 0 0 1 -2 2h-10a2 2 0 0 1 -2 -2z\" /> <path d=\"M9 7l6 0\" /> <path d=\"M9 11l6 0\" /> <path d=\"M9 15l4 0\" />","pencil":"<path d=\"M4 20h4l10.5 -10.5a2.828 2.828 0 1 0 -4 -4l-10.5 10.5v4\" /> <path d=\"M13.5 6.5l4 4\" />","phone":"<path d=\"M5 4h4l2 5l-2.5 1.5a11 11 0 0 0 5 5l1.5 -2.5l5 2v4a2 2 0 0 1 -2 2a16 16 0 0 1 -15 -15a2 2 0 0 1 2 -2\" />","photo":"<path d=\"M15 8h.01\" /> <path d=\"M3 6a3 3 0 0 1 3 -3h12a3 3 0 0 1 3 3v12a3 3 0 0 1 -3 3h-12a3 3 0 0 1 -3 -3v-12z\" /> <path d=\"M3 16l5 -5c.928 -.893 2.072 -.893 3 0l5 5\" /> <path d=\"M14 14l1 -1c.928 -.893 2.072 -.893 3 0l3 3\" />","plus":"<path d=\"M12 5l0 14\" /> <path d=\"M5 12l14 0\" />","receipt":"<path d=\"M5 21v-16a2 2 0 0 1 2 -2h10a2 2 0 0 1 2 2v16l-3 -2l-2 2l-2 -2l-2 2l-2 -2l-3 2m4 -14h6m-6 4h6m-2 4h2\" />","refresh":"<path d=\"M20 11a8.1 8.1 0 0 0 -15.5 -2m-.5 -4v4h4\" /> <path d=\"M4 13a8.1 8.1 0 0 0 15.5 2m.5 4v-4h-4\" />","route":"<path d=\"M3 19a2 2 0 1 0 4 0a2 2 0 0 0 -4 0\" /> <path d=\"M19 7a2 2 0 1 0 0 -4a2 2 0 0 0 0 4z\" /> <path d=\"M11 19h5.5a3.5 3.5 0 0 0 0 -7h-8a3.5 3.5 0 0 1 0 -7h4.5\" />","scale":"<path d=\"M7 20l10 0\" /> <path d=\"M6 6l6 -1l6 1\" /> <path d=\"M12 3l0 17\" /> <path d=\"M9 12l-3 -6l-3 6a3 3 0 0 0 6 0\" /> <path d=\"M21 12l-3 -6l-3 6a3 3 0 0 0 6 0\" />","search":"<path d=\"M10 10m-7 0a7 7 0 1 0 14 0a7 7 0 1 0 -14 0\" /> <path d=\"M21 21l-6 -6\" />","shopping-bag":"<path d=\"M6.331 8h11.339a2 2 0 0 1 1.977 2.304l-1.255 8.152a3 3 0 0 1 -2.966 2.544h-6.852a3 3 0 0 1 -2.965 -2.544l-1.255 -8.152a2 2 0 0 1 1.977 -2.304z\" /> <path d=\"M9 11v-5a3 3 0 0 1 6 0v5\" />","sparkles":"<path d=\"M16 18a2 2 0 0 1 2 2a2 2 0 0 1 2 -2a2 2 0 0 1 -2 -2a2 2 0 0 1 -2 2zm0 -12a2 2 0 0 1 2 2a2 2 0 0 1 2 -2a2 2 0 0 1 -2 -2a2 2 0 0 1 -2 2zm-7 12a6 6 0 0 1 6 -6a6 6 0 0 1 -6 -6a6 6 0 0 1 -6 6a6 6 0 0 1 6 6z\" />","star":"<path d=\"M12 17.75l-6.172 3.245l1.179 -6.873l-5 -4.867l6.9 -1l3.086 -6.253l3.086 6.253l6.9 1l-5 4.867l1.179 6.873z\" />","sun":"<path d=\"M12 12m-4 0a4 4 0 1 0 8 0a4 4 0 1 0 -8 0\" /> <path d=\"M3 12h1m8 -9v1m8 8h1m-9 8v1m-6.4 -15.4l.7 .7m12.1 -.7l-.7 .7m0 11.4l.7 .7m-12.1 -.7l-.7 .7\" />","target":"<path d=\"M12 12m-1 0a1 1 0 1 0 2 0a1 1 0 1 0 -2 0\" /> <path d=\"M12 12m-5 0a5 5 0 1 0 10 0a5 5 0 1 0 -10 0\" /> <path d=\"M12 12m-9 0a9 9 0 1 0 18 0a9 9 0 1 0 -18 0\" />","ticket":"<path d=\"M15 5l0 2\" /> <path d=\"M15 11l0 2\" /> <path d=\"M15 17l0 2\" /> <path d=\"M5 5h14a2 2 0 0 1 2 2v3a2 2 0 0 0 0 4v3a2 2 0 0 1 -2 2h-14a2 2 0 0 1 -2 -2v-3a2 2 0 0 0 0 -4v-3a2 2 0 0 1 2 -2\" />","tool":"<path d=\"M7 10h3v-3l-3.5 -3.5a6 6 0 0 1 8 8l6 6a2 2 0 0 1 -3 3l-6 -6a6 6 0 0 1 -8 -8l3.5 3.5\" />","tools-kitchen-2":"<path d=\"M19 3v12h-5c-.023 -3.681 .184 -7.406 5 -12zm0 12v6h-1v-3m-10 -14v17m-3 -17v3a3 3 0 1 0 6 0v-3\" />","trash":"<path d=\"M4 7l16 0\" /> <path d=\"M10 11l0 6\" /> <path d=\"M14 11l0 6\" /> <path d=\"M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2 -2l1 -12\" /> <path d=\"M9 7v-3a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v3\" />","user":"<path d=\"M8 7a4 4 0 1 0 8 0a4 4 0 0 0 -8 0\" /> <path d=\"M6 21v-2a4 4 0 0 1 4 -4h4a4 4 0 0 1 4 4v2\" />","users":"<path d=\"M9 7m-4 0a4 4 0 1 0 8 0a4 4 0 1 0 -8 0\" /> <path d=\"M3 21v-2a4 4 0 0 1 4 -4h4a4 4 0 0 1 4 4v2\" /> <path d=\"M16 3.13a4 4 0 0 1 0 7.75\" /> <path d=\"M21 21v-2a4 4 0 0 0 -3 -3.85\" />","wind":"<path d=\"M5 8h8.5a2.5 2.5 0 1 0 -2.34 -3.24\" /> <path d=\"M3 12h15.5a2.5 2.5 0 1 1 -2.34 3.24\" /> <path d=\"M4 16h5.5a2.5 2.5 0 1 1 -2.34 3.24\" />","world":"<path d=\"M3 12a9 9 0 1 0 18 0a9 9 0 0 0 -18 0\" /> <path d=\"M3.6 9h16.8\" /> <path d=\"M3.6 15h16.8\" /> <path d=\"M11.5 3a17 17 0 0 0 0 18\" /> <path d=\"M12.5 3a17 17 0 0 1 0 18\" />","clock":"<path d=\"M3 12a9 9 0 1 0 18 0a9 9 0 0 0 -18 0\" /> <path d=\"M12 7v5l3 3\" />","minus":"<path d=\"M5 12l14 0\" />"};
 Object.assign(_ICONS,_ICONS_EXTRA);
 const TI=(n,s)=>{const p=_ICONS[n]||_ICONS['map-pin'];const z=s||16;return `<svg width="${z}" height="${z}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-2px;display:inline-block;">${p}</svg>`;};
@@ -1122,7 +1122,7 @@ function settle(exps,tvls){
   while(cr.length&&de.length){const c=cr[0],d=de[0],am=Math.min(c.v,d.v);if(am>0.01)tx.push({from:d.n,to:c.n,amount:Math.round(am)});c.v-=am;d.v-=am;if(c.v<0.01)cr.shift();if(d.v<0.01)de.shift();}
   return{b,tx};
 }
-let S={tripName:'2026 旅遊計畫',cover:COVERS[0][1],coverPos:'30%',budget:0,settleCurrency:'TWD',days:[{id:'d1',title:'第一天',date:'',locations:[]}],travelers:['旅伴A','旅伴B'],travelerIcons:{旅伴A:'🙂',旅伴B:'😎'},expenses:[],memo:[],view:'itinerary',dayIdx:0,modal:null,editTN:false,tnDraft:'',wishlist:[],wlFabOpen:false,travelerMeta:{},tvExpanded:'',sortMode:false,trash:{}};
+let S={tripName:'2026 旅遊計畫',cover:COVERS[0][1],coverPos:'30%',budget:0,settleCurrency:'TWD',days:[{id:'d1',title:'第一天',date:'',locations:[]}],travelers:['旅伴A','旅伴B'],travelerIcons:{旅伴A:'🙂',旅伴B:'😎'},expenses:[],memo:[],view:'itinerary',dayIdx:0,modal:null,editTN:false,tnDraft:'',wishlist:[],wlCats:[],wlFabOpen:false,travelerMeta:{},tvExpanded:'',sortMode:false,trash:{}};
 let FM={};
 let cloud={ready:false,doc:null,tripId:null,applying:false,status:'單機儲存'};
 function loadScript(src){
@@ -1166,6 +1166,7 @@ async function initCloud(){
         expenses:mergeById(S.expenses,data.expenses,trash),
         memo:mergeById(S.memo,data.memo,trash),
         wishlist:mergeById(S.wishlist,data.wishlist,trash),
+        wlCats:mergeById(S.wlCats,data.wlCats,trash),
         travelers:[...new Set([...(data.travelers||[]),...(S.travelers||[])])].filter(n=>!trash['tv:'+n]),
       };
       S={...S,...data,...merged,trash,settleCurrency:data.settleCurrency||S.settleCurrency||'TWD',travelerIcons:{...(S.travelerIcons||{}),...(data.travelerIcons||{})},travelerMeta:{...(S.travelerMeta||{}),...(data.travelerMeta||{})},budget:Number(data.budget||0),cover:data.cover||S.cover,coverPos:data.coverPos||S.coverPos||'30%',view:S.view,dayIdx:S.dayIdx,modal:S.modal,editTN:S.editTN,tnDraft:S.tnDraft};
@@ -1237,6 +1238,7 @@ function buildTrip(){
     expenses:stampChanges(S.expenses,prev.expenses),
     memo:stampChanges(S.memo,prev.memo),
     wishlist:stampChanges(S.wishlist,prev.wishlist),
+    wlCats:stampChanges(S.wlCats,prev.wlCats),
     trash:S.trash||{},
     updatedAt:new Date().toISOString()};
 }
@@ -2365,7 +2367,7 @@ function showNote(locId){
   const l=S.days.flatMap(d=>d.locations).find(l=>l.id===locId);
   if(l){const el=document.querySelector(`[onclick*="showNoteSheet('${locId}'"]`);showNoteSheet(locId,l.name,el||document.body);}
 }
-function buildModal(){if(S.modal?.t==='wl_add')return buildWlAddModal();if(S.modal?.t==='wl_import')return buildWlImportModal();if(S.modal?.t==='wl_edit')return buildWlEditModal();if(S.modal?.t==='wl_day')return mWlDay();if(S.modal?.t==='memo_add')return mMemoAdd();if(S.modal?.t==='memo_import')return buildMemoImportModal();
+function buildModal(){if(S.modal?.t==='wl_add')return buildWlAddModal();if(S.modal?.t==='wl_cat')return buildWlCatModal();if(S.modal?.t==='wl_import')return buildWlImportModal();if(S.modal?.t==='wl_edit')return buildWlEditModal();if(S.modal?.t==='wl_day')return mWlDay();if(S.modal?.t==='memo_add')return mMemoAdd();if(S.modal?.t==='memo_import')return buildMemoImportModal();
   const m=S.modal;let c='';
   if(m.t==='tripGate')c=mTripGate();else if(m.t==='loc')c=mLoc();else if(m.t==='nd'||m.t==='ed')c=mDay();else if(m.t==='exp')c=mExp();else if(m.t==='tv')c=mTv();else if(m.t==='tvEdit')c=buildTvEditModal();else if(m.t==='cover')c=mCover();else if(m.t==='tools')c=mTools();else if(m.t==='import')c=mImport();else if(m.t==='note')c=mNote();else if(m.t==='help')c=mHelp();
   const lock=m.t==='tripGate';
@@ -2688,8 +2690,31 @@ const WL_CATS=[
   {id:'other',  label:'其他',   emoji:'📌', icon:'map-pin'},
 ];
 const WL_CAT_MAP={cafe:'餐飲',food:'餐飲',souvenir:'購物',attraction:'景點',shopping:'購物',hotel:'住宿',other:'其他'};
+// 內建 + 使用者自訂分類（自訂排在「其他」之前）
+function wlAllCats(){
+  const custom=(S.wlCats||[]).map(c=>({id:c.id,label:c.label,emoji:c.emoji||'📌',icon:c.icon||'star',custom:true}));
+  const other=WL_CATS.find(c=>c.id==='other');
+  return [...WL_CATS.filter(c=>c.id!=='other'),...custom,other];
+}
+function wlAddCat(){
+  const name=(document.getElementById('wl-newcat-name')?.value||'').trim();
+  const emoji=(document.getElementById('wl-newcat-emoji')?.value||'').trim();
+  if(!name)return;
+  if(wlAllCats().some(c=>c.label===name)){alert('已經有同名分類了');return;}
+  setD({wlCats:[...(S.wlCats||[]),{id:'c_'+uid(),label:name.slice(0,12),emoji:emoji.slice(0,4)}]});
+}
+function wlDelCat(id){
+  const cat=(S.wlCats||[]).find(c=>c.id===id);
+  if(!cat)return;
+  const used=wlItems().filter(i=>i.cat===id).length;
+  if(!confirm(used?`刪除「${cat.label}」？該分類的 ${used} 個項目會移到「其他」。`:`刪除「${cat.label}」？`))return;
+  tomb(id);
+  if(_wlFilter===id)_wlFilter='all';
+  setD({wlCats:(S.wlCats||[]).filter(c=>c.id!==id),wishlist:wlItems().map(i=>i.cat===id?{...i,cat:'other'}:i)});
+}
 let _wlFilter='all';
-let _wlGroup='cat'; // 'cat' 依分類 | 'area' 依地區
+let _wlGroup=(()=>{try{return localStorage.getItem('wl-group')||'cat'}catch(e){return 'cat'}})(); // 'cat' 依分類 | 'area' 依地區（記住上次選擇）
+let _wlArea='all'; // 依地區模式下的地區篩選
 function wlAreas(){return [...new Set(wlItems().map(i=>(i.area||'').trim()).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'zh-Hant'));}
 
 function wlItems(){ return S.wishlist||[]; }
@@ -2697,14 +2722,25 @@ function wlItems(){ return S.wishlist||[]; }
 function wishlistView(){
   const items=wlItems();
   const filter=_wlFilter;
-  const catBtns=WL_CATS.map(c=>{
+  const catBtns=wlAllCats().map(c=>{
     const cnt=c.id==='all'?items.length:items.filter(i=>i.cat===c.id).length;
-    return`<button class="wl-filter-btn${filter===c.id?' on':''}" onclick="_wlFilter='${c.id}';setU({})">${TI(c.icon||'map-pin',13)} ${c.label}${cnt?` <span style="opacity:.6;font-size:10px;">${cnt}</span>`:''}</button>`;
-  }).join('');
-  const groupBtns=`<div class="wl-filter-row" style="margin-top:6px;"><button class="wl-filter-btn${_wlGroup==='cat'?' on':''}" onclick="_wlGroup='cat';setU({})">${TI('checkbox',13)} 依分類</button><button class="wl-filter-btn${_wlGroup==='area'?' on':''}" onclick="_wlGroup='area';setU({})">${TI('map-pin',13)} 依地區</button></div>`;
-  const topbar=`<div class="wl-topbar"><div class="wl-filter-row">${catBtns}</div>${groupBtns}</div>`;
+    return`<button class="wl-filter-btn${filter===c.id?' on':''}" onclick="_wlFilter='${c.id}';setU({})">${TI(c.icon||'map-pin',13)} ${esc(c.label)}${cnt?` <span style="opacity:.6;font-size:10px;">${cnt}</span>`:''}</button>`;
+  }).join('')+`<button class="wl-filter-btn" title="管理自訂分類" onclick="openModal(this,{t:'wl_cat'})">${TI('plus',13)} 分類</button>`;
+  const groupBtns=`<div class="wl-filter-row" style="margin-top:6px;"><button class="wl-filter-btn${_wlGroup==='area'?' on':''}" onclick="_wlGroup='area';try{localStorage.setItem('wl-group','area')}catch(e){};setU({})">${TI('map-pin',13)} 依地區</button><button class="wl-filter-btn${_wlGroup==='cat'?' on':''}" onclick="_wlGroup='cat';try{localStorage.setItem('wl-group','cat')}catch(e){};setU({})">${TI('checkbox',13)} 依分類</button></div>`;
+  // 依地區模式：多一排地區晶片，點了只看該地區
+  let areaBtns='';
+  if(_wlGroup==='area'){
+    const areas=wlAreas();
+    const noArea=items.filter(i=>!(i.area||'').trim()).length;
+    const chip=(key,label,cnt)=>`<button class="wl-filter-btn${_wlArea===key?' on':''}" onclick="_wlArea='${jsq(key)}';setU({})">${esc(label)}${cnt?` <span style="opacity:.6;font-size:10px;">${cnt}</span>`:''}</button>`;
+    areaBtns=`<div class="wl-filter-row" style="margin-top:6px;">${chip('all','全部地區',items.length)}${areas.map(a=>chip(a,a,items.filter(i=>(i.area||'').trim()===a).length)).join('')}${noArea?chip('__none__','未分區',noArea):''}</div>`;
+  }
+  const topbar=`<div class="wl-topbar"><div class="wl-filter-row">${catBtns}</div>${groupBtns}${areaBtns}</div>`;
 
-  const visible=filter==='all'?items:items.filter(i=>i.cat===filter);
+  let visible=filter==='all'?items:items.filter(i=>i.cat===filter);
+  if(_wlGroup==='area'&&_wlArea!=='all'){
+    visible=visible.filter(i=>_wlArea==='__none__'?!(i.area||'').trim():(i.area||'').trim()===_wlArea);
+  }
   let body='';
   if(!visible.length){
     body=`<div class="wl-empty"><div style="font-size:32px;margin-bottom:8px;">${filter==='all'?TI('star',32):TI('search',32)}</div><div style="font-weight:700;margin-bottom:6px;">${filter==='all'?'清單是空的':'這個分類還沒有項目'}</div><div style="font-size:13px;">${filter==='all'?'點右上角「＋ 新增」加入想去的地方':'切換其他分類或新增項目'}</div></div>`;
@@ -2717,9 +2753,9 @@ function wishlistView(){
     } else if(filter==='all'){
       const groups={};
       visible.forEach(item=>{ const g=item.cat||'other'; if(!groups[g])groups[g]=[]; groups[g].push(item); });
-      body=WL_CATS.filter(c=>c.id!=='all'&&groups[c.id]?.length).map(c=>{
+      body=wlAllCats().filter(c=>c.id!=='all'&&groups[c.id]?.length).map(c=>{
         const cards=groups[c.id].map(item=>wlCardHtml(item)).join('');
-        return`<div class="wl-group"><div class="wl-group-label">${TI(c.icon||'map-pin',14)} ${c.label}</div>${cards}</div>`;
+        return`<div class="wl-group"><div class="wl-group-label">${TI(c.icon||'map-pin',14)} ${esc(c.label)}</div>${cards}</div>`;
       }).join('');
     } else {
       body=visible.map(item=>wlCardHtml(item)).join('');
@@ -2729,12 +2765,12 @@ function wishlistView(){
 }
 
 function wlCardHtml(item){
-  const catMeta=WL_CATS.find(c=>c.id===item.cat)||WL_CATS[WL_CATS.length-1];
+  const catMeta=wlAllCats().find(c=>c.id===item.cat)||WL_CATS[WL_CATS.length-1];
   const appCat=WL_CAT_MAP[item.cat]||'其他';
   const color=CBr[appCat]||'#888780';
   const bg=CB[appCat]||'var(--t-gray-bg)';
   const fg=CF[appCat]||'var(--t-gray-fg)';
-  const badge=`<span class="wl-badge" style="background:${bg};color:${fg};">${TI(catMeta.icon||'map-pin',12)} ${catMeta.label}</span>${item.area?`<span class="wl-badge" style="background:var(--soft);color:var(--muted);border:1px solid var(--line);">${TI('map-pin',11)} ${esc(item.area)}</span>`:''}`;
+  const badge=`<span class="wl-badge" style="background:${bg};color:${fg};">${catMeta.custom?esc(catMeta.emoji||'📌'):TI(catMeta.icon||'map-pin',12)} ${esc(catMeta.label)}</span>${item.area?`<span class="wl-badge" style="background:var(--soft);color:var(--muted);border:1px solid var(--line);">${TI('map-pin',11)} ${esc(item.area)}</span>`:''}`;
   const dayBtns=S.days.map((d,i)=>`<button class="wl-day-btn" title="${esc(d.title)}${d.date?` · ${esc(d.date)}`:''}" onclick="wlOpenAddToDay('${item.id}',${i},this)">${TI('plus',11)} Day ${i+1}</button>`).join('');
   const added=wlIsInItinerary(item);
   const done=added?`<span style="font-size:11px;color:var(--muted);padding:4px 0;">${TI('circle-check',12)} 已加入行程</span>`:'';
@@ -2790,7 +2826,7 @@ function buildWlEditModal(){
   const m=S.modal;
   const item=wlItems().find(i=>i.id===m.itemId);
   if(!item)return buildWlAddModal();
-  const catOpts=WL_CATS.filter(c=>c.id!=='all').map(c=>`<option value="${c.id}"${item.cat===c.id?' selected':''}>${c.emoji} ${c.label}</option>`).join('');
+  const catOpts=wlAllCats().filter(c=>c.id!=='all').map(c=>`<option value="${c.id}"${item.cat===c.id?' selected':''}>${c.emoji} ${esc(c.label)}</option>`).join('');
   return`<div class="mhd"><div class="mt">${TI('pencil',16)} 編輯清單地點</div><div class="mcl" onclick="setU({modal:null})">✕</div></div>
       <div class="fg"><label class="fl">名稱 *</label><input id="wl-edit-name" class="inp" value="${esc(item.name)}"></div>
       <div class="fg"><label class="fl">分類</label>
@@ -2879,8 +2915,22 @@ function wlAddToDay(itemId, dayIdx, date='', time=''){
 }
 
 // Modal: wl_add
+function buildWlCatModal(){
+  const customs=(S.wlCats||[]);
+  const rows=customs.length?customs.map(c=>`<div style="display:flex;align-items:center;gap:8px;padding:8px 10px;background:var(--soft);border-radius:10px;margin-bottom:6px;"><span style="flex:1;font-size:14px;">${esc(c.emoji||'📌')} ${esc(c.label)}</span><button class="btn" style="padding:5px 10px;font-size:12px;color:var(--danger);" onclick="wlDelCat('${c.id}')">刪除</button></div>`).join(''):`<div class="tip" style="margin-bottom:8px;">還沒有自訂分類。內建分類（咖啡廳、美食…）無法刪除。</div>`;
+  return`<div class="mhd"><div class="mt">${TI('checkbox',16)} 自訂分類</div><div class="mcl" onclick="setU({modal:null})">✕</div></div>
+      ${rows}
+      <div class="fg" style="margin-top:10px;"><label class="fl">新增分類</label>
+        <div style="display:flex;gap:8px;">
+          <input id="wl-newcat-emoji" class="inp" placeholder="🍸" style="width:64px;flex:0 0 auto;text-align:center;" maxlength="4">
+          <input id="wl-newcat-name" class="inp" placeholder="例：酒吧、甜點、溫泉..." style="flex:1;" onkeydown="if(event.key==='Enter'){event.preventDefault();wlAddCat();}">
+        </div>
+        <div class="tip">左邊可放一個表情符號當圖示（可留空）。新分類會出現在篩選列和新增地點的選單裡，也會同步給旅伴。</div>
+      </div>
+      <div class="ar"><button class="btn bp" style="flex:1;padding:10px;" onclick="wlAddCat()">新增分類</button><button class="btn" style="flex:1;padding:10px;" onclick="setU({modal:null})">完成</button></div>`;
+}
 function buildWlAddModal(){
-  const catOpts=WL_CATS.filter(c=>c.id!=='all').map(c=>`<option value="${c.id}">${c.emoji} ${c.label}</option>`).join('');
+  const catOpts=wlAllCats().filter(c=>c.id!=='all').map(c=>`<option value="${c.id}">${c.emoji} ${esc(c.label)}</option>`).join('');
   return`<div class="mhd"><div class="mt">${TI('plus',16)} 新增到清單</div><div class="mcl" onclick="setU({modal:null})">✕</div></div>
       <div class="fg"><label class="fl">名稱 *</label><input id="wl-name-inp" class="inp" placeholder="例：一之船入 九份老街店" autofocus></div>
       <div class="fg"><label class="fl">分類</label>
@@ -2986,7 +3036,7 @@ function wlConfirmImport(){
 
 // ════ HERO & SHEET modal engine ════════════════════════
 // Hero modal types (large forms) — open from trigger element
-const HERO_TYPES=new Set(['loc','exp','nd','ed','wl_add','wl_import','wl_edit','wl_day','import','tv','tvEdit','cover','tools','help','note','memo_add','memo_import','tripGate']);
+const HERO_TYPES=new Set(['loc','exp','nd','ed','wl_add','wl_import','wl_edit','wl_day','wl_cat','import','tv','tvEdit','cover','tools','help','note','memo_add','memo_import','tripGate']);
 // Sheet modal types (compact) — slide up from bottom
 const SHEET_TYPES=new Set([]);
 
@@ -3040,7 +3090,7 @@ function _getModalContent(m){
   else if(m.t==='memo_add')c=mMemoAdd();
   else if(m.t==='memo_import')c=buildMemoImportModal();
   else if(m.t==='tvEdit')c=buildTvEditModal();
-  else if(m.t==='wl_add')c=buildWlAddModal();
+  else if(m.t==='wl_add')c=buildWlAddModal();else if(m.t==='wl_cat')c=buildWlCatModal();
   else if(m.t==='wl_import')c=buildWlImportModal();
   else if(m.t==='wl_edit')c=buildWlEditModal();
   else if(m.t==='wl_day')c=mWlDay();
