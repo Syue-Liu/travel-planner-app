@@ -17,8 +17,8 @@ service cloud.firestore {
       allow read: if true;
 
       allow create, update: if
-        // 代碼至少 10 字元（鼓勵使用亂數代碼；舊的短代碼旅程仍可讀，只是不能再寫入）
-        tripId.size() >= 10
+        // 相容既有的 9 字元旅程代碼（例如 tokyo2026）；新旅程仍建議使用亂數代碼
+        tripId.size() >= 9
         // 只能寫入白名單欄位
         && request.resource.data.keys().hasOnly([
              'tripName','cover','coverPos','budget','settleCurrency',

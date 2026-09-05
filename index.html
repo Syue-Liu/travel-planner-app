@@ -102,6 +102,8 @@ a{text-decoration:none}
 .stat-cell+.stat-cell::before{content:'';position:absolute;left:0;top:18%;height:64%;width:1px;background:var(--line)}
 .stat-n{font-size:20px;font-weight:900;color:var(--ink);letter-spacing:-.5px;line-height:1}
 .stat-l{font-size:11px;color:var(--muted);font-weight:700}
+.trip-brief{display:flex;align-items:center;gap:7px;flex-wrap:wrap;margin-top:3px}
+.trip-brief-chip{display:inline-flex;align-items:center;gap:5px;padding:4px 9px;border-radius:999px;background:rgba(255,255,255,.17);border:1px solid rgba(255,255,255,.25);font-size:11px;font-weight:800;color:#fff;backdrop-filter:blur(8px);text-shadow:0 1px 6px rgba(0,0,0,.35)}
 .cover-actions{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
 .glass{background:rgba(255,255,255,.18);color:#fff;border:1px solid rgba(255,255,255,.26);backdrop-filter:blur(10px)}
 .cover-menu-wrap{position:relative;z-index:80;flex-shrink:0}
@@ -130,6 +132,8 @@ a{text-decoration:none}
 .section-title{font-weight:800;font-size:17px;line-height:1.25;min-width:0;word-break:keep-all;color:var(--ink);}
 .section-meta{display:flex;align-items:center;flex-wrap:wrap;gap:8px;}
 .section-meta-date{font-size:12px;font-weight:700;color:var(--muted);display:inline-flex;align-items:center;gap:3px;}
+.day-summary{display:flex;gap:6px;flex-wrap:wrap;margin:0 0 11px}
+.day-summary-chip{display:inline-flex;align-items:center;gap:4px;padding:5px 9px;border-radius:999px;background:var(--soft);border:1px solid var(--line);font-size:11px;font-weight:800;color:var(--muted)}
 .section-actions{display:flex;align-items:center;justify-content:flex-end;gap:6px;flex-wrap:nowrap;position:relative;flex-shrink:0}
 .action-group{display:flex;align-items:center;gap:7px;position:relative;flex-wrap:nowrap}
 .quick-holder{position:relative}
@@ -369,6 +373,7 @@ input:focus,select:focus,textarea:focus{border-color:var(--teal-soft);box-shadow
 }
 @media (max-width:640px){
   body{font-size:14px}
+  .day-tabs{position:sticky;top:59px;z-index:18;margin-left:-14px;margin-right:-14px;padding:9px 14px 10px;background:var(--nav-bg);border-bottom:1px solid var(--line-a);backdrop-filter:blur(14px)}
   input,select,textarea{font-size:16px;min-width:0;max-width:100%;width:100%}
   input[type=date],input[type=time]{-webkit-appearance:none;appearance:none;text-align:left;min-height:54px;padding-left:12px;padding-right:12px}
   .cover{aspect-ratio:16/9;min-height:180px;max-height:280px}
@@ -1338,12 +1343,22 @@ function fabAi(el){
   else if(S.view==='memo')openModal(el,{t:'memo_import'});
 }
 function hdr(te){
-  const statsStrip='';
+  const dated=(S.days||[]).filter(d=>/^\d{4}-\d{2}-\d{2}$/.test(d.date||'')).sort((a,b)=>a.date.localeCompare(b.date));
+  const first=dated[0]?.date,last=dated[dated.length-1]?.date;
+  const fmtMd=d=>d?`${Number(d.slice(5,7))}/${Number(d.slice(8,10))}`:'';
+  const today=new Date();today.setHours(0,0,0,0);
+  const start=first?new Date(first+'T00:00:00'):null;
+  const diff=start?Math.ceil((start-today)/86400000):null;
+  const countdown=diff===null?'':diff>0?`倒數 ${diff} 天`:diff===0?'今天出發':diff>=-(dated.length-1)?'旅途中':'旅程已結束';
+  const locCount=(S.days||[]).reduce((n,d)=>n+(d.locations?.length||0),0);
+  const done=(S.memo||[]).filter(m=>m.done).length,memoTotal=(S.memo||[]).length;
+  const statsStrip=`<div class="stats-strip"><div class="stat-cell"><div class="stat-n">${S.days?.length||0}</div><div class="stat-l">行程天數</div></div><div class="stat-cell"><div class="stat-n">${locCount}</div><div class="stat-l">行程地點</div></div><div class="stat-cell"><div class="stat-n">${done}/${memoTotal}</div><div class="stat-l">行前完成</div></div></div>`;
   const coverStyle=`--cover:url('${esc(S.cover)}');--cover-pos:${S.coverPos||'30%'}`;
   if(S.editTN)return`<header class="cover" style="${coverStyle}"><div class="topbar"></div><div class="cover-bottom"><div class="title-edit"><input class="tni" id="tn-in" value="${esc(S.tnDraft)}" placeholder="行程名稱" oninput="S.tnDraft=this.value" onkeydown="if(event.key==='Enter')saveTN()" autofocus><button class="btn glass" onclick="saveTN()">完成</button></div></div></header>${statsStrip}`;
   const menu=S.menuOpen?`<div class="cover-menu-backdrop" onclick="setU({menuOpen:false})"></div><div class="cover-menu" onclick="event.stopPropagation()"><button onclick="copyShareLink();setU({menuOpen:false})"><span class="mi">${TI('link',16)}</span>分享連結</button><button onclick="S.menuOpen=false;openModal(this,{t:'tools'})"><span class="mi">${TI('tool',16)}</span>旅程工具</button><button onclick="S.menuOpen=false;openModal(this,{t:'cover'})"><span class="mi">${TI('photo',16)}</span>更換封面</button><button onclick="S.menuOpen=false;openModal(this,{t:'tv'})"><span class="mi">${TI('users',16)}</span>旅伴管理</button><button onclick="S.menuOpen=false;openModal(this,{t:'help'})"><span class="mi">${TI('book',16)}</span>使用說明</button><button onclick="event.stopPropagation();cycleTheme()"><span class="mi">${TI(THEME_ICON[themePref()],16)}</span>外觀：${THEME_LABEL[themePref()]}${themePref()==='auto'?`（${themeEffective()==='dark'?'深':'淺'}）`:''}</button></div>`:'';
   const syncChip=cloud.tripId?`<span class="hdr-sub-chip">${TI('link',12)} ${esc(cloud.tripId)}</span><button class="hdr-sync-switch" title="切換同步代碼" aria-label="切換同步代碼" onclick="event.stopPropagation();openModal(this,{t:'tools'})">⇄</button>`:'';
-  return`<header class="cover" style="${coverStyle}"><div class="topbar"><div></div><div class="cover-menu-wrap"><button class="hamb" aria-label="開啟選單" onclick="event.stopPropagation();setU({menuOpen:!S.menuOpen})"><span></span><span></span><span></span></button>${menu}</div></div><div class="cover-bottom"><div class="hdr-title" onclick="setU({editTN:true,tnDraft:'${jsq(S.tripName)}'})"><span>${esc(S.tripName)}</span><span class="hdr-title-edit-icon">${TI('pencil',16)}</span></div><div class="hdr-sub"><span>${esc(cloud.status||'本機儲存')}</span>${syncChip}</div>${!cloud.ready?`<div class="sync-quick"><span style="color:rgba(255,255,255,.85);">${TI('link',15)}</span><input id="hdr-sync-inp" type="text" placeholder="輸入同步代碼，Enter 跳轉" autocomplete="off" autocapitalize="none" spellcheck="false" onkeydown="if(event.key==='Enter'){var v=this.value.trim();if(v){var el=document.getElementById('trip-code');if(el)el.value=v;else{S._quickCode=v;}switchTrip(false);}}"><button class="sync-quick-btn" onclick="var v=document.getElementById('hdr-sync-inp').value.trim();if(v){var el=document.getElementById('trip-code');if(el)el.value=v;switchTrip(false);}">跳轉</button></div>`:''}</div></header>${statsStrip}`;
+  const brief=(first&&last)?`<div class="trip-brief"><span class="trip-brief-chip">${TI('calendar',12)} ${fmtMd(first)}-${fmtMd(last)}</span>${countdown?`<span class="trip-brief-chip">${TI('clock',12)} ${countdown}</span>`:''}</div>`:'';
+  return`<header class="cover" style="${coverStyle}"><div class="topbar"><div></div><div class="cover-menu-wrap"><button class="hamb" aria-label="開啟選單" onclick="event.stopPropagation();setU({menuOpen:!S.menuOpen})"><span></span><span></span><span></span></button>${menu}</div></div><div class="cover-bottom"><div class="hdr-title" onclick="setU({editTN:true,tnDraft:'${jsq(S.tripName)}'})"><span>${esc(S.tripName)}</span><span class="hdr-title-edit-icon">${TI('pencil',16)}</span></div>${brief}<div class="hdr-sub"><span>${esc(cloud.status||'本機儲存')}</span>${syncChip}</div>${!cloud.ready?`<div class="sync-quick"><span style="color:rgba(255,255,255,.85);">${TI('link',15)}</span><input id="hdr-sync-inp" type="text" placeholder="輸入同步代碼，Enter 跳轉" autocomplete="off" autocapitalize="none" spellcheck="false" onkeydown="if(event.key==='Enter'){var v=this.value.trim();if(v){var el=document.getElementById('trip-code');if(el)el.value=v;else{S._quickCode=v;}switchTrip(false);}}"><button class="sync-quick-btn" onclick="var v=document.getElementById('hdr-sync-inp').value.trim();if(v){var el=document.getElementById('trip-code');if(el)el.value=v;switchTrip(false);}">跳轉</button></div>`:''}</div></header>${statsStrip}`;
 }
 function saveTN(){const v=document.getElementById('tn-in')?.value?.trim()||S.tnDraft.trim()||'未命名旅程';setD({tripName:v,editTN:false});}
 function gnav(){
@@ -1411,7 +1426,9 @@ function itin(day,si){
   }
   // Store detail for sheet
   if(weatherDetail)window['_wx_'+day.id]=weatherDetail;
-  return`<div class="day-tabs">${tabs}<button class="dtab dtab-add" onclick="FM={title:'第${nd}天',date:'',city:''};openModal(this,{t:'nd'})">${TI('plus',13)} 新增</button></div><div class="section-head"><div class="section-title-wrap"><div class="section-title" title="點擊編輯這一天" onclick="openDayEdit(this)">${esc(day.title)}<span class="hdr-title-edit-icon" style="color:var(--muted);">${TI('pencil',14)}</span></div>${(day.date||weatherBadge)?`<div class="section-meta">${day.date?`<span class="section-meta-date">${TI('calendar',13)} ${day.date}</span>`:''}${weatherBadge}</div>`:''}</div><div class="section-actions"><div class="action-group primary"><button class="btn" title="跳到現在的行程" onclick="jumpToNow()">${TI('clock-play',14)} 現在</button><button class="btn" title="排序行程" style="${S.sortMode?'background:var(--teal-fill-2);border-color:var(--teal-fill-2);color:#fff;':''}" onclick="setU({sortMode:!S.sortMode})">${S.sortMode?TI('check',14)+' 完成排序':TI('arrows-sort',14)+' 排序'}</button></div></div></div>${itineraryMap(day)}${day.locations.length?`<div class="tl-list">${locs}</div>`:locs}`;
+  const catCounts=(day.locations||[]).reduce((a,l)=>{const c=l.category||'其他';a[c]=(a[c]||0)+1;return a;},{});
+  const summary=`<div class="day-summary"><span class="day-summary-chip">${TI('map-pin',12)} ${day.locations.length} 個地點</span>${Object.entries(catCounts).slice(0,4).map(([c,n])=>`<span class="day-summary-chip">${esc(c)} ${n}</span>`).join('')}</div>`;
+  return`<div class="day-tabs">${tabs}<button class="dtab dtab-add" onclick="FM={title:'第${nd}天',date:'',city:''};openModal(this,{t:'nd'})">${TI('plus',13)} 新增</button></div><div class="section-head"><div class="section-title-wrap"><div class="section-title" title="點擊編輯這一天" onclick="openDayEdit(this)">${esc(day.title)}<span class="hdr-title-edit-icon" style="color:var(--muted);">${TI('pencil',14)}</span></div>${(day.date||weatherBadge)?`<div class="section-meta">${day.date?`<span class="section-meta-date">${TI('calendar',13)} ${day.date}</span>`:''}${weatherBadge}</div>`:''}</div><div class="section-actions"><div class="action-group primary"><button class="btn" title="跳到現在的行程" onclick="jumpToNow()">${TI('clock-play',14)} 現在</button><button class="btn" title="排序行程" style="${S.sortMode?'background:var(--teal-fill-2);border-color:var(--teal-fill-2);color:#fff;':''}" onclick="setU({sortMode:!S.sortMode})">${S.sortMode?TI('check',14)+' 完成排序':TI('arrows-sort',14)+' 排序'}</button></div></div></div>${summary}${itineraryMap(day)}${day.locations.length?`<div class="tl-list">${locs}</div>`:locs}`;
 }
 function exps(te){
   const cs=CATS.map(c=>({c,t:S.expenses.filter(e=>e.category===c).reduce((s,e)=>s+expValue(e),0)})).filter(x=>x.t>0);

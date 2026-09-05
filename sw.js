@@ -5,13 +5,14 @@
  * - OpenStreetMap 圖磚：cache-first + 上限 300 張，避免佔爆儲存空間
  * - Firestore / 匯率 / Nominatim API：不攔截，維持即時性
  */
-const VERSION = 'v4';
+const VERSION = 'v5';
 const SHELL_CACHE = 'shell-' + VERSION;
 const CDN_CACHE = 'cdn-' + VERSION;
 const TILE_CACHE = 'tiles-' + VERSION;
 const TILE_LIMIT = 300;
 
-const SHELL = ['./', './index.html', './manifest.json', './icon-192.png', './icon-512.png'];
+// 僅預快取專案中確實存在的檔案，避免 addAll 因 404 讓整個 SW 安裝失敗。
+const SHELL = ['./', './index.html', './firebase-config.js'];
 
 const CDN_HOSTS = ['unpkg.com', 'cdn.jsdelivr.net', 'www.gstatic.com'];
 const SKIP_HOSTS = ['firestore.googleapis.com', 'open.er-api.com', 'nominatim.openstreetmap.org'];
