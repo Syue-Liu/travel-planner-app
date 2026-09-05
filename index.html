@@ -1574,6 +1574,7 @@ function mTv(){
           <div class="tv-name">${esc(t)}${role}</div>
           <div class="tv-mini-stats">${stats.paidCount?TI('coin',12)+' 付了 '+stats.paidCount+' 筆 · '+(CUR_LABEL[cur]||'')+fmt(stats.paidTotal):'尚未記帳'}</div>
         </div>
+        <button class="btn-ic" onclick="event.stopPropagation();editTvProfile('${jsq(t)}')" title="修改名字與資料" aria-label="修改名字與資料">${TI('pencil',15)}</button>
         <button class="tv-del" onclick="event.stopPropagation();rmTv('${jsq(t)}')" title="移除">✕</button>
       </div>
       ${isOpen?`
@@ -1607,7 +1608,7 @@ ${cards||'<div style="text-align:center;color:var(--muted);font-size:13px;paddin
   <label class="fl">代表圖案（${AVATARS.length} 種可選）</label>
   <div class="avatar-pick avatar-pick-grid">${avatars}</div>
   <div class="fg"><label class="fl">名字</label>
-    <input type="text" id="traveler-name-input" placeholder="輸入旅伴名稱，例：小美、阿哲" oninput="FM.newTraveler=this.value;_tvUpdatePreview()">
+    <input type="text" id="traveler-name-input" value="${esc(FM.newTraveler||'')}" placeholder="輸入旅伴名稱，例：小美、阿哲" oninput="FM.newTraveler=this.value;_tvUpdatePreview()">
   </div>
   <button class="btn bp" style="width:100%;padding:11px;font-size:14px;" onclick="addTv()">＋ 新增旅伴</button>
   <div class="tip">選字完成後再按「新增旅伴」；Enter 不會用來新增旅伴。</div>
@@ -1637,7 +1638,7 @@ function toggleSplitPerson(name){
 
 function editTvProfile(name){
   const meta=(S.travelerMeta||{})[name]||{};
-  FM={...FM,editTvName:name,editTvRole:meta.role||'',editTvBio:meta.bio||''};
+  FM={...FM,editTvName:name,editTvNewName:name,editTvRole:meta.role||'',editTvBio:meta.bio||''};
   S.modal={t:'tvEdit'};
   _refreshHeroContent();
 }
@@ -1646,10 +1647,14 @@ function buildTvEditModal(){
   const name=FM.editTvName||'';
   const ic=S.travelerIcons?.[name]||'🙂';
   const c=getTvColor(name);
-  return`<div class="mhd"><div class="mt">編輯旅伴角色</div><div class="mcl" onclick="closeTvEdit()">✕</div></div>
+  return`<div class="mhd"><div class="mt">編輯旅伴名字與資料</div><div class="mcl" onclick="closeTvEdit()">✕</div></div>
 <div class="tv-preview" style="--tv-bg:${c.bg};--tv-fg:${c.fg};--tv-ac:${c.accent};">
   <div class="tv-avatar tv-avatar-lg">${ic}</div>
   <div class="tv-preview-name">${esc(name)}</div>
+</div>
+<div class="fg"><label class="fl" for="tv-edit-name">旅伴名字</label>
+  <input type="text" id="tv-edit-name" value="${esc(FM.editTvNewName||'')}" oninput="FM.editTvNewName=this.value">
+  <div class="tip">改名會同步更新付款人及分帳對象，保留原有金額。</div>
 </div>
 <div class="fg"><label class="fl">角色 / 暱稱</label>
   <input type="text" id="tv-edit-role" value="${esc(FM.editTvRole||'')}" placeholder="例：嚮導、財務、攝影師、司機" oninput="FM.editTvRole=this.value">
@@ -1671,8 +1676,31 @@ function closeTvEdit(){
 function saveTvProfile(){
   const name=FM.editTvName;
   if(!name)return;
+  const next=cleanName(document.getElementById('tv-edit-name')?.value??FM.editTvNewName);
+  if(!next){alert('請輸入旅伴名稱');return;}
+  if(next!==name&&S.travelers.includes(next)){alert('這個名字已被其他旅伴使用');return;}
   const tvMeta={...(S.travelerMeta||{})};
-  tvMeta[name]={role:(FM.editTvRole||'').trim(),bio:(FM.editTvBio||'').trim()};
+  if(next!==name){
+    const icons={...(S.travelerIcons||{})};
+    icons[next]=icons[name]||'🙂';delete icons[name];delete tvMeta[name];
+    tomb('tv:'+name);
+    S.trash={...S.trash,['tv:'+next]:0};
+    S.travelers=S.travelers.map(t=>t===name?next:t);
+    S.travelerIcons=icons;
+    S.expenses=S.expenses.map(e=>{
+      if(e.paidBy!==name&&!e.splitWith?.includes(name)&&!Object.prototype.hasOwnProperty.call(e.shares||{},name))return e;
+      const updated={...e,_u:Date.now()};
+      if(e.paidBy===name)updated.paidBy=next;
+      if(e.splitWith)updated.splitWith=e.splitWith.map(t=>t===name?next:t);
+      if(Object.prototype.hasOwnProperty.call(e.shares||{},name)){
+        updated.shares={...e.shares,[next]:e.shares[name]};delete updated.shares[name];
+      }
+      return updated;
+    });
+    if(S.tvExpanded===name)S.tvExpanded=next;
+    if(S.splitExpanded===name)S.splitExpanded=next;
+  }
+  tvMeta[next]={...(S.travelerMeta?.[name]||{}),role:(FM.editTvRole||'').trim(),bio:(FM.editTvBio||'').trim()};
   S={...S,travelerMeta:tvMeta,modal:{t:'tv'}};
   psave();
   _refreshHeroContent();
@@ -2614,10 +2642,7 @@ async function pasteClipboard(boxId,cbName){
   alert('無法自動讀取剪貼簿，請在輸入框內長按貼上。');
 }
 function cleanName(v){
-  v=String(v||'').trim();
-  const half=v.length/2;
-  if(v.length%2===0&&v.slice(0,half)===v.slice(half))v=v.slice(0,half);
-  return v;
+  return String(v||'').trim();
 }
 function pickAvatar(icon,btn){
   FM.tvIcon=icon;
@@ -2633,7 +2658,8 @@ function addTv(){
   if(S.travelers.includes(v)){alert('這位旅伴已經在清單裡了');return;}
   const travelerIcons={...(S.travelerIcons||{}),[v]:FM.tvIcon||'🙂'};
   FM={tvIcon:FM.tvIcon||'🙂',newTraveler:''};
-  S={...S,travelers:[...S.travelers,v],travelerIcons};
+  // 明確覆蓋舊刪除標記，避免雲端快照把重新加入的同名旅伴移除。
+  S={...S,travelers:[...S.travelers,v],travelerIcons,trash:{...(S.trash||{}),['tv:'+v]:0}};
   psave();
   _refreshHeroContent();
 }
