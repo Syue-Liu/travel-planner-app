@@ -5,7 +5,7 @@
  * - OpenStreetMap 圖磚：cache-first + 上限 300 張，避免佔爆儲存空間
  * - Firestore / 匯率 / Nominatim API：不攔截，維持即時性
  */
-const VERSION = 'v5';
+const VERSION = 'v6';
 const SHELL_CACHE = 'shell-' + VERSION;
 const CDN_CACHE = 'cdn-' + VERSION;
 const TILE_CACHE = 'tiles-' + VERSION;
@@ -46,6 +46,7 @@ self.addEventListener('fetch', e => {
   if (req.mode === 'navigate' || url.pathname.endsWith('/index.html')) {
     e.respondWith(
       fetch(req).then(res => {
+        if (!res.ok) throw new Error('Navigation unavailable');
         const copy = res.clone();
         caches.open(SHELL_CACHE).then(c => c.put('./index.html', copy));
         return res;
