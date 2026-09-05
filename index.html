@@ -134,6 +134,12 @@ a{text-decoration:none}
 .section-meta-date{font-size:12px;font-weight:700;color:var(--muted);display:inline-flex;align-items:center;gap:3px;}
 .day-summary{display:flex;gap:6px;flex-wrap:wrap;margin:0 0 11px}
 .day-summary-chip{display:inline-flex;align-items:center;gap:4px;padding:5px 9px;border-radius:999px;background:var(--soft);border:1px solid var(--line);font-size:11px;font-weight:800;color:var(--muted)}
+.travel-toolkit{background:var(--paper);border:1px solid var(--line);border-radius:16px;padding:14px;margin-bottom:14px;font-size:14px;line-height:1.6}
+.travel-toolkit summary{cursor:pointer;font-weight:800;padding:8px 0}
+.travel-toolkit .sync-row{display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap}
+.travel-key{padding:10px 0;border-bottom:1px solid var(--line);overflow-wrap:anywhere}
+.travel-key p{color:var(--muted);white-space:pre-wrap}
+.travel-segment{display:block;padding:10px 0;border-top:1px solid var(--line);color:var(--t-blue-fg);overflow-wrap:anywhere}
 .section-actions{display:flex;align-items:center;justify-content:flex-end;gap:6px;flex-wrap:nowrap;position:relative;flex-shrink:0}
 .action-group{display:flex;align-items:center;gap:7px;position:relative;flex-wrap:nowrap}
 .quick-holder{position:relative}
@@ -1151,6 +1157,7 @@ async function initCloud(){
   try{
     const app=window.firebase.apps?.length?window.firebase.app():window.firebase.initializeApp(window.TRAVEL_APP_FIREBASE);
     const db=window.firebase.firestore(app);
+    try{await db.enablePersistence({synchronizeTabs:true});}catch(e){console.warn('[indexeddb-cache]',e.code);}
     const params=new URLSearchParams(location.search);
     let tripId=params.get('trip');
     if(!tripId){
@@ -1160,23 +1167,27 @@ async function initCloud(){
     }
     localStorage.setItem('travel-trip-id',tripId);
     cloud={ready:true,doc:db.collection('trips').doc(tripId),tripId,status:'雲端同步中',applying:false};
-    cloud.doc.onSnapshot(snap=>{
-      if(!snap.exists){psave();return;}
+    cloud.doc.onSnapshot({includeMetadataChanges:true},snap=>{
+      if(!snap.exists){if(!snap.metadata.fromCache)psave();return;}
       const data=snap.data()||{};
+      if(pendingTrip()){cloud.status=navigator.onLine?'已存手機・待同步':'離線・已存手機';render();if(!snap.metadata.fromCache)retryTripSync();return;}
       cloud.applying=true;
       // 合併墓碑（雙方的刪除都保留）
-      const trash={...(data.trash||{}),...(S.trash||{})};
+      const trash=data.trash||{};
       const merged={
-        days:mergeDays(S.days,data.days,trash),
-        expenses:mergeById(S.expenses,data.expenses,trash),
-        memo:mergeById(S.memo,data.memo,trash),
-        wishlist:mergeById(S.wishlist,data.wishlist,trash),
-        wlCats:mergeById(S.wlCats,data.wlCats,trash),
-        travelers:[...new Set([...(data.travelers||[]),...(S.travelers||[])])].filter(n=>!trash['tv:'+n]),
+        days:data.days||[],
+        expenses:data.expenses||[],
+        memo:data.memo||[],
+        wishlist:data.wishlist||[],
+        wlCats:data.wlCats||[],
+        travelers:(data.travelers||[]).filter(n=>!(trash['tv:'+n]>0)),
       };
       S={...S,...data,...merged,trash,settleCurrency:data.settleCurrency||S.settleCurrency||'TWD',travelerIcons:{...(S.travelerIcons||{}),...(data.travelerIcons||{})},travelerMeta:{...(S.travelerMeta||{}),...(data.travelerMeta||{})},budget:Number(data.budget||0),cover:data.cover||S.cover,coverPos:data.coverPos||S.coverPos||'30%',view:S.view,dayIdx:S.dayIdx,modal:S.modal,editTN:S.editTN,tnDraft:S.tnDraft};
       cloud.lastApplied={...data,...merged,trash};
-      cloud.status='已同步';
+      S.travelerMeta=data.travelerMeta||{};S.travelerIcons=data.travelerIcons||{};
+      normalizeTravelerIds();
+      cacheTrip(buildTrip(),false);
+      cloud.status=snap.metadata.fromCache?'離線快照・已存手機':snap.metadata.hasPendingWrites?'已存手機・待同步':'已同步雲端';
       render();
       cloud.applying=false;
     },err=>{console.warn('[onSnapshot]',err);cloud.status='同步失敗，暫存本機';render();});
@@ -1184,6 +1195,11 @@ async function initCloud(){
   }catch(e){cloud.status='雲端設定錯誤';return false;}
 }
 async function load(){
+  const code=new URLSearchParams(location.search).get('trip');
+  const cached=readTripCache();
+  if(cached?.trip){S={...S,...cached.trip,modal:null,view:'itinerary',dayIdx:0};cloud.status='已載入手機快照';}
+  else if(code){S={...S,days:[],travelers:[],travelerIcons:{},travelerMeta:{}};}
+  normalizeTravelerIds();render();startNowTimer();
   try{
     const hasCloud=await initCloud();
     if(hasCloud){
@@ -1191,6 +1207,7 @@ async function load(){
       if(S.modal)_mountModalOverlay();
       return;
     }
+    if(code){cloud.status='離線・僅能查看已下載旅程';render();return;}
     const raw=await getSaved(SK)||await getSaved(OLD_SK2)||await getSaved(OLD_SK);
     if(raw){const sv=JSON.parse(raw);S={...S,...sv,settleCurrency:sv.settleCurrency||'TWD',travelerIcons:sv.travelerIcons||S.travelerIcons||{},travelerMeta:sv.travelerMeta||{},budget:Number(sv.budget||0),cover:sv.cover||COVERS[0][1],view:'itinerary',dayIdx:0,modal:null,editTN:false,wishlist:sv.wishlist||[]};}
   }catch(e){console.warn('[trip]',e);}
@@ -1199,7 +1216,7 @@ async function load(){
 }
 // ── 同步輔助：墓碑（記錄刪除）＋以 id 合併陣列，避免多人同時編輯互相覆蓋 ──
 const TRASH_TTL=45*24*60*60*1000;
-function tomb(id){if(!id)return;const t={...(S.trash||{})};t[id]=Date.now();const now=Date.now();for(const k in t)if(now-t[k]>TRASH_TTL)delete t[k];S.trash=t;}
+function tomb(id){if(!id)return;const t={...(S.trash||{})};t[id]=Date.now();S.trash=t;}
 function _itemSig(o){const c={...o};delete c._u;return JSON.stringify(c);}
 // 針對這次要寫出的資料，與上次雲端快照比對：有變動的項目蓋上 _u 時間戳
 function stampChanges(list,prevList){
@@ -1232,6 +1249,7 @@ function mergeDays(local,remote,trash){
   });
 }
 function buildTrip(){
+  normalizeTravelerIds();
   const prev=cloud.lastApplied||{};
   const days=stampChanges(S.days,prev.days).map((d,i)=>{
     const pd=(prev.days||[]).find(x=>x.id===d.id);
@@ -1250,14 +1268,12 @@ function buildTrip(){
 async function _psaveNow(){
   if(cloud.applying)return;
   const t=buildTrip();
+  if(!cacheTrip(t,true)){cloud.status='手機儲存失敗・請匯出備份';render();return;}
   // 同步回 S，讓 _u 戳記留在本地狀態
   S.days=t.days;S.expenses=t.expenses;S.memo=t.memo;S.wishlist=t.wishlist;
   try{
     if(cloud.ready&&cloud.doc){
-      cloud.status='同步中';
-      await cloud.doc.set(t,{merge:true});
-      cloud.lastApplied=t;
-      cloud.status='已同步';
+      await retryTripSync();
     }
     else await setSaved(SK,JSON.stringify(t));
   }catch(e){
@@ -1270,6 +1286,7 @@ async function _psaveNow(){
 // 800ms 內的連續變動合併成一次寫入，離開頁面前強制寫出
 let _saveTimer=null,_savePending=false;
 function psave(){
+  cacheTrip(buildTrip(),true);
   _savePending=true;
   clearTimeout(_saveTimer);
   _saveTimer=setTimeout(()=>{_savePending=false;_psaveNow();},800);
@@ -1346,10 +1363,10 @@ function hdr(te){
   const dated=(S.days||[]).filter(d=>/^\d{4}-\d{2}-\d{2}$/.test(d.date||'')).sort((a,b)=>a.date.localeCompare(b.date));
   const first=dated[0]?.date,last=dated[dated.length-1]?.date;
   const fmtMd=d=>d?`${Number(d.slice(5,7))}/${Number(d.slice(8,10))}`:'';
-  const today=new Date();today.setHours(0,0,0,0);
-  const start=first?new Date(first+'T00:00:00'):null;
+  const today=new Date(tripClock().date+'T00:00:00Z');
+  const start=first?new Date(first+'T00:00:00Z'):null;
   const diff=start?Math.ceil((start-today)/86400000):null;
-  const countdown=diff===null?'':diff>0?`倒數 ${diff} 天`:diff===0?'今天出發':diff>=-(dated.length-1)?'旅途中':'旅程已結束';
+  const countdown=diff===null?'':diff>0?`倒數 ${diff} 天`:diff===0?'今天出發':tripClock().date<=last?'旅途中':'旅程已結束';
   const locCount=(S.days||[]).reduce((n,d)=>n+(d.locations?.length||0),0);
   const done=(S.memo||[]).filter(m=>m.done).length,memoTotal=(S.memo||[]).length;
   const statsStrip=`<div class="stats-strip"><div class="stat-cell"><div class="stat-n">${S.days?.length||0}</div><div class="stat-l">行程天數</div></div><div class="stat-cell"><div class="stat-n">${locCount}</div><div class="stat-l">行程地點</div></div><div class="stat-cell"><div class="stat-n">${done}/${memoTotal}</div><div class="stat-l">行前完成</div></div></div>`;
@@ -1369,7 +1386,7 @@ function itineraryMap(day){
   const locs=dayMapLocs(day);
   if(!locs.length)return`<div class="itin-map-card"><div class="itin-map-empty">${TI('map-2',15)} 這一天還沒有可定位的地址，填入地點名稱或地址後就會出現地圖。</div></div>`;
   const open=S.mapOpen===true;
-  const routeUrl=dayRouteUrl(locs);
+  const routeUrl=''; // Mixed flights, trains and rides must not become one driving route.
   const points=locs.map((l,i)=>{
     const cat=l.category||ac(`${l.name} ${l.notes||''} ${l.address||''}`);
     const color=CBr[cat]||'#0f5e5e';
@@ -1387,7 +1404,7 @@ function itin(day,si){
     return`<button class="dtab${on?' on':''}" title="${esc(d.title)}${d.date?` · ${esc(d.date)}`:''}${on?'（再點一次可編輯）':''}" onclick="dayTabClick(${i},this)">Day ${i+1}${dshort}${on?`<span class="dtab-edit">${TI('pencil',11)}</span>`:''}</button>`;
   }).join('');
   const nd=S.days.length+1;
-  const nowLocId=getNowLocId(day.locations);
+  const nowLocId=getNowLocId(day.locations,day);
   const locs=!day.locations.length?`<div class="empty"><div style="margin-bottom:8px;color:var(--muted);">${TI('map-pin',34)}</div><div style="font-weight:800;margin-bottom:14px;">這一天還沒有行程</div><div class="empty-cta"><button class="btn bp" onclick="_heroOrigin=this.getBoundingClientRect();oLoc('')">${TI('plus',15)} 新增地點</button><button class="btn" style="background:var(--ai);border-color:var(--ai);color:#fff;" onclick="openModal(this,{t:'import'})">${TI('sparkles',15)} AI 匯入行程</button></div></div>`:day.locations.map((l,i)=>{
     const cat=l.category||ac(`${l.name} ${l.notes||''} ${l.address||''}`);
     const badge=`<span class="loc-cat-badge" style="background:${CB[cat]||CB['其他']};color:${CF[cat]||CF['其他']};">${TI(CTI[cat]||'map-pin',12)} ${cat}</span>`;
@@ -1421,13 +1438,13 @@ function itin(day,si){
       const wi=wxInfo(wx.data.code);
       weatherDetail=wx.data;
       weatherDetail._wi=wi;
-      weatherBadge=`<button class="wx-badge" onclick="showWxSheet('${day.id}',this)" title="點擊查看完整天氣"><span class="wx-badge-ic">${wi.e}</span>${wx.data.temp}°C ${esc(day.city)}</button>`;
-    }
+      weatherBadge=`<button class="wx-badge" onclick="showWxSheet('${day.id}',this)" title="目前觀測，不是行程日預報"><span class="wx-badge-ic">${wi.e}</span>${wx.data.temp}°C ${esc(day.city)}・目前</button>`;
+    } else weatherBadge=`<span class="weather-loading">${esc(day.city)}・目前無法取得天氣</span>`;
   }
   // Store detail for sheet
   if(weatherDetail)window['_wx_'+day.id]=weatherDetail;
   const catCounts=(day.locations||[]).reduce((a,l)=>{const c=l.category||'其他';a[c]=(a[c]||0)+1;return a;},{});
-  const summary=`<div class="day-summary"><span class="day-summary-chip">${TI('map-pin',12)} ${day.locations.length} 個地點</span>${Object.entries(catCounts).slice(0,4).map(([c,n])=>`<span class="day-summary-chip">${esc(c)} ${n}</span>`).join('')}</div>`;
+  const summary=travelToolkit(day)+`<div class="day-summary"><span class="day-summary-chip">${TI('map-pin',12)} ${day.locations.length} 個地點</span>${Object.entries(catCounts).slice(0,4).map(([c,n])=>`<span class="day-summary-chip">${esc(c)} ${n}</span>`).join('')}</div>`;
   return`<div class="day-tabs">${tabs}<button class="dtab dtab-add" onclick="FM={title:'第${nd}天',date:'',city:''};openModal(this,{t:'nd'})">${TI('plus',13)} 新增</button></div><div class="section-head"><div class="section-title-wrap"><div class="section-title" title="點擊編輯這一天" onclick="openDayEdit(this)">${esc(day.title)}<span class="hdr-title-edit-icon" style="color:var(--muted);">${TI('pencil',14)}</span></div>${(day.date||weatherBadge)?`<div class="section-meta">${day.date?`<span class="section-meta-date">${TI('calendar',13)} ${day.date}</span>`:''}${weatherBadge}</div>`:''}</div><div class="section-actions"><div class="action-group primary"><button class="btn" title="跳到現在的行程" onclick="jumpToNow()">${TI('clock-play',14)} 現在</button><button class="btn" title="排序行程" style="${S.sortMode?'background:var(--teal-fill-2);border-color:var(--teal-fill-2);color:#fff;':''}" onclick="setU({sortMode:!S.sortMode})">${S.sortMode?TI('check',14)+' 完成排序':TI('arrows-sort',14)+' 排序'}</button></div></div></div>${summary}${itineraryMap(day)}${day.locations.length?`<div class="tl-list">${locs}</div>`:locs}`;
 }
 function exps(te){
@@ -1684,7 +1701,7 @@ function saveTvProfile(){
     const icons={...(S.travelerIcons||{})};
     icons[next]=icons[name]||'🙂';delete icons[name];delete tvMeta[name];
     tomb('tv:'+name);
-    S.trash={...S.trash,['tv:'+next]:0};
+    S.trash={...S.trash,['tv:'+next]:-Date.now()};
     S.travelers=S.travelers.map(t=>t===name?next:t);
     S.travelerIcons=icons;
     S.expenses=S.expenses.map(e=>{
@@ -1700,7 +1717,7 @@ function saveTvProfile(){
     if(S.tvExpanded===name)S.tvExpanded=next;
     if(S.splitExpanded===name)S.splitExpanded=next;
   }
-  tvMeta[next]={...(S.travelerMeta?.[name]||{}),role:(FM.editTvRole||'').trim(),bio:(FM.editTvBio||'').trim()};
+  tvMeta[next]={...(S.travelerMeta?.[name]||{}),name:next,_u:Date.now(),role:(FM.editTvRole||'').trim(),bio:(FM.editTvBio||'').trim()};
   S={...S,travelerMeta:tvMeta,modal:{t:'tv'}};
   psave();
   _refreshHeroContent();
@@ -1860,6 +1877,7 @@ function sExp(){
     splitWith=Object.keys(shares);
   }
   const exp={id:S.modal.expId||uid(),item:FM.item,amount,currency:cur,amountBase:Math.round(convertAmount(amount,cur,'TWD')),category:FM.category||ac(FM.item),paidBy:personal?'':FM.paidBy,expenseMode:personal?'personal':'shared',splitWith,shares:personal?null:shares,date:normalizeExpenseDate(FM.date)||localDate()};
+  bindExpenseIds(exp);
   if(S.modal.expId){const i=exps.findIndex(e=>e.id===S.modal.expId);exps[i]=exp;}else exps.push(exp);
   setD({expenses:exps,modal:null});
 }
@@ -1953,12 +1971,14 @@ function getWx(city){
   _fetchWx(city).then(data=>{_wxState[k]={loading:false,data};render();});
   return _wxState[k];
 }
-function getNowLocId(locs){
+function getNowLocId(locs,day=S.days[S.dayIdx]){
+  const clock=tripClock();
+  if(day?.date!==clock.date)return null;
   if(!locs?.length)return null;
-  const now=new Date(),nowMins=now.getHours()*60+now.getMinutes();
+  const nowMins=clock.minutes;
   const withTime=locs.filter(l=>l.time);
   // No times at all → highlight first location
-  if(!withTime.length)return locs[0].id;
+  if(!withTime.length)return null;
   let upId=null,upDiff=Infinity,paId=null,paDiff=Infinity;
   for(const l of withTime){
     const[h,m]=l.time.split(':').map(Number),lm=h*60+m,d=lm-nowMins;
@@ -1966,14 +1986,14 @@ function getNowLocId(locs){
     else if(d<0&&-d<paDiff){paDiff=-d;paId=l.id;}
   }
   // Prefer upcoming; if all past use last passed; if nothing matched use first with time
-  return upId||paId||withTime[0].id;
+  return upDiff===0?upId:paId;
 }
 function localDate(d=new Date()){
   const y=d.getFullYear(),mo=String(d.getMonth()+1).padStart(2,'0'),dd=String(d.getDate()).padStart(2,'0');
   return`${y}-${mo}-${dd}`;
 }
 function findTodayIdx(){
-  const today=localDate(),todayMs=new Date(today).getTime();
+  const today=tripClock().date,todayMs=new Date(today).getTime();
   // 1. Exact date match
   let di=S.days.findIndex(d=>d.date===today);
   if(di>=0)return di;
@@ -2659,7 +2679,7 @@ function addTv(){
   const travelerIcons={...(S.travelerIcons||{}),[v]:FM.tvIcon||'🙂'};
   FM={tvIcon:FM.tvIcon||'🙂',newTraveler:''};
   // 明確覆蓋舊刪除標記，避免雲端快照把重新加入的同名旅伴移除。
-  S={...S,travelers:[...S.travelers,v],travelerIcons,trash:{...(S.trash||{}),['tv:'+v]:0}};
+  S={...S,travelers:[...S.travelers,v],travelerIcons,travelerMeta:{...S.travelerMeta,[v]:{id:uid(),name:v,_u:Date.now()}},trash:{...(S.trash||{}),['tv:'+v]:-Date.now()}};
   psave();
   _refreshHeroContent();
 }
@@ -3644,6 +3664,92 @@ function memoConfirmImport(){
   document.body.appendChild(t);setTimeout(()=>t.remove(),2100);
 }
 
+// Trip-scoped durable journal: never mix data from two sync codes.
+function travelToolkit(day){
+  const cached=readTripCache();
+  const keyItems=day.locations.filter(l=>l.phone||l.reservation==='pending'||l.category==='住宿'||/航班|航空|取車|還車|集合/.test(l.name));
+  const points=day.locations.filter(l=>!(/航空|航班|JR|N.EX|大江戶線|山手線|中央線|地下鐵/.test(l.name)));
+  const mode=['driving','walking','transit'].includes(S.routeMode)?S.routeMode:'driving';
+  const segments=points.slice(1).map((to,i)=>{
+    const from=points[i];
+    const url='https://www.google.com/maps/dir/?api=1&origin='+encodeURIComponent(from.address||from.name)+'&destination='+encodeURIComponent(to.address||to.name)+'&travelmode='+mode;
+    return `<a class="travel-segment" href="${esc(url)}" target="_blank" rel="noopener">${i+1}. ${esc(from.name)} → ${esc(to.name)}</a>`;
+  }).join('');
+  return `<section class="travel-toolkit" aria-label="旅途中快速查詢"><div class="sync-row"><strong role="status">${esc(cloud.status)}</strong><button class="btn" onclick="retryTripSync()">重試同步</button></div><div class="tip">${esc(tripClock().label)} · ${cached?'此裝置已有行程副本':'此裝置尚無離線副本'}。地圖導航仍需網路；目前天氣不是旅行日預報。</div><details ${keyItems.length?'open':''}><summary>重要資訊 · ${keyItems.length} 項</summary>${keyItems.map(l=>`<div class="travel-key"><strong>${esc(l.time||'')} ${esc(l.name)}</strong>${l.reservation==='pending'?'<div>待確認預約</div>':''}<p>${linkify(l.notes||'')}</p>${l.phone?`<a href="tel:${esc(l.phone)}">撥打 ${esc(l.phone)}</a>`:''}</div>`).join('')||'這一天沒有住宿、航班或租車資訊。'}</details><details><summary>分段導航</summary><label>交通方式 <select aria-label="分段導航交通方式" onchange="setU({routeMode:this.value})">${[['driving','開車／騎乘參考'],['walking','步行'],['transit','大眾運輸']].map(([v,t])=>`<option value="${v}" ${v===mode?'selected':''}>${t}</option>`).join('')}</select></label><div class="tip">已排除航班與鐵路活動。騎乘請在 Google Maps 手動開啟「避開高速公路、避開收費道路」，核對實際路線後再出發；地址不完整的補給點請先確認。</div>${segments||'至少需要兩個地點才能產生分段導航。'}</details></section>`;
+}
+function tripCacheKey(){return 'travel-offline-v1:'+ (new URLSearchParams(location.search).get('trip')||'local');}
+function readTripCache(){try{return JSON.parse(localStorage.getItem(tripCacheKey())||'null');}catch{return null;}}
+function pendingTrip(){return readTripCache()?.pending===true;}
+function cacheTrip(trip,pending){
+  try{localStorage.setItem(tripCacheKey(),JSON.stringify({trip,pending,revision:uid(),savedAt:new Date().toISOString()}));return true;}
+  catch(e){console.warn('[offline-cache]',e);return false;}
+}
+function mergeTrash(a={},b={}){
+  const result={...b};
+  for(const [k,v] of Object.entries(a||{}))if(!(k in result)||Math.abs(v)>Math.abs(result[k]))result[k]=v;
+  return result;
+}
+function mergedTrip(local,remote){
+  const trash=mergeTrash(local.trash,remote.trash);
+  const out={...remote,...local,trash};
+  out.days=mergeDays(local.days,remote.days,trash);
+  for(const k of ['expenses','memo','wishlist','wlCats'])out[k]=mergeById(local[k],remote[k],trash);
+  out.travelers=[...new Set([...(remote.travelers||[]),...(local.travelers||[])])].filter(n=>!(trash['tv:'+n]>0));
+  out.travelerIcons={...remote.travelerIcons,...local.travelerIcons};
+  out.travelerMeta={...remote.travelerMeta};
+  for(const [name,m] of Object.entries(local.travelerMeta||{}))if(!out.travelerMeta[name]||(m._u||0)>=(out.travelerMeta[name]._u||0))out.travelerMeta[name]=m;
+  return out;
+}
+let syncBusy=false;
+async function retryTripSync(){
+  if(!new URLSearchParams(location.search).get('trip'))return;
+  if(syncBusy||cloud.blocked||!pendingTrip())return;
+  if(!navigator.onLine){cloud.status='離線・已存手機，連線後重試';render();return;}
+  if(!cloud.doc){await initCloud();if(!cloud.doc)return;}
+  syncBusy=true;cloud.status='已存手機・同步中';render();
+  const journal=readTripCache();
+  try{
+    const result=await cloud.doc.firestore.runTransaction(async tx=>{
+      const snap=await tx.get(cloud.doc);
+      const next=mergedTrip(journal.trip,snap.exists?snap.data():{});
+      tx.set(cloud.doc,next,{merge:true});return next;
+    });
+    if(readTripCache()?.revision===journal.revision){
+      S={...S,...result};normalizeTravelerIds();cacheTrip(buildTrip(),false);cloud.lastApplied=result;
+      cloud.status='已同步雲端・手機可離線查看';
+    }else cloud.status='已存手機・尚有更新待同步';
+  }catch(e){cloud.blocked=e.code==='permission-denied';cloud.status=cloud.blocked?'雲端拒絕寫入・請確認權限後重新載入；手機副本已保留':'同步失敗・手機副本已保留';console.warn('[sync]',e);}
+  finally{syncBusy=false;render();}
+}
+window.addEventListener('online',()=>retryTripSync());
+window.addEventListener('offline',()=>{cloud.status='離線・使用手機副本';render();});
+setInterval(()=>{if(navigator.onLine&&pendingTrip())retryTripSync();},30000);
+function tripClock(now=new Date()){
+  const japan=(new URLSearchParams(location.search).get('trip')==='tokyo2026')||S.days.some(d=>/東京|河口湖|日本|大阪|京都/.test(d.city||''));
+  const zone=japan?'Asia/Tokyo':Intl.DateTimeFormat().resolvedOptions().timeZone;
+  const p=Object.fromEntries(new Intl.DateTimeFormat('en-CA',{timeZone:zone,year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',hourCycle:'h23'}).formatToParts(now).map(x=>[x.type,x.value]));
+  return {date:`${p.year}-${p.month}-${p.day}`,minutes:Number(p.hour)*60+Number(p.minute),label:japan?'日本時間 UTC+9':'裝置當地時間'};
+}
+function travelerId(name){return S.travelerMeta?.[name]?.id||('legacy-'+encodeURIComponent(name));}
+function bindExpenseIds(e){
+  e.paidById=e.paidBy?travelerId(e.paidBy):'';
+  e.splitWithIds=(e.splitWith||[]).map(travelerId);
+  e.sharesById=e.shares?Object.fromEntries(Object.entries(e.shares).map(([n,v])=>[travelerId(n),v])):null;
+}
+function normalizeTravelerIds(){
+  S.travelerMeta={...(S.travelerMeta||{})};
+  for(const n of S.travelers||[])S.travelerMeta[n]={...S.travelerMeta[n],id:travelerId(n),name:S.travelerMeta[n]?.name||n};
+  const byId={};
+  for(const [n,m] of Object.entries(S.travelerMeta))if(m.id&&(!byId[m.id]||(m._u||0)>(byId[m.id]._u||0)))byId[m.id]={...m,name:m.name||n};
+  S.travelers=[...new Set((S.travelers||[]).map(n=>byId[travelerId(n)]?.name||n))].filter(n=>!((S.trash||{})['tv:'+n]>0));
+  S.expenses=(S.expenses||[]).map(e=>{
+    const x={...e};if(!('paidById' in x))bindExpenseIds(x);
+    if(x.paidById&&byId[x.paidById])x.paidBy=byId[x.paidById].name;
+    if(x.splitWithIds)x.splitWith=x.splitWithIds.map((id,i)=>byId[id]?.name||x.splitWith?.[i]).filter(Boolean);
+    if(x.sharesById)x.shares=Object.fromEntries(Object.entries(x.sharesById).map(([id,v])=>[byId[id]?.name||Object.keys(x.shares||{}).find(n=>travelerId(n)===id)||id,v]));
+    return x;
+  });
+}
 load();
 loadFx();
 // ── PWA：離線快取（GitHub Pages 為 HTTPS，可直接使用） ──
