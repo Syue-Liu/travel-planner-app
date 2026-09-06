@@ -1233,7 +1233,7 @@ async function load(){
     const raw=await getSaved(SK)||await getSaved(OLD_SK2)||await getSaved(OLD_SK);
     if(raw){const sv=JSON.parse(raw);S={...S,...sv,settleCurrency:sv.settleCurrency||'TWD',travelerIcons:sv.travelerIcons||S.travelerIcons||{},travelerMeta:sv.travelerMeta||{},budget:Number(sv.budget||0),cover:sv.cover||COVERS[0][1],view:'itinerary',dayIdx:0,modal:null,editTN:false,wishlist:sv.wishlist||[]};}
   }catch(e){console.warn('[trip]',e);}
-  setTimeout(jumpToNow,80);
+  setTimeout(()=>jumpToNow(false),80);
   startNowTimer();
 }
 // ── 同步輔助：墓碑（記錄刪除）＋以 id 合併陣列，避免多人同時編輯互相覆蓋 ──
@@ -2044,18 +2044,48 @@ function findTodayIdx(){
   return S.dayIdx;
 }
 let _nowTimer=null;
-function jumpToNow(){
-  const di=findTodayIdx();
-  S.dayIdx=di;
+function nowTarget(){
+  const clock=tripClock();
+  const dated=S.days.map((day,index)=>({day,index})).filter(x=>/^\d{4}-\d{2}-\d{2}$/.test(x.day.date||'')).sort((a,b)=>a.day.date.localeCompare(b.day.date));
+  let entry=dated.find(x=>x.day.date===clock.date),message='',last=false;
+  if(!entry){
+    entry=dated.find(x=>x.day.date>clock.date);
+    if(entry)message=entry===dated[0]?'旅程尚未開始，已跳到第一天':'今天沒有行程，已跳到下一個行程日';
+    else if(dated.length){entry=dated[dated.length-1];last=true;message='旅程日期已過，已跳到最後一天';}
+    else{entry={day:S.days[S.dayIdx]||S.days[0],index:S.days[S.dayIdx]?S.dayIdx:0};message='尚未設定日期，已顯示所選日期的行程';}
+  }
+  const {day,index}=entry,locs=day?.locations||[];
+  const timed=locs.filter(l=>/^([01]?\d|2[0-3]):[0-5]\d$/.test(l.time||'')).map(l=>({loc:l,mins:Number(l.time.split(':')[0])*60+Number(l.time.split(':')[1])})).sort((a,b)=>a.mins-b.mins);
+  let target=last?(timed.at(-1)?.loc||locs.at(-1)):(timed[0]?.loc||locs[0]);
+  if(day?.date===clock.date){
+    const past=timed.filter(x=>x.mins<=clock.minutes);
+    target=past.at(-1)?.loc||timed[0]?.loc||locs[0];
+    message=!timed.length?'今天尚未設定行程時間':past.length?'已跳到目前時段的行程':'今天的行程尚未開始，已跳到下一筆';
+  }
+  if(!locs.length)message=day?'這一天尚未新增行程':'尚未新增行程日期';
+  return {dayIdx:index,id:target?.id,message};
+}
+let _nowJumpTimer=null;
+function jumpToNow(notify=true){
+  const target=nowTarget();
+  if(!S.days.length){if(notify)showNowNotice(target.message);return;}
+  S.dayIdx=target.dayIdx;
   S.view='itinerary';
   render();
-  setTimeout(()=>{
-    const el=document.querySelector('.loc-card-wrap.loc-now');
+  clearTimeout(_nowJumpTimer);
+  _nowJumpTimer=setTimeout(()=>{
+    const el=Array.from(document.querySelectorAll('.loc-card-wrap')).find(el=>el.dataset.locid===target.id)||document.querySelector('.section-head');
     if(el)el.scrollIntoView({behavior:'smooth',block:'center'});
-    // Also scroll active tab into view
-    const tab=document.querySelector('.day-tabs .dtab.on');
-    if(tab)tab.scrollIntoView({inline:'nearest',block:'nearest',behavior:'smooth'});
+    if(notify)showNowNotice(target.message);
   },100);
+}
+function showNowNotice(message){
+  document.getElementById('_nowNotice')?.remove();
+  const el=document.createElement('div');
+  el.id='_nowNotice';el.className='wl-toast';el.setAttribute('role','status');
+  el.style.cssText='white-space:normal;max-width:calc(100vw - 32px);width:max-content;text-align:center';
+  el.textContent=message;document.body.appendChild(el);
+  setTimeout(()=>el.remove(),4000);
 }
 function startNowTimer(){
   if(_nowTimer)return;
