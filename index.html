@@ -1329,7 +1329,7 @@ function setD(u){
 function setU(u){S={...S,...u};render();}
 let _preserveScroll=false;
 function render(){
-  const savedScroll=_preserveScroll?window.scrollY:0;
+  const savedScroll=window.scrollY;
   _preserveScroll=false;
   const root=document.getElementById('root');if(!root)return;
   const si=Math.min(S.dayIdx,S.days.length-1);
@@ -1340,8 +1340,13 @@ function render(){
 
   setTimeout(()=>{
     const t=document.querySelector('.day-tabs .dtab.on');
-    if(t)t.scrollIntoView({inline:'nearest',block:'nearest',behavior:'instant'});
-    if(savedScroll>0)window.scrollTo({top:savedScroll,behavior:'instant'});
+    // Only move the horizontal day strip; scrollIntoView also moved the page.
+    if(t){
+      const strip=t.parentElement,buttonRect=t.getBoundingClientRect(),stripRect=strip.getBoundingClientRect();
+      if(buttonRect.left<stripRect.left)strip.scrollLeft-=stripRect.left-buttonRect.left;
+      else if(buttonRect.right>stripRect.right)strip.scrollLeft+=buttonRect.right-stripRect.right;
+    }
+    window.scrollTo({top:savedScroll,behavior:'instant'});
   },0);
   if(S.view==='itinerary'&&S.mapOpen===true)setTimeout(()=>mountItinMap(ad),0);
   // 保險：若狀態有 modal 但畫面上沒有掛載任何視窗，重新掛回（避免狀態不同步導致 FAB 消失）
@@ -1678,20 +1683,21 @@ function toggleSplitPerson(name){
 
 function editTvProfile(name){
   const meta=(S.travelerMeta||{})[name]||{};
-  FM={...FM,editTvName:name,editTvNewName:name,editTvRole:meta.role||'',editTvBio:meta.bio||''};
+  FM={...FM,editTvName:name,editTvNewName:name,editTvIcon:S.travelerIcons?.[name]||'🙂',editTvRole:meta.role||'',editTvBio:meta.bio||''};
   S.modal={t:'tvEdit'};
   _refreshHeroContent();
 }
 
 function buildTvEditModal(){
   const name=FM.editTvName||'';
-  const ic=S.travelerIcons?.[name]||'🙂';
+  const ic=FM.editTvIcon||S.travelerIcons?.[name]||'🙂';
   const c=getTvColor(name);
   return`<div class="mhd"><div class="mt">編輯旅伴名字與資料</div><div class="mcl" onclick="closeTvEdit()">✕</div></div>
 <div class="tv-preview" style="--tv-bg:${c.bg};--tv-fg:${c.fg};--tv-ac:${c.accent};">
   <div class="tv-avatar tv-avatar-lg">${ic}</div>
   <div class="tv-preview-name">${esc(name)}</div>
 </div>
+<div class="fg"><label class="fl">代表圖案</label><div class="avatar-pick avatar-pick-grid" id="tv-edit-avatars">${AVATARS.map(a=>`<button type="button" class="avatar-btn${ic===a?' on':''}" aria-label="選擇 ${a}" aria-pressed="${ic===a}" onclick="pickEditTvAvatar('${a}',this)">${a}</button>`).join('')}</div></div>
 <div class="fg"><label class="fl" for="tv-edit-name">旅伴名字</label>
   <input type="text" id="tv-edit-name" value="${esc(FM.editTvNewName||'')}" oninput="FM.editTvNewName=this.value">
   <div class="tip">改名會同步更新付款人及分帳對象，保留原有金額。</div>
@@ -1708,6 +1714,12 @@ function buildTvEditModal(){
 </div>`;
 }
 
+function pickEditTvAvatar(icon,btn){
+  FM.editTvIcon=icon;
+  document.querySelectorAll('#tv-edit-avatars .avatar-btn').forEach(b=>{b.classList.toggle('on',b===btn);b.setAttribute('aria-pressed',String(b===btn));});
+  const preview=document.querySelector('.tv-preview .tv-avatar-lg');
+  if(preview)preview.textContent=icon;
+}
 function closeTvEdit(){
   S.modal={t:'tv'};
   _refreshHeroContent();
@@ -1741,7 +1753,7 @@ function saveTvProfile(){
     if(S.splitExpanded===name)S.splitExpanded=next;
   }
   tvMeta[next]={...(S.travelerMeta?.[name]||{}),name:next,_u:Date.now(),role:(FM.editTvRole||'').trim(),bio:(FM.editTvBio||'').trim()};
-  S={...S,travelerMeta:tvMeta,modal:{t:'tv'}};
+  S={...S,travelerMeta:tvMeta,travelerIcons:{...S.travelerIcons,[next]:FM.editTvIcon||S.travelerIcons?.[next]||'🙂'},modal:{t:'tv'}};
   psave();
   _refreshHeroContent();
 }
