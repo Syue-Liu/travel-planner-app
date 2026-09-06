@@ -137,8 +137,30 @@ a{text-decoration:none}
 .travel-toolkit{background:var(--paper);border:1px solid var(--line);border-radius:16px;padding:14px;margin-bottom:14px;font-size:14px;line-height:1.6}
 .travel-toolkit summary{cursor:pointer;font-weight:800;padding:8px 0}
 .travel-toolkit .sync-row{display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap}
-.travel-key{padding:10px 0;border-bottom:1px solid var(--line);overflow-wrap:anywhere}
-.travel-key p{color:var(--muted);white-space:pre-wrap}
+.travel-important{margin:14px -2px 4px}
+.travel-important>summary{list-style:none;display:flex;align-items:center;gap:10px;padding:14px 2px!important;font-size:17px;letter-spacing:.02em}
+.travel-important>summary::-webkit-details-marker{display:none}
+.important-heading-icon{display:grid;place-items:center;width:36px;height:36px;border-radius:12px;background:var(--teal-fill);color:white}
+.important-count{font-size:12px;font-weight:700;color:var(--muted);margin-left:auto}
+.important-chevron{transition:transform .2s}.travel-important[open] .important-chevron{transform:rotate(180deg)}
+.important-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;padding:2px 0 12px}
+.travel-key{--key-color:var(--t-blue-fg);--key-tint:var(--t-blue-bg);border:1px solid var(--line);border-top:3px solid var(--key-color);border-radius:16px;background:var(--paper);box-shadow:0 5px 18px rgba(0,0,0,.04);overflow:hidden;min-width:0;display:flex;flex-direction:column;overflow-wrap:anywhere}
+.travel-key[data-kind="stay"]{--key-color:var(--t-green-fg);--key-tint:var(--t-green-bg)}
+.travel-key[data-kind="ride"]{--key-color:var(--t-amber-fg);--key-tint:var(--t-amber-bg)}
+.travel-key[data-kind="booking"]{--key-color:var(--t-purple-fg);--key-tint:var(--t-purple-bg)}
+.key-ticket-top{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:14px 16px;background:var(--key-tint)}
+.key-kind{display:flex;align-items:center;gap:7px;color:var(--key-color);font-size:14px;font-weight:800}
+.key-time{font-size:25px;line-height:1;font-weight:900;letter-spacing:-.5px;font-variant-numeric:tabular-nums;color:var(--key-color);white-space:nowrap}
+.key-content{padding:16px;flex:1}.key-content h3{font-size:16px;line-height:1.5;margin:0 0 8px;color:var(--ink)}
+.key-status{display:inline-flex;align-items:center;gap:5px;border-radius:7px;padding:4px 8px;font-size:12px;font-weight:800;background:var(--t-amber-bg);color:var(--t-amber-fg);margin-bottom:9px}
+.key-status.booked{background:var(--t-green-bg);color:var(--t-green-fg)}
+.key-address{font-size:13px;line-height:1.6;color:var(--muted);margin:0 0 10px}
+.key-note{font-size:14px;line-height:1.8;color:var(--ink);white-space:pre-wrap;margin:0}
+.key-more summary{font-size:13px!important;color:var(--key-color);font-weight:700;padding:6px 0!important}
+.key-actions{display:flex;flex-wrap:wrap;gap:8px;padding:10px 16px;border-top:1px dashed var(--line);background:var(--soft)}
+.key-actions a,.key-actions button{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:40px;padding:6px 12px;border-radius:9px;background:var(--paper);border:1px solid var(--line);font-size:13px;font-weight:800;color:var(--key-color);cursor:pointer}
+.key-actions a:focus-visible,.travel-important summary:focus-visible{outline:2px solid var(--key-color,var(--teal-fill));outline-offset:3px}
+@media(max-width:640px){.important-grid{grid-template-columns:1fr}.key-time{font-size:28px}.key-content{padding:14px 16px}.travel-toolkit{padding:12px}.key-actions a{min-height:44px;flex:1}}
 .travel-segment{display:block;padding:10px 0;border-top:1px solid var(--line);color:var(--t-blue-fg);overflow-wrap:anywhere}
 .section-actions{display:flex;align-items:center;justify-content:flex-end;gap:6px;flex-wrap:nowrap;position:relative;flex-shrink:0}
 .action-group{display:flex;align-items:center;gap:7px;position:relative;flex-wrap:nowrap}
@@ -1531,6 +1553,7 @@ function mLoc(){
 <div class="mobile-stack" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;"><div><label class="fl">分類</label><select onchange="FM.category=this.value">${locCatOpts}</select></div><div><label class="fl">時間</label><input type="time" value="${esc(FM.time||'')}" oninput="FM.time=this.value" style="min-height:44px;"></div></div>
 <div class="mobile-stack" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;"><div><label class="fl">訂位狀態</label><select onchange="FM.reservation=this.value">${resOpts}</select></div><div><label class="fl">訂位確認碼</label><input type="text" value="${esc(FM.resCode||'')}" placeholder="選填" oninput="FM.resCode=this.value"></div></div>
 <div class="fg"><label class="fl">備註</label><textarea placeholder="例：需預訂、注意公休日、停車資訊..." oninput="FM.notes=this.value" style="min-height:100px;resize:vertical;">${esc(FM.notes||'')}</textarea></div>
+<div class="fg"><label class="fl" for="important-setting">重要資訊區塊</label><select id="important-setting" onchange="FM.important=this.value==='auto'?null:this.value==='show'"><option value="auto" ${FM.important==null?'selected':''}>自動判斷（住宿、航班、租車、預約等）</option><option value="show" ${FM.important===true?'selected':''}>置頂顯示</option><option value="hide" ${FM.important===false?'selected':''}>不顯示（保留每日行程）</option></select></div>
 <div class="ar"><button class="btn bp" style="flex:1;padding:10px;" onclick="sLoc()">儲存</button><button class="btn" style="flex:1;padding:10px;" onclick="setU({modal:null})">取消</button></div>`;
 }
 function mDay(){
@@ -3665,17 +3688,28 @@ function memoConfirmImport(){
 }
 
 // Trip-scoped durable journal: never mix data from two sync codes.
+function addImportantInfo(el){
+  _heroOrigin=el.getBoundingClientRect();oLoc('');FM.important=true;_refreshHeroContent();
+}
 function travelToolkit(day){
   const cached=readTripCache();
-  const keyItems=day.locations.filter(l=>l.phone||l.reservation==='pending'||l.category==='住宿'||/航班|航空|取車|還車|集合/.test(l.name));
+  const keyItems=day.locations.filter(l=>l.important!==false&&(l.important===true||l.phone||l.reservation==='pending'||l.category==='住宿'||/航班|航空|取車|還車|集合/.test(l.name)));
   const points=day.locations.filter(l=>!(/航空|航班|JR|N.EX|大江戶線|山手線|中央線|地下鐵/.test(l.name)));
   const mode=['driving','walking','transit'].includes(S.routeMode)?S.routeMode:'driving';
+  const importantCards=keyItems.map(l=>{
+    const [kind,label,icon]=/航空|航班/.test(l.name)?['flight','航班資訊','ticket']:l.category==='住宿'?['stay','住宿資訊','bed']:/取車|還車/.test(l.name)?['ride','租車安排','car']:['booking','預約與聯絡','calendar'];
+    const notes=l.notes||'';
+    const firstLine=notes.split('\n')[0];
+    const long=notes.length>95||notes.includes('\n');
+    const preview=firstLine.length>95?firstLine.slice(0,95)+'…':firstLine;
+    return `<article class="travel-key" data-kind="${kind}"><div class="key-ticket-top"><span class="key-kind">${TI(icon,19)} ${label}</span>${l.time?`<time class="key-time">${esc(l.time)}</time>`:''}</div><div class="key-content"><h3>${esc(l.name)}</h3>${l.reservation==='pending'?`<span class="key-status">${TI('clock',13)} 待確認預約</span>`:l.reservation==='booked'?`<span class="key-status booked">${TI('circle-check',13)} 已訂位</span>`:''}${l.address?`<p class="key-address">${esc(l.address)}</p>`:''}${long?`<p class="key-note">${esc(preview)}</p><details class="key-more"><summary>查看完整提醒</summary><p class="key-note">${linkify(notes)}</p></details>`:`<p class="key-note">${linkify(notes)}</p>`}</div><div class="key-actions"><a href="${mu(l.address||l.name)}" target="_blank" rel="noopener">${TI('map-pin',15)} 查看地圖</a>${l.phone?`<a href="tel:${esc(l.phone)}">${TI('phone',15)} 撥打電話</a>`:''}<button type="button" onclick="_heroOrigin=this.getBoundingClientRect();oLoc(\'${jsq(l.id)}\')">${TI('pencil',15)} 編輯</button></div></article>`;
+  }).join('');
   const segments=points.slice(1).map((to,i)=>{
     const from=points[i];
     const url='https://www.google.com/maps/dir/?api=1&origin='+encodeURIComponent(from.address||from.name)+'&destination='+encodeURIComponent(to.address||to.name)+'&travelmode='+mode;
     return `<a class="travel-segment" href="${esc(url)}" target="_blank" rel="noopener">${i+1}. ${esc(from.name)} → ${esc(to.name)}</a>`;
   }).join('');
-  return `<section class="travel-toolkit" aria-label="旅途中快速查詢"><div class="sync-row"><strong role="status">${esc(cloud.status)}</strong><button class="btn" onclick="retryTripSync()">重試同步</button></div><div class="tip">${esc(tripClock().label)} · ${cached?'此裝置已有行程副本':'此裝置尚無離線副本'}。地圖導航仍需網路；目前天氣不是旅行日預報。</div><details ${keyItems.length?'open':''}><summary>重要資訊 · ${keyItems.length} 項</summary>${keyItems.map(l=>`<div class="travel-key"><strong>${esc(l.time||'')} ${esc(l.name)}</strong>${l.reservation==='pending'?'<div>待確認預約</div>':''}<p>${linkify(l.notes||'')}</p>${l.phone?`<a href="tel:${esc(l.phone)}">撥打 ${esc(l.phone)}</a>`:''}</div>`).join('')||'這一天沒有住宿、航班或租車資訊。'}</details><details><summary>分段導航</summary><label>交通方式 <select aria-label="分段導航交通方式" onchange="setU({routeMode:this.value})">${[['driving','開車／騎乘參考'],['walking','步行'],['transit','大眾運輸']].map(([v,t])=>`<option value="${v}" ${v===mode?'selected':''}>${t}</option>`).join('')}</select></label><div class="tip">已排除航班與鐵路活動。騎乘請在 Google Maps 手動開啟「避開高速公路、避開收費道路」，核對實際路線後再出發；地址不完整的補給點請先確認。</div>${segments||'至少需要兩個地點才能產生分段導航。'}</details></section>`;
+  return `<section class="travel-toolkit" aria-label="旅途中快速查詢"><div class="sync-row"><strong role="status">${esc(cloud.status)}</strong><button class="btn" onclick="retryTripSync()">重試同步</button></div><div class="tip">${esc(tripClock().label)} · ${cached?'此裝置已有行程副本':'此裝置尚無離線副本'}。地圖導航仍需網路；目前天氣不是旅行日預報。</div><details class="travel-important" ${keyItems.length?'open':''}><summary><span class="important-heading-icon">${TI('ticket',19)}</span>重要資訊<span class="important-count">${keyItems.length} 項安排</span><span class="important-chevron">${TI('chevron-down',16)}</span></summary><button class="btn" type="button" style="margin:0 0 12px" onclick="addImportantInfo(this)">${TI('plus',15)} 新增重要資訊</button><div class="important-grid">${importantCards||'<p class="key-address">這一天沒有住宿、航班或租車資訊。</p>'}</div></details><details><summary>分段導航</summary><label>交通方式 <select aria-label="分段導航交通方式" onchange="setU({routeMode:this.value})">${[['driving','開車／騎乘參考'],['walking','步行'],['transit','大眾運輸']].map(([v,t])=>`<option value="${v}" ${v===mode?'selected':''}>${t}</option>`).join('')}</select></label><div class="tip">已排除航班與鐵路活動。騎乘請在 Google Maps 手動開啟「避開高速公路、避開收費道路」，核對實際路線後再出發；地址不完整的補給點請先確認。</div>${segments||'至少需要兩個地點才能產生分段導航。'}</details></section>`;
 }
 function tripCacheKey(){return 'travel-offline-v1:'+ (new URLSearchParams(location.search).get('trip')||'local');}
 function readTripCache(){try{return JSON.parse(localStorage.getItem(tripCacheKey())||'null');}catch{return null;}}
