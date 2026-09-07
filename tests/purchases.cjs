@@ -3,7 +3,7 @@ const html=fs.readFileSync(require('node:path').join(__dirname,'../index.html'),
 for(const m of html.matchAll(/<script(?:\s[^>]*)?>([\s\S]*?)<\/script>/gi))new vm.Script(m[1]);
 function fn(name){const start=html.search(new RegExp('^function '+name+'\\(','m'));assert(start>=0);const tail=html.slice(start);const end=tail.slice(1).search(/^(?:function |async function |let |const |window\.|setInterval\(|load\()/m);return tail.slice(0,end+1);}
 let seq=0,undo;const alerts=[];
-const ctx={S:{memo:[{id:'memo1',text:'護照',cat:'證件',done:false}],trash:{}},FM:{},TI:()=>'',esc:s=>String(s).replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('"','&quot;'),uid:()=>`buy${++seq}`,alert:m=>alerts.push(m),confirm:()=>true,openModal:()=>{},setD:u=>Object.assign(ctx.S,u),tomb:id=>ctx.S.trash[id]=Date.now(),undoToast:(_,f)=>undo=f};
+const ctx={Blob,S:{memo:[{id:'memo1',text:'護照',cat:'證件',done:false}],trash:{}},FM:{},TI:()=>'',esc:s=>String(s).replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('"','&quot;'),uid:()=>`buy${++seq}`,alert:m=>alerts.push(m),confirm:()=>true,openModal:()=>{},setD:u=>Object.assign(ctx.S,u),tomb:id=>ctx.S.trash[id]=Date.now(),undoToast:(_,f)=>undo=f};
 vm.createContext(ctx);
 vm.runInContext(html.slice(html.indexOf("let buyFilter='all'"),html.indexOf('function memoView()')),ctx);
 vm.runInContext(fn('toggleMemo'),ctx);
@@ -20,4 +20,28 @@ const stamped=ctx.stampChanges(ctx.S.memo,[]);assert(stamped.every(m=>m._u));con
 const merged=ctx.mergeById(restored,[{id:'remote',kind:'purchase',text:'旅伴商品',_u:1}],{});assert.equal(merged.length,4);
 ctx.deleteBuy(id);assert(ctx.S.trash[id]);assert(!ctx.buyItems().some(m=>m.id===id));undo();assert(ctx.buyItems().some(m=>m.text==='新口味'&&m.id!==id));assert.equal(ctx.S.memo[0].id,'memo1');
 assert(html.includes("m.kind!=='purchase'"));assert(html.includes("else if(m.t==='buy_edit')c=buyModal()"));
-console.log('PASS: script syntax, purchase CRUD, validation, checkbox, filters, escaping, storage roundtrip, per-item merge, deletion/undo, memo preservation and modal routing');
+// Grouping, backwards compatibility, custom categories and image presentation.
+vm.runInContext("buyFilter='all'",ctx);
+const photo='data:image/jpeg;base64,YWJj';
+ctx.FM={buyName:'乳霜',buyQuantity:1,buyArea:'  銀座  ',buyCategory:'美妝保養',buyShop:'Loft',buyImage:photo};ctx.saveBuy();
+ctx.FM={buyName:'鉛筆',buyQuantity:3,buyArea:'銀座',buyCategory:'文具',buyShop:'伊東屋'};ctx.saveBuy();
+const cream=ctx.buyItems().find(m=>m.text==='乳霜');assert.equal(cream.area,'銀座');assert.equal(cream.image,photo);
+const groups=ctx.buyGroups(ctx.buyItems());assert.equal(groups.filter(([a])=>a==='銀座').length,1);assert.equal(groups.find(([a])=>a==='銀座')[1].length,2);assert.equal(groups.at(-1)[0],'未指定地區');
+assert.equal(ctx.buyCategory({}),'其他');assert.equal(ctx.safeBuyImage('javascript:alert(1)'), '');assert.equal(ctx.safeBuyImage('data:image/svg+xml;base64,YWJj'),'');assert.equal(ctx.safeBuyImage('data:image/jpeg;base64,'+'a'.repeat(40001)),'');
+assert(ctx.buyCard(cream).includes('class="buy-photo"  ontoggle'));assert(ctx.buyCard(cream).includes('loading="lazy"'));assert(!ctx.buyCard({id:'none',text:'無圖'}).includes('<details'));
+vm.runInContext(`buyPhotoOpen.add('${cream.id}')`,ctx);assert(ctx.buyCard(cream).includes('class="buy-photo" open'));
+vm.runInContext("buyCategoryFilter='文具'",ctx);assert(ctx.buyView().includes('鉛筆'));assert(!ctx.buyView().includes('乳霜'));
+ctx.openBuy(null,cream.id);assert.equal(ctx.FM.buyArea,'銀座');assert.equal(ctx.FM.buyImage,photo);assert(ctx.buyModal().includes('buy-photo-input'));ctx.FM.buyImage='';ctx.saveBuy();assert.equal(ctx.buyItems().find(m=>m.id===cream.id).image,'');
+const before=ctx.S.memo.length;ctx.FM={buyName:'等待圖片',buyQuantity:1,buyImageBusy:true};ctx.saveBuy();assert.equal(ctx.S.memo.length,before);
+ctx.S.cover='x'.repeat(850000);ctx.FM={buyName:'超出容量',buyQuantity:1};ctx.saveBuy();assert.equal(ctx.S.memo.length,before);delete ctx.S.cover;
+// Browser image pipeline mocked at its I/O boundary; cancellation must not leak images into another draft.
+let imageHandle,refresh=0,revoked=0;
+ctx._refreshHeroContent=()=>refresh++;
+ctx.URL={createObjectURL:()=> 'blob:test',revokeObjectURL:()=>revoked++};
+ctx.Image=class{constructor(){imageHandle=this;this.naturalWidth=1200;this.naturalHeight=800;}set src(v){this.source=v;}};
+ctx.document={createElement:()=>({getContext:()=>({fillRect(){},drawImage(){}}),toDataURL:()=>photo})};
+ctx.S.modal={t:'buy_edit'};ctx.FM={buyImage:''};ctx.uploadBuyImage({type:'image/jpeg',size:2000});assert(ctx.FM.buyImageBusy);imageHandle.onload();assert.equal(ctx.FM.buyImage,photo);assert.equal(ctx.FM.buyImageBusy,false);assert.equal(revoked,1);
+ctx.uploadBuyImage({type:'image/png',size:2000});ctx.FM={buyImage:''};imageHandle.onload();assert.equal(ctx.FM.buyImage,'');assert.equal(revoked,2);
+ctx.uploadBuyImage({type:'image/webp',size:2000});imageHandle.onerror();assert.equal(ctx.FM.buyImageBusy,false);assert.equal(revoked,3);
+const beforeInvalid=refresh;ctx.uploadBuyImage({type:'image/svg+xml',size:100});ctx.uploadBuyImage({type:'image/png',size:13*1024*1024});assert.equal(refresh,beforeInvalid);
+console.log('PASS: syntax, CRUD, validation, completion filters, escaping, storage/merge, undo, memo isolation, region grouping, custom categories, collapsed images, image edit/removal, capacity guard, compression callbacks, stale upload cancellation and invalid files');
