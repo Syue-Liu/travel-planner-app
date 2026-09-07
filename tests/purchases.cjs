@@ -1,0 +1,23 @@
+const fs=require('node:fs'),vm=require('node:vm'),assert=require('node:assert/strict');
+const html=fs.readFileSync(require('node:path').join(__dirname,'../index.html'),'utf8');
+for(const m of html.matchAll(/<script(?:\s[^>]*)?>([\s\S]*?)<\/script>/gi))new vm.Script(m[1]);
+function fn(name){const start=html.search(new RegExp('^function '+name+'\\(','m'));assert(start>=0);const tail=html.slice(start);const end=tail.slice(1).search(/^(?:function |async function |let |const |window\.|setInterval\(|load\()/m);return tail.slice(0,end+1);}
+let seq=0,undo;const alerts=[];
+const ctx={S:{memo:[{id:'memo1',text:'護照',cat:'證件',done:false}],trash:{}},FM:{},TI:()=>'',esc:s=>String(s).replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('"','&quot;'),uid:()=>`buy${++seq}`,alert:m=>alerts.push(m),confirm:()=>true,openModal:()=>{},setD:u=>Object.assign(ctx.S,u),tomb:id=>ctx.S.trash[id]=Date.now(),undoToast:(_,f)=>undo=f};
+vm.createContext(ctx);
+vm.runInContext(html.slice(html.indexOf("let buyFilter='all'"),html.indexOf('function memoView()')),ctx);
+vm.runInContext(fn('toggleMemo'),ctx);
+vm.runInContext(fn('stampChanges'),ctx);vm.runInContext(fn('_itemSig'),ctx);vm.runInContext(fn('mergeById'),ctx);
+ctx.FM={buyName:'餅乾',buyQuantity:2,buyShop:'河口湖',buyNote:'送家人'};ctx.saveBuy();
+assert.equal(ctx.buyItems().length,1);assert.equal(ctx.S.memo[0].text,'護照');const id=ctx.buyItems()[0].id;
+ctx.openBuy(null,id);ctx.FM.buyName='新口味';ctx.saveBuy();assert.equal(ctx.buyItems()[0].text,'新口味');assert.equal(ctx.buyItems()[0].quantity,2);
+ctx.toggleMemo(id);assert.equal(ctx.buyItems()[0].done,true);
+ctx.openBuy(null,id);ctx.FM.buyNote='改備註';ctx.saveBuy();assert.equal(ctx.buyItems()[0].done,true);
+ctx.FM={buyName:' ',buyQuantity:1};ctx.saveBuy();ctx.FM={buyName:'錯誤數量',buyQuantity:1.5};ctx.saveBuy();assert.equal(alerts.length,2);assert.equal(ctx.buyItems().length,1);
+ctx.S.memo.push({id:'xss',kind:'purchase',text:'<img onerror=alert(1)>',note:'<script>',quantity:1,done:false});assert(!ctx.buyView().includes('<img onerror'));assert(ctx.buyView().includes('&lt;script>'));
+vm.runInContext("buyFilter='pending'",ctx);assert(!ctx.buyView().includes('新口味'));vm.runInContext("buyFilter='done'",ctx);assert(ctx.buyView().includes('新口味'));
+const stamped=ctx.stampChanges(ctx.S.memo,[]);assert(stamped.every(m=>m._u));const restored=JSON.parse(JSON.stringify(stamped));assert.equal(restored.find(m=>m.id===id).shop,'河口湖');
+const merged=ctx.mergeById(restored,[{id:'remote',kind:'purchase',text:'旅伴商品',_u:1}],{});assert.equal(merged.length,4);
+ctx.deleteBuy(id);assert(ctx.S.trash[id]);assert(!ctx.buyItems().some(m=>m.id===id));undo();assert(ctx.buyItems().some(m=>m.text==='新口味'&&m.id!==id));assert.equal(ctx.S.memo[0].id,'memo1');
+assert(html.includes("m.kind!=='purchase'"));assert(html.includes("else if(m.t==='buy_edit')c=buyModal()"));
+console.log('PASS: script syntax, purchase CRUD, validation, checkbox, filters, escaping, storage roundtrip, per-item merge, deletion/undo, memo preservation and modal routing');
