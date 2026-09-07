@@ -118,7 +118,18 @@ a{text-decoration:none}
 .tni{background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.35);color:#fff;border-radius:12px;padding:11px 12px;font-size:18px;font-family:var(--font-sans);flex:1;min-width:0}
 .tni::placeholder{color:rgba(255,255,255,.62)}
 .quick{display:none}
-.nav{position:sticky;top:0;z-index:20;display:flex;gap:6px;padding:8px;background:var(--nav-bg);backdrop-filter:blur(14px);border-bottom:1px solid var(--line-a)}
+.nav{position:sticky;top:0;z-index:20;display:flex;gap:6px;padding:8px;background:var(--nav-bg);backdrop-filter:blur(14px);border-bottom:1px solid var(--line-a);overflow-x:auto}
+.nav-btn{min-width:62px;white-space:nowrap}
+.buy-hero{padding:22px;border-radius:22px;background:linear-gradient(135deg,var(--teal-fill),#356e65);color:#fff;margin-bottom:18px}
+.buy-hero h2{margin:0 0 8px;font-size:23px}
+.buy-tools{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px}
+.buy-card{display:flex;align-items:flex-start;gap:12px;padding:16px;margin-bottom:10px;border:1px solid var(--line);border-radius:16px;background:var(--paper)}
+.buy-check{width:24px;height:24px;flex-shrink:0;accent-color:var(--teal);margin-top:3px;cursor:pointer}
+.buy-main{flex:1;min-width:0;overflow-wrap:anywhere}
+.buy-name{font-size:16px;font-weight:800}.buy-card.done .buy-name{text-decoration:line-through;color:var(--muted)}
+.buy-meta{font-size:13px;color:var(--muted);margin-top:6px;white-space:pre-wrap}
+.buy-actions{display:flex;gap:4px;flex-shrink:0}
+@media(max-width:420px){.nav-btn{font-size:12px;gap:3px;min-width:55px}.buy-card{padding:12px;gap:8px}.buy-actions{flex-direction:column}}
 .nav-btn{flex:1;min-height:42px;padding:8px 4px;font-size:13.5px;color:var(--muted);border:0;background:transparent;border-radius:999px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:5px;font-weight:700}
 .nav-btn.on{color:#fff;background:var(--teal-fill);font-weight:700;box-shadow:0 7px 18px rgba(15,94,94,.22)}
 .body{padding:14px 14px calc(24px + env(safe-area-inset-bottom))}
@@ -1336,7 +1347,7 @@ function render(){
   const ad=S.days[si];
   const te=S.expenses.reduce((s,e)=>s+expValue(e),0);
   const {b,tx}=settle(S.expenses,S.travelers);
-  root.innerHTML=`<div class="app">${hdr(te)}${gnav()}<main class="body">${S.view==='memo'?memoView():''}${S.view==='itinerary'?itin(ad,si):''}${S.view==='wishlist'?wishlistView():''}${S.view==='expenses'?exps(te):''}${S.view==='split'?splt(b,tx,te):''}</main></div>${globalFab()}`;
+  root.innerHTML=`<div class="app">${hdr(te)}${gnav()}<main class="body">${S.view==='memo'?memoView():''}${S.view==='buy'?buyView():''}${S.view==='itinerary'?itin(ad,si):''}${S.view==='wishlist'?wishlistView():''}${S.view==='expenses'?exps(te):''}${S.view==='split'?splt(b,tx,te):''}</main></div>${globalFab()}`;
 
   setTimeout(()=>{
     const t=document.querySelector('.day-tabs .dtab.on');
@@ -1395,7 +1406,7 @@ function hdr(te){
   const diff=start?Math.ceil((start-today)/86400000):null;
   const countdown=diff===null?'':diff>0?`倒數 ${diff} 天`:diff===0?'今天出發':tripClock().date<=last?'旅途中':'旅程已結束';
   const locCount=(S.days||[]).reduce((n,d)=>n+(d.locations?.length||0),0);
-  const done=(S.memo||[]).filter(m=>m.done).length,memoTotal=(S.memo||[]).length;
+  const done=(S.memo||[]).filter(m=>m.kind!=='purchase'&&m.done).length,memoTotal=(S.memo||[]).filter(m=>m.kind!=='purchase').length;
   const statsStrip=`<div class="stats-strip"><div class="stat-cell"><div class="stat-n">${S.days?.length||0}</div><div class="stat-l">行程天數</div></div><div class="stat-cell"><div class="stat-n">${locCount}</div><div class="stat-l">行程地點</div></div><div class="stat-cell"><div class="stat-n">${done}/${memoTotal}</div><div class="stat-l">行前完成</div></div></div>`;
   const coverStyle=`--cover:url('${esc(S.cover)}');--cover-pos:${S.coverPos||'30%'}`;
   if(S.editTN)return`<header class="cover" style="${coverStyle}"><div class="topbar"></div><div class="cover-bottom"><div class="title-edit"><input class="tni" id="tn-in" value="${esc(S.tnDraft)}" placeholder="行程名稱" oninput="S.tnDraft=this.value" onkeydown="if(event.key==='Enter')saveTN()" autofocus><button class="btn glass" onclick="saveTN()">完成</button></div></div></header>${statsStrip}`;
@@ -1406,7 +1417,7 @@ function hdr(te){
 }
 function saveTN(){const v=document.getElementById('tn-in')?.value?.trim()||S.tnDraft.trim()||'未命名旅程';setD({tripName:v,editTN:false});}
 function gnav(){
-  const ts=[['memo','checklist','備忘'],['itinerary','route','行程'],['wishlist','star','清單'],['expenses','coin','記帳'],['split','scale','分帳']];
+  const ts=[['memo','checklist','備忘'],['itinerary','route','行程'],['wishlist','star','清單'],['buy','shopping-bag','待買'],['expenses','coin','記帳'],['split','scale','分帳']];
   return`<nav class="nav">${ts.map(([k,ic,l])=>`<button class="nav-btn${S.view===k?' on':''}" onclick="switchTab('${k}')">${TI(ic,15)} ${l}</button>`).join('')}</nav>`;
 }
 function itineraryMap(day){
@@ -2513,8 +2524,42 @@ function mNote(){
 const MEMO_CATS=['證件','行李','預訂','其他'];
 const MEMO_IC={證件:'🪪',行李:'🧳',預訂:'📅',其他:'📌'};
 const MEMO_TI={證件:'id',行李:'luggage',預訂:'calendar-check',其他:'map-pin'};
+// Purchase entries share the existing memo sync collection and tombstone handling.
+// A discriminator keeps purchases separate from pre-trip tasks without a rules migration.
+let buyFilter='all';
+function buyItems(){return (S.memo||[]).filter(m=>m.kind==='purchase');}
+function buyView(){
+  const items=buyItems(),done=items.filter(m=>m.done).length;
+  const visible=items.filter(m=>buyFilter==='all'||(buyFilter==='done'?m.done:!m.done)).slice().sort((a,b)=>Number(a.done)-Number(b.done));
+  const filters=[['all','全部'],['pending','未買'],['done','已買']].map(([id,label])=>`<button class="btn ${buyFilter===id?'bp':''}" aria-pressed="${buyFilter===id}" onclick="buyFilter='${id}';render()">${label}</button>`).join('');
+  return `<section class="buy-hero"><h2>🛍️ 旅行待買清單</h2><div>想帶回家的好東西，一件也不漏。</div><div style="margin-top:16px;font-weight:800">已買 ${done} / ${items.length} 件 · 還有 ${items.length-done} 件待買</div><progress aria-label="採買完成進度" value="${done}" max="${items.length||1}" style="width:100%;margin-top:10px;accent-color:#e7c782"></progress></section><div class="buy-tools">${filters}<button class="btn bp" style="margin-left:auto" onclick="openBuy(this)">${TI('plus',15)} 新增商品</button></div>${visible.map(m=>`<article class="buy-card${m.done?' done':''}"><input class="buy-check" type="checkbox" ${m.done?'checked':''} aria-label="${esc(m.text)}：已買" onchange="toggleMemo('${m.id}')"><div class="buy-main"><div class="buy-name">${esc(m.text)} <span style="font-size:12px;color:var(--muted)">× ${Number(m.quantity)||1}</span></div>${m.shop?`<div class="buy-meta">店家｜${esc(m.shop)}</div>`:''}${m.note?`<div class="buy-meta">${esc(m.note)}</div>`:''}</div><div class="buy-actions"><button class="btn-ic" aria-label="編輯商品" onclick="openBuy(this,'${m.id}')">${TI('pencil',16)}</button><button class="btn-ic" aria-label="刪除商品" onclick="deleteBuy('${m.id}')">${TI('trash',16)}</button></div></article>`).join('')||`<div class="empty">${items.length?'這個篩選下沒有商品':'還沒有待買商品，點「新增商品」開始記錄。'}</div>`}`;
+}
+function openBuy(el,id=''){
+  const item=buyItems().find(m=>m.id===id);
+  FM={buyId:item?.id||'',buyName:item?.text||'',buyQuantity:item?.quantity||1,buyShop:item?.shop||'',buyNote:item?.note||''};
+  openModal(el,{t:'buy_edit'});
+}
+function buyModal(){
+  return `<div class="mhd"><div class="mt">${FM.buyId?'編輯':'新增'}待買商品</div><button class="mcl" aria-label="關閉" onclick="setU({modal:null})">✕</button></div><form onsubmit="event.preventDefault();saveBuy()"><div class="fg"><label class="fl" for="buy-name">商品名稱 *</label><input id="buy-name" required maxlength="120" value="${esc(FM.buyName||'')}" placeholder="例：桔梗信玄餅" oninput="FM.buyName=this.value"></div><div class="fg"><label class="fl" for="buy-quantity">數量</label><input id="buy-quantity" type="number" min="1" max="999" step="1" required value="${Number(FM.buyQuantity)||1}" oninput="FM.buyQuantity=this.value"></div><div class="fg"><label class="fl" for="buy-shop">預計購買店家／區域</label><input id="buy-shop" maxlength="200" value="${esc(FM.buyShop||'')}" placeholder="例：河口湖桔梗屋" oninput="FM.buyShop=this.value"></div><div class="fg"><label class="fl" for="buy-note">備註</label><textarea id="buy-note" rows="3" maxlength="1000" placeholder="口味、尺寸、顏色，或要送給誰…" oninput="FM.buyNote=this.value">${esc(FM.buyNote||'')}</textarea></div><div class="ar"><button class="btn bp" type="submit">儲存商品</button><button class="btn" type="button" onclick="setU({modal:null})">取消</button></div></form>`;
+}
+function saveBuy(){
+  const text=String(FM.buyName||'').trim(),quantity=Number(FM.buyQuantity);
+  if(!text){alert('請填寫商品名稱');return;}
+  if(!Number.isInteger(quantity)||quantity<1||quantity>999){alert('數量請填入 1–999 的整數');return;}
+  const old=buyItems().find(m=>m.id===FM.buyId);
+  if(FM.buyId&&!old){alert('這筆商品已被刪除，請重新新增');return;}
+  const item={...old,id:old?.id||uid(),kind:'purchase',cat:'待買',text:text.slice(0,120),quantity,shop:String(FM.buyShop||'').trim().slice(0,200),note:String(FM.buyNote||'').trim().slice(0,1000),done:old?.done||false};
+  const memo=old?S.memo.map(m=>m.id===old.id?item:m):[...(S.memo||[]),item];
+  setD({memo,modal:null});
+}
+function deleteBuy(id){
+  const item=buyItems().find(m=>m.id===id);
+  if(!item||!confirm(`刪除待買商品「${item.text}」？`))return;
+  tomb(id);setD({memo:S.memo.filter(m=>m.id!==id)});
+  undoToast('已刪除待買商品',()=>setD({memo:[...S.memo,{...item,id:uid(),_u:Date.now()}]}));
+}
 function memoView(){
-  const items=S.memo||[];
+  const items=(S.memo||[]).filter(m=>m.kind!=='purchase');
   const done=items.filter(m=>m.done).length;
   const groups=MEMO_CATS.map(cat=>{
     const its=items.filter(m=>m.cat===cat);
@@ -3164,7 +3209,7 @@ function wlConfirmImport(){
 
 // ════ HERO & SHEET modal engine ════════════════════════
 // Hero modal types (large forms) — open from trigger element
-const HERO_TYPES=new Set(['loc','exp','nd','ed','wl_add','wl_import','wl_edit','wl_day','wl_cat','import','tv','tvEdit','cover','tools','help','note','memo_add','memo_import','tripGate']);
+const HERO_TYPES=new Set(['loc','exp','nd','ed','wl_add','wl_import','wl_edit','wl_day','wl_cat','import','tv','tvEdit','cover','tools','help','note','memo_add','memo_import','buy_edit','tripGate']);
 // Sheet modal types (compact) — slide up from bottom
 const SHEET_TYPES=new Set([]);
 
@@ -3206,6 +3251,7 @@ function _mountModalOverlay(){
 function _getModalContent(m){
   let c='';
   if(m.t==='tripGate')c=mTripGate();
+  else if(m.t==='buy_edit')c=buyModal();
   else if(m.t==='loc')c=mLoc();
   else if(m.t==='nd'||m.t==='ed')c=mDay();
   else if(m.t==='exp')c=mExp();
