@@ -1384,6 +1384,7 @@ function fabConfig(){
   return cfg[S.view]||null;
 }
 function globalFab(){
+  if(S.view==='buy'&&!S.modal&&!S.editTN)return `<div class="app-fab-wrap"><button class="app-fab-main" type="button" title="新增商品" aria-label="新增商品" onclick="openBuy(this)">${TI('plus',26)}</button></div>`;
   const cfg=fabConfig();
   if(!cfg)return'';
   const tmplRow=(S.view==='itinerary'&&S.wlFabOpen)?`<div class="app-fab-tmpls">${TMPL.map((t,i)=>`<button class="app-fab-tmpl" style="background:${CB[t.cat]};color:${CF[t.cat]};" onclick="fabTmpl(this,${i})">${TI(CTI[t.cat]||'map-pin',13)} ${esc(t.name)}</button>`).join('')}</div>`:'';
@@ -2556,7 +2557,7 @@ function buyView(){
   const categories=[...new Set([...BUY_CATEGORIES,...items.map(buyCategory),...(buyCategoryFilter==='all'?[]:[buyCategoryFilter])])];
   const categorySelect=`<select aria-label="篩選商品分類" onchange="buyCategoryFilter=this.value;render()"><option value="all">所有分類</option>${categories.map(c=>`<option ${c===buyCategoryFilter?'selected':''} value="${esc(c)}">${esc(c)}</option>`).join('')}</select>`;
   const groups=buyGroups(visible).map(([area,list])=>`<section><h3 class="buy-area-title"><span>📍 ${esc(area)}</span><small>${list.filter(m=>!m.done).length} 件未買 / ${list.length} 件</small></h3>${list.map(buyCard).join('')}</section>`).join('');
-  return `<section class="buy-hero"><h2>🛍️ 旅行待買清單</h2><div>依地區一起買，商品圖片隨手展開。</div><div style="margin-top:16px;font-weight:800">已買 ${done} / ${items.length} 件 · 還有 ${items.length-done} 件待買</div><progress aria-label="採買完成進度" value="${done}" max="${items.length||1}" style="width:100%;margin-top:10px;accent-color:#e7c782"></progress></section><div class="buy-tools">${filters}${categorySelect}<button class="btn bp" style="margin-left:auto" onclick="openBuy(this)">${TI('plus',15)} 新增商品</button></div>${groups||`<div class="empty">${items.length?'這個篩選下沒有商品':'還沒有待買商品，點「新增商品」開始記錄。'}</div>`}`;
+  return `<section class="buy-hero"><h2>🛍️ 旅行待買清單</h2><div>依地區一起買，商品圖片隨手展開。</div><div style="margin-top:16px;font-weight:800">已買 ${done} / ${items.length} 件 · 還有 ${items.length-done} 件待買</div><progress aria-label="採買完成進度" value="${done}" max="${items.length||1}" style="width:100%;margin-top:10px;accent-color:#e7c782"></progress></section><div class="buy-tools">${filters}${categorySelect}</div>${groups||`<div class="empty">${items.length?'這個篩選下沒有商品':'還沒有待買商品，點右下角「＋」開始記錄。'}</div>`}`;
 }
 function buyCard(m){
   const photo=safeBuyImage(m.image);
