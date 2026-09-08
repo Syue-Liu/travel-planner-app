@@ -138,6 +138,12 @@ a{text-decoration:none}
 .buy-photo img{padding:8px}.buy-preview{margin-top:10px}
 .buy-fields{display:grid;grid-template-columns:1fr 1fr;gap:12px}.buy-fields>*{min-width:0}
 .buy-tools select{width:auto;max-width:100%;min-height:40px}
+.buy-quick{margin-top:9px;min-width:0}
+.buy-quick-label{font-size:11px;color:var(--muted);margin-bottom:6px}
+.buy-quick-row{display:flex;flex-wrap:wrap;gap:6px}
+.buy-quick-btn{border:1px solid var(--line);border-radius:999px;background:var(--soft);color:var(--teal);padding:7px 11px;min-height:36px;max-width:100%;font:inherit;font-size:12px;cursor:pointer;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.buy-quick-btn:active{background:var(--teal-fill);color:#fff}
+.buy-quick summary{font-size:12px;color:var(--muted);padding:8px 0;cursor:pointer}
 @media(max-width:420px){.buy-fields{grid-template-columns:1fr}}
 @media(max-width:420px){.nav-btn{font-size:12px;gap:3px;min-width:55px}.buy-card{padding:12px;gap:8px}.buy-actions{flex-direction:column}}
 .nav-btn{flex:1;min-height:42px;padding:8px 4px;font-size:13.5px;color:var(--muted);border:0;background:transparent;border-radius:999px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:5px;font-weight:700}
@@ -2569,12 +2575,31 @@ function openBuy(el,id=''){
   openModal(el,{t:'buy_edit'});
 }
 function buyModal(){
-  return `<div class="mhd"><div class="mt">${FM.buyId?'編輯':'新增'}待買商品</div><button class="mcl" aria-label="關閉" onclick="setU({modal:null})">✕</button></div><form onsubmit="event.preventDefault();saveBuy()"><div class="fg"><label class="fl" for="buy-name">商品名稱 *</label><input id="buy-name" required maxlength="120" value="${esc(FM.buyName||'')}" placeholder="例：桔梗信玄餅" oninput="FM.buyName=this.value"></div>${buyExtraFields()}<div class="fg"><label class="fl" for="buy-quantity">數量</label><input id="buy-quantity" type="number" min="1" max="999" step="1" required value="${Number(FM.buyQuantity)||1}" oninput="FM.buyQuantity=this.value"></div><div class="fg"><label class="fl" for="buy-shop">哪裡買得到／店家</label><input id="buy-shop" maxlength="200" value="${esc(FM.buyShop||'')}" placeholder="例：河口湖桔梗屋" oninput="FM.buyShop=this.value"></div><div class="fg"><label class="fl" for="buy-note">備註</label><textarea id="buy-note" rows="3" maxlength="1000" placeholder="口味、尺寸、顏色，或要送給誰…" oninput="FM.buyNote=this.value">${esc(FM.buyNote||'')}</textarea></div><div class="ar"><button class="btn bp" type="submit" ${FM.buyImageBusy?'disabled':''}>${FM.buyImageBusy?'圖片處理中…':'儲存商品'}</button><button class="btn" type="button" onclick="setU({modal:null})">取消</button></div></form>`;
+  return `<div class="mhd"><div class="mt">${FM.buyId?'編輯':'新增'}待買商品</div><button class="mcl" aria-label="關閉" onclick="setU({modal:null})">✕</button></div><form onsubmit="event.preventDefault();saveBuy()"><div class="fg"><label class="fl" for="buy-name">商品名稱 *</label><input id="buy-name" required maxlength="120" value="${esc(FM.buyName||'')}" placeholder="例：桔梗信玄餅" oninput="FM.buyName=this.value"></div>${buyExtraFields()}<div class="fg"><label class="fl" for="buy-quantity">數量</label><input id="buy-quantity" type="number" min="1" max="999" step="1" required value="${Number(FM.buyQuantity)||1}" oninput="FM.buyQuantity=this.value"></div><div class="fg"><label class="fl" for="buy-shop">哪裡買得到／店家</label><input id="buy-shop" maxlength="200" value="${esc(FM.buyShop||'')}" placeholder="例：河口湖桔梗屋" oninput="FM.buyShop=this.value">${buyQuickChoices('buyShop','shop')}</div><div class="fg"><label class="fl" for="buy-note">備註</label><textarea id="buy-note" rows="3" maxlength="1000" placeholder="口味、尺寸、顏色，或要送給誰…" oninput="FM.buyNote=this.value">${esc(FM.buyNote||'')}</textarea></div><div class="ar"><button class="btn bp" type="submit" ${FM.buyImageBusy?'disabled':''}>${FM.buyImageBusy?'圖片處理中…':'儲存商品'}</button><button class="btn" type="button" onclick="setU({modal:null})">取消</button></div></form>`;
+}
+function buyQuickValues(property){
+  const seen=new Set();
+  return buyItems().slice().sort((a,b)=>(b._u||0)-(a._u||0)).map(m=>String(m[property]||'').trim().replace(/\s+/g,' ')).filter(value=>{if(!value||seen.has(value))return false;seen.add(value);return true;});
+}
+function buyQuickChoices(field,property){
+  const values=buyQuickValues(property);
+  if(!values.length)return '';
+  const chip=value=>`<button type="button" class="buy-quick-btn" data-field="${esc(field)}" data-value="${esc(value)}" title="${esc(value)}" onclick="applyBuyQuick(this)">${esc(value)}</button>`;
+  return `<div class="buy-quick"><div class="buy-quick-label">之前填過 · 點一下帶入</div><div class="buy-quick-row">${values.slice(0,6).map(chip).join('')}</div>${values.length>6?`<details><summary>更多選項（${values.length-6}）</summary><div class="buy-quick-row">${values.slice(6).map(chip).join('')}</div></details>`:''}</div>`;
+}
+function applyBuyQuick(button){
+  const fields={buyCategory:'buy-category',buyArea:'buy-area',buyShop:'buy-shop'};
+  const field=button.dataset.field,id=fields[field];
+  if(!id)return;
+  const input=document.getElementById(id);
+  if(!input)return;
+  FM[field]=button.dataset.value||'';
+  input.value=FM[field];
 }
 function buyExtraFields(){
   const areas=[...new Set(['新宿','原宿','澀谷','銀座','河口湖','山中湖','機場',...buyItems().map(m=>String(m.area||'').trim()).filter(Boolean)])];
   const categories=[...new Set([...BUY_CATEGORIES,...buyItems().map(buyCategory)])];
-  return `<div class="buy-fields"><div class="fg"><label class="fl" for="buy-category">商品分類（可自訂）</label><input id="buy-category" list="buy-categories" maxlength="30" value="${esc(FM.buyCategory||'其他')}" oninput="FM.buyCategory=this.value"><datalist id="buy-categories">${categories.map(c=>`<option value="${esc(c)}"></option>`).join('')}</datalist></div><div class="fg"><label class="fl" for="buy-area">購買地區</label><input id="buy-area" list="buy-areas" maxlength="60" placeholder="例：銀座（同地區自動放一起）" value="${esc(FM.buyArea||'')}" oninput="FM.buyArea=this.value"><datalist id="buy-areas">${areas.map(a=>`<option value="${esc(a)}"></option>`).join('')}</datalist></div></div><div class="fg"><label class="fl" for="buy-photo-input">商品參考圖片</label><input id="buy-photo-input" type="file" accept="image/jpeg,image/png,image/webp" ${FM.buyImageBusy?'disabled':''} onchange="uploadBuyImage(this.files[0])"><div class="tip">每件商品 1 張，可上傳 JPG、PNG、WebP（原圖最多 12MB）。自動壓縮後與旅伴同步，清單內預設收合。圖片只協助辨認商品，不代表店家有現貨。</div><div class="buy-preview">${FM.buyImageBusy?'<p role="status">正在縮小圖片，請稍候…</p>':safeBuyImage(FM.buyImage)?`<img src="${safeBuyImage(FM.buyImage)}" alt="商品圖片預覽"><button class="btn" type="button" onclick="FM.buyImage='';_refreshHeroContent()">移除圖片</button>`:''}</div></div>`;
+  return `<div class="buy-fields"><div class="fg"><label class="fl" for="buy-category">商品分類（可自訂）</label><input id="buy-category" list="buy-categories" maxlength="30" value="${esc(FM.buyCategory||'其他')}" oninput="FM.buyCategory=this.value"><datalist id="buy-categories">${categories.map(c=>`<option value="${esc(c)}"></option>`).join('')}</datalist>${buyQuickChoices('buyCategory','purchaseCategory')}</div><div class="fg"><label class="fl" for="buy-area">購買地區</label><input id="buy-area" list="buy-areas" maxlength="60" placeholder="例：銀座（同地區自動放一起）" value="${esc(FM.buyArea||'')}" oninput="FM.buyArea=this.value"><datalist id="buy-areas">${areas.map(a=>`<option value="${esc(a)}"></option>`).join('')}</datalist>${buyQuickChoices('buyArea','area')}</div></div><div class="fg"><label class="fl" for="buy-photo-input">商品參考圖片</label><input id="buy-photo-input" type="file" accept="image/jpeg,image/png,image/webp" ${FM.buyImageBusy?'disabled':''} onchange="uploadBuyImage(this.files[0])"><div class="tip">每件商品 1 張，可上傳 JPG、PNG、WebP（原圖最多 12MB）。自動壓縮後與旅伴同步，清單內預設收合。圖片只協助辨認商品，不代表店家有現貨。</div><div class="buy-preview">${FM.buyImageBusy?'<p role="status">正在縮小圖片，請稍候…</p>':safeBuyImage(FM.buyImage)?`<img src="${safeBuyImage(FM.buyImage)}" alt="商品圖片預覽"><button class="btn" type="button" onclick="FM.buyImage='';_refreshHeroContent()">移除圖片</button>`:''}</div></div>`;
 }
 function uploadBuyImage(file){
   if(!file)return;
