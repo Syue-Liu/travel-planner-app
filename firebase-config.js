@@ -9,9 +9,8 @@ window.TRAVEL_APP_FIREBASE = {
 };
 
 // Public upload settings only. Never put a Cloudinary API secret here.
-// Fill after verifying a restricted unsigned preset in the Cloudinary console.
-// Leave empty to keep existing uploads working until the account is connected.
+// Unsigned preset verified with a real image upload and HTTPS delivery.
 window.TRAVEL_APP_CLOUDINARY = {
-  cloudName: "",
-  uploadPreset: ""
+  cloudName: "ddcalhl1s",
+  uploadPreset: "travel_planner"
 };
