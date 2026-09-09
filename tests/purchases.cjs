@@ -3,7 +3,7 @@ const html=fs.readFileSync(require('node:path').join(__dirname,'../index.html'),
 for(const m of html.matchAll(/<script(?:\s[^>]*)?>([\s\S]*?)<\/script>/gi))new vm.Script(m[1]);
 function fn(name){const start=html.search(new RegExp('^function '+name+'\\(','m'));assert(start>=0);const tail=html.slice(start);const end=tail.slice(1).search(/^(?:function |async function |let |const |window\.|setInterval\(|load\()/m);return tail.slice(0,end+1);}
 let seq=0,undo;const alerts=[];
-const ctx={Blob,S:{memo:[{id:'memo1',text:'護照',cat:'證件',done:false}],trash:{}},FM:{},TI:()=>'',esc:s=>String(s).replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('"','&quot;'),uid:()=>`buy${++seq}`,alert:m=>alerts.push(m),confirm:()=>true,openModal:()=>{},setD:u=>Object.assign(ctx.S,u),tomb:id=>ctx.S.trash[id]=Date.now(),undoToast:(_,f)=>undo=f};
+const ctx={Blob,window:{},S:{memo:[{id:'memo1',text:'護照',cat:'證件',done:false}],trash:{}},FM:{},TI:()=>'',esc:s=>String(s).replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('"','&quot;'),uid:()=>`buy${++seq}`,alert:m=>alerts.push(m),confirm:()=>true,openModal:()=>{},setD:u=>Object.assign(ctx.S,u),tomb:id=>ctx.S.trash[id]=Date.now(),undoToast:(_,f)=>undo=f};
 vm.createContext(ctx);
 vm.runInContext(html.slice(html.indexOf("let buyFilter='all'"),html.indexOf('function memoView()')),ctx);
 vm.runInContext(fn('toggleMemo'),ctx);
@@ -96,3 +96,46 @@ importNodes['buy-import-box'].value=JSON.stringify([{name:'有效商品'},{name:
 vm.runInContext(fn('fabConfig'),ctx);ctx.S.view='buy';ctx.S.modal=null;assert.equal(ctx.fabConfig().ai,'AI 匯入待買');
 assert(html.includes("else if(S.view==='buy')openBuyImport(el)"));assert(html.includes("else if(m.t==='buy_import')c=buyImportModal()"));
 console.log('PASS: purchase regressions, multi-select, recipients and AI import parsing, preview, validation, escaping, duplicates, concurrent additions, append-only writes, capacity limits and FAB routing');
+
+// Cloudinary boundary and async races; network is mocked, no real account/files are used here.
+(async()=>{
+  const cloudUrl='https://res.cloudinary.com/test-cloud/image/upload/v123/travel/photo.jpg';
+  ctx.window.TRAVEL_APP_CLOUDINARY={cloudName:'test-cloud',uploadPreset:'travel_test'};
+  ctx.cloud={tripId:'test-trip'};ctx.navigator={onLine:true};
+  ctx.FormData=FormData;ctx.AbortController=AbortController;ctx.setTimeout=setTimeout;ctx.clearTimeout=clearTimeout;
+  assert(ctx.cloudImageConfig());assert.equal(ctx.safeBuyImage(cloudUrl),cloudUrl);
+  for(const value of ['javascript:alert(1)','https://evil.example/a.jpg','https://res.cloudinary.com.evil.example/test-cloud/image/upload/a.jpg','https://res.cloudinary.com/test-cloud/raw/upload/a.jpg','https://res.cloudinary.com/test-cloud/image/upload/a.svg',cloudUrl+'" onerror="evil'])assert.equal(ctx.cloudImageUrl(value),'');
+  ctx.window.TRAVEL_APP_CLOUDINARY.cloudName='../bad';assert.equal(ctx.cloudImageConfig(),null);ctx.window.TRAVEL_APP_CLOUDINARY.cloudName='test-cloud';
+  let request,verified=0;
+  ctx.fetch=async(url,options)=>{request={url,options};return {ok:true,json:async()=>({secure_url:cloudUrl})};};
+  ctx.verifyCloudImage=async url=>{verified++;return url;};
+  assert.equal(await ctx.sendCloudImage(photo),cloudUrl);assert.equal(verified,1);assert.equal(request.url,'https://api.cloudinary.com/v1_1/test-cloud/image/upload');
+  assert.equal(request.options.body.get('upload_preset'),'travel_test');assert.equal(request.options.body.get('file'),photo);assert.equal(request.options.credentials,'omit');assert.equal(request.options.body.get('api_key'),null);
+  ctx.navigator.onLine=false;await assert.rejects(ctx.sendCloudImage(photo),/需要網路/);ctx.navigator.onLine=true;
+  await assert.rejects(ctx.sendCloudImage('javascript:evil'),/格式/);
+  ctx.fetch=async()=>({ok:false,status:400,json:async()=>({error:{message:'preset invalid'}})});await assert.rejects(ctx.sendCloudImage(photo),/上傳設定/);
+  ctx.fetch=async()=>({ok:true,json:async()=>({secure_url:'https://res.cloudinary.com/other/image/upload/a.jpg'})});await assert.rejects(ctx.sendCloudImage(photo),/有效網址/);
+  ctx.fetch=async()=>{throw Object.assign(Error('timeout'),{name:'AbortError'});};await assert.rejects(ctx.sendCloudImage(photo),/逾時/);
+  ctx.fetch=async()=>({ok:true,json:async()=>({secure_url:cloudUrl})});ctx.verifyCloudImage=async()=>{throw Error('not readable');};await assert.rejects(ctx.sendCloudImage(photo),/not readable/);
+  // A cancelled edit must not receive a late result; failed uploads retain the original image.
+  const sendOriginal=ctx.sendCloudImage;let completeUpload;
+  ctx.compressCloudImage=async()=>photo;ctx.sendCloudImage=()=>new Promise(resolve=>completeUpload=resolve);
+  ctx.FM={buyImage:photo};ctx.S.modal={t:'buy_edit'};
+  let pending=ctx.uploadCloudBuyImage({type:'image/jpeg'});await new Promise(setImmediate);assert(ctx.FM.buyImageBusy);completeUpload(cloudUrl);await pending;assert.equal(ctx.FM.buyImage,cloudUrl);assert.equal(ctx.FM.buyImageBusy,false);
+  pending=ctx.uploadCloudBuyImage({type:'image/jpeg'});await new Promise(setImmediate);ctx.FM={buyImage:photo};ctx.S.modal={t:'buy_edit'};completeUpload(cloudUrl);await pending;assert.equal(ctx.FM.buyImage,photo);
+  ctx.sendCloudImage=async()=>{throw Error('upload failed');};await ctx.uploadCloudBuyImage({type:'image/jpeg'});assert.equal(ctx.FM.buyImage,photo);assert.equal(ctx.FM.buyImageBusy,false);
+  // Cover upload preserves a newly selected or remotely edited cover.
+  ctx.sendCloudImage=()=>new Promise(resolve=>completeUpload=resolve);ctx.S.modal={t:'cover'};ctx.S.cover=photo;
+  pending=ctx.uploadCloudCover({type:'image/jpeg'});await new Promise(setImmediate);ctx.S.cover='newer-cover';completeUpload(cloudUrl);await pending;assert.equal(ctx.S.cover,'newer-cover');
+  ctx.S.modal={t:'cover'};pending=ctx.uploadCloudCover({type:'image/jpeg'});await new Promise(setImmediate);completeUpload(cloudUrl);await pending;assert.equal(ctx.S.cover,cloudUrl);
+  // Migration preserves concurrent fields and deleted products and does not cross trips.
+  ctx.S.memo=[{id:'keep-task',text:'護照'},{id:'move1',kind:'purchase',text:'商品一',image:photo},{id:'move2',kind:'purchase',text:'商品二',image:'data:image/jpeg;base64,ZGVm'}];ctx.S.cover=photo;ctx.S.modal={t:'cloud_images'};
+  ctx.buildTrip=()=>({memo:ctx.S.memo,cover:ctx.S.cover});
+  ctx.sendCloudImage=async data=>{ctx.S.memo.find(m=>m.id==='move1').note='旅伴新備註';return cloudUrl;};await ctx.migrateTripImages();
+  assert.equal(ctx.S.cover,cloudUrl);assert.equal(ctx.S.memo.find(m=>m.id==='move1').note,'旅伴新備註');assert.equal(ctx.S.memo.find(m=>m.id==='move1').image,cloudUrl);assert.equal(ctx.S.memo[0].text,'護照');assert.equal(ctx.embeddedTripImages().length,0);
+  const newPhoto='data:image/jpeg;base64,Z2hp';ctx.S.memo.push({id:'failed',kind:'purchase',text:'未搬移',image:newPhoto});
+  ctx.sendCloudImage=async()=>{throw Error('upload failed');};await ctx.migrateTripImages();assert.equal(ctx.S.memo.find(m=>m.id==='failed').image,newPhoto);
+  ctx.sendCloudImage=async()=>{ctx.S.memo=ctx.S.memo.filter(m=>m.id!=='failed');return cloudUrl;};await ctx.migrateTripImages();assert(!ctx.S.memo.some(m=>m.id==='failed'));
+  ctx.S.memo.push({id:'switch',kind:'purchase',text:'原旅程',image:'data:image/jpeg;base64,amts'});ctx.sendCloudImage=async()=>{ctx.cloud.tripId='other-trip';return cloudUrl;};await ctx.migrateTripImages();assert.equal(ctx.S.memo.find(m=>m.id==='switch').image,'data:image/jpeg;base64,amts');
+  console.log('PASS: Cloudinary config, trusted URLs, upload failures, verified delivery, stale drafts, cover races, migration preservation and trip isolation');
+})().catch(e=>{console.error(e);process.exitCode=1;});
