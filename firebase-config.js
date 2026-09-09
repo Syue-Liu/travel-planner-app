@@ -7,3 +7,11 @@ window.TRAVEL_APP_FIREBASE = {
   appId: "1:175780108662:web:7fb79300dcc474198c8257",
   measurementId: "G-BKFZ9JHM36"
 };
+
+// Public upload settings only. Never put a Cloudinary API secret here.
+// Fill after verifying a restricted unsigned preset in the Cloudinary console.
+// Leave empty to keep existing uploads working until the account is connected.
+window.TRAVEL_APP_CLOUDINARY = {
+  cloudName: "",
+  uploadPreset: ""
+};
