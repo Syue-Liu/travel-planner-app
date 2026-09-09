@@ -1797,8 +1797,8 @@ function mCover(){
   const posOpts=[['10%','偏上（主體在照片上半）'],['30%','居中偏上（預設）'],['50%','正中央'],['70%','居中偏下'],['90%','偏下（主體在照片下半）']];
   const posRadios=posOpts.map(([v,l])=>`<label style="display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:10px;cursor:pointer;background:${pos===v?'var(--t-green-bg)':'transparent'};border:1px solid ${pos===v?'var(--teal)':'transparent'};"><input type="radio" name="coverPos" value="${v}" ${pos===v?'checked':''} onchange="S.coverPos=this.value;_refreshHeroContent()" style="accent-color:var(--teal);width:16px;height:16px;flex-shrink:0;"><span style="font-size:13px;">${l}</span></label>`).join('');
   return`<div class="mhd"><div class="mt">更換封面</div><div class="mcl" onclick="setU({modal:null})">✕</div></div>
-<div class="cover-grid">${choices}</div>
-<div class="fg"><label class="fl">上傳自己的封面</label><input type="file" id="cover-file" accept="image/*" onchange="uploadCover(this.files?.[0])">
+<div class="cover-grid">${choices}</div>${coverCloudBusy?'<p role="status">正在壓縮並上傳封面，請稍候…</p>':''}
+<div class="fg"><label class="fl">上傳自己的封面</label><input type="file" id="cover-file" accept="image/jpeg,image/png,image/webp" ${coverCloudBusy?'disabled':''} onchange="uploadCover(this.files?.[0])">
 <div style="margin-top:8px;padding:10px 12px;background:var(--t-green-bg);border-radius:10px;border:1px solid #c5e5d5;">
   <div style="font-size:12px;font-weight:900;color:var(--t-green-fg);margin-bottom:5px;">${TI('aspect-ratio',13)} 推薦圖片比例</div>
   <div style="font-size:12px;color:var(--t-green-fg);line-height:1.7;">${TI('circle-check',12)} 最佳：<b>16:9</b>（1920×1080px）手機＋電腦都完美<br>${TI('circle-check',12)} 次佳：<b>4:3</b>（1200×900px）適合風景照<br>${TI('alert-triangle',12)} 避免：直式照片（會在電腦被嚴重裁切）</div>
@@ -1812,6 +1812,7 @@ function mTools(){
   return`<div class="mhd"><div class="mt">旅程工具</div><div class="mcl" onclick="setU({modal:null})">✕</div></div>
 <div class="fg"><label class="fl">同步代碼</label><div style="display:flex;gap:8px;"><input type="text" id="trip-code" value="${esc(cloud.tripId||'')}" placeholder="例：tokyo2026" autocomplete="off" autocapitalize="none" style="flex:1;"><button class="btn" type="button" style="white-space:nowrap;" onclick="genTripCode()">${TI('refresh',14)} 產生亂數</button></div><div class="tip">同一個同步代碼就是同一份旅程。<b>知道代碼的人都能讀寫這份資料</b>，建議用「產生亂數」做出難以猜到的代碼，不要用 tokyo2026 這種容易撞到的名字。</div></div>
 <div class="ar"><button class="btn" style="flex:1;padding:10px;" onclick="switchTrip(false)">切換到這個代碼</button><button class="btn" style="flex:1;padding:10px;" onclick="switchTrip(true)">複製目前旅程到新代碼</button></div>
+<div class="fg"><label class="fl">圖片儲存</label><button class="btn" type="button" onclick="openModal(this,{t:'cloud_images'})">圖片空間／搬移舊圖片</button></div>
 <div class="fg"><label class="fl">結算幣別</label><select onchange="setD({settleCurrency:this.value,modal:{t:'tools'}})">${settleOpts}</select><div class="tip">${esc(FX.status)}。匯率來源：ExchangeRate-API Open Access，每日更新一次。</div></div>
 <div class="fg"><label class="fl">旅行總預算（NT$）</label><input type="number" inputmode="numeric" value="${S.budget||''}" placeholder="例：50000" oninput="S.budget=this.value"></div>
 <div class="ar"><button class="btn bp" style="flex:1;padding:10px;" onclick="setD({budget:Number(S.budget||0),modal:null})">儲存預算</button><button class="btn" style="flex:1;padding:10px;" onclick="exportTrip()">封存旅程</button></div>
@@ -1961,6 +1962,7 @@ function saveCoverUrl(){
   setD({cover:v,modal:null});
 }
 function uploadCover(file){
+  if(cloudImageConfig())return uploadCloudCover(file);
   if(!file)return;
   if(!file.type.startsWith('image/')){alert('請選擇圖片檔');return;}
   const reader=new FileReader();
@@ -2563,7 +2565,7 @@ function buyGroups(items){
   for(const item of items)for(const area of buyAreas(item)){if(!groups.has(area))groups.set(area,[]);groups.get(area).push(item);}
   return [...groups].sort(([a],[b])=>a===b?0:a==='未指定地區'?1:b==='未指定地區'?-1:a.localeCompare(b,'zh-Hant'));
 }
-function safeBuyImage(value){return typeof value==='string'&&value.length<=40000&&/^data:image\/jpeg;base64,[A-Za-z0-9+/]+={0,2}$/.test(value)?value:'';}
+function safeBuyImage(value){return cloudImageUrl(value)||(typeof value==='string'&&value.length<=40000&&/^data:image\/jpeg;base64,[A-Za-z0-9+/]+={0,2}$/.test(value)?value:'');}
 function buyItems(){return (S.memo||[]).filter(m=>m.kind==='purchase');}
 function buyView(){
   const items=buyItems(),done=items.filter(m=>m.done).length;
@@ -2572,7 +2574,7 @@ function buyView(){
   const categories=[...new Set([...BUY_CATEGORIES,...items.flatMap(buyCategories),...(buyCategoryFilter==='all'?[]:[buyCategoryFilter])])];
   const categorySelect=`<select aria-label="篩選商品分類" onchange="buyCategoryFilter=this.value;render()"><option value="all">所有分類</option>${categories.map(c=>`<option ${c===buyCategoryFilter?'selected':''} value="${esc(c)}">${esc(c)}</option>`).join('')}</select>`;
   const groups=buyGroups(visible).map(([area,list])=>`<section><h3 class="buy-area-title"><span>📍 ${esc(area)}</span><small>${list.filter(m=>!m.done).length} 件未買 / ${list.length} 件</small></h3>${list.map(buyCard).join('')}</section>`).join('');
-  return `<section class="buy-hero"><h2>🛍️ 旅行待買清單</h2><div>依地區一起買，商品圖片隨手展開。</div><div style="margin-top:16px;font-weight:800">已買 ${done} / ${items.length} 件 · 還有 ${items.length-done} 件待買</div><progress aria-label="採買完成進度" value="${done}" max="${items.length||1}" style="width:100%;margin-top:10px;accent-color:#e7c782"></progress></section><div class="buy-tools">${filters}${categorySelect}</div>${groups||`<div class="empty">${items.length?'這個篩選下沒有商品':'還沒有待買商品，點右下角「＋」開始記錄。'}</div>`}`;
+  return `<section class="buy-hero"><h2>🛍️ 旅行待買清單</h2><div>依地區一起買，商品圖片隨手展開。</div><div style="margin-top:16px;font-weight:800">已買 ${done} / ${items.length} 件 · 還有 ${items.length-done} 件待買</div><progress aria-label="採買完成進度" value="${done}" max="${items.length||1}" style="width:100%;margin-top:10px;accent-color:#e7c782"></progress></section><div class="buy-tools">${filters}${categorySelect}<button class="btn" type="button" onclick="openModal(this,{t:'cloud_images'})">圖片空間</button></div>${groups||`<div class="empty">${items.length?'這個篩選下沒有商品':'還沒有待買商品，點右下角「＋」開始記錄。'}</div>`}`;
 }
 function buyCard(m){
   const photo=safeBuyImage(m.image);
@@ -2621,9 +2623,10 @@ function applyBuyQuick(button){
 function buyExtraFields(){
   const areas=[...new Set(['新宿','原宿','澀谷','銀座','河口湖','山中湖','機場',...buyItems().flatMap(m=>buyValues(m.area))])];
   const categories=[...new Set([...BUY_CATEGORIES,...buyItems().flatMap(buyCategories)])];
-  return `<div class="buy-fields"><div class="fg"><label class="fl" for="buy-category">商品分類（可複選／自訂）</label><input id="buy-category" list="buy-categories" maxlength="200" placeholder="未填為其他" value="${esc(FM.buyCategory||'')}" oninput="updateBuyQuick('buyCategory',this.value)"><datalist id="buy-categories">${categories.map(c=>`<option value="${esc(c)}"></option>`).join('')}</datalist>${buyQuickChoices('buyCategory','purchaseCategory')}</div><div class="fg"><label class="fl" for="buy-area">購買地區</label><input id="buy-area" list="buy-areas" maxlength="200" placeholder="例：銀座、新宿（會分別顯示在各區）" value="${esc(FM.buyArea||'')}" oninput="updateBuyQuick('buyArea',this.value)"><datalist id="buy-areas">${areas.map(a=>`<option value="${esc(a)}"></option>`).join('')}</datalist>${buyQuickChoices('buyArea','area')}</div></div><div class="fg"><label class="fl" for="buy-photo-input">商品參考圖片</label><input id="buy-photo-input" type="file" accept="image/jpeg,image/png,image/webp" ${FM.buyImageBusy?'disabled':''} onchange="uploadBuyImage(this.files[0])"><div class="tip">每件商品 1 張，可上傳 JPG、PNG、WebP（原圖最多 12MB）。自動壓縮後與旅伴同步，清單內預設收合。圖片只協助辨認商品，不代表店家有現貨。</div><div class="buy-preview">${FM.buyImageBusy?'<p role="status">正在縮小圖片，請稍候…</p>':safeBuyImage(FM.buyImage)?`<img src="${safeBuyImage(FM.buyImage)}" alt="商品圖片預覽"><button class="btn" type="button" onclick="FM.buyImage='';_refreshHeroContent()">移除圖片</button>`:''}</div></div>`;
+  return `<div class="buy-fields"><div class="fg"><label class="fl" for="buy-category">商品分類（可複選／自訂）</label><input id="buy-category" list="buy-categories" maxlength="200" placeholder="未填為其他" value="${esc(FM.buyCategory||'')}" oninput="updateBuyQuick('buyCategory',this.value)"><datalist id="buy-categories">${categories.map(c=>`<option value="${esc(c)}"></option>`).join('')}</datalist>${buyQuickChoices('buyCategory','purchaseCategory')}</div><div class="fg"><label class="fl" for="buy-area">購買地區</label><input id="buy-area" list="buy-areas" maxlength="200" placeholder="例：銀座、新宿（會分別顯示在各區）" value="${esc(FM.buyArea||'')}" oninput="updateBuyQuick('buyArea',this.value)"><datalist id="buy-areas">${areas.map(a=>`<option value="${esc(a)}"></option>`).join('')}</datalist>${buyQuickChoices('buyArea','area')}</div></div><div class="fg"><label class="fl" for="buy-photo-input">商品參考圖片</label><input id="buy-photo-input" type="file" accept="image/jpeg,image/png,image/webp" ${FM.buyImageBusy?'disabled':''} onchange="uploadBuyImage(this.files[0])"><div class="tip">每件商品 1 張，可上傳 JPG、PNG、WebP（原圖最多 12MB）。${cloudImageConfig()?'自動壓縮後上傳至 Cloudinary，旅程只同步圖片網址。上傳需要網路。':'自動壓縮後與旅伴同步，清單內預設收合。'}圖片只協助辨認商品，不代表店家有現貨。</div><div class="buy-preview">${FM.buyImageBusy?'<p role="status">正在處理並儲存圖片，請稍候…</p>':safeBuyImage(FM.buyImage)?`<img src="${safeBuyImage(FM.buyImage)}" alt="商品圖片預覽"><button class="btn" type="button" onclick="FM.buyImage='';_refreshHeroContent()">移除圖片</button>`:''}</div></div>`;
 }
 function uploadBuyImage(file){
+  if(cloudImageConfig())return uploadCloudBuyImage(file);
   if(!file)return;
   if(!['image/jpeg','image/png','image/webp'].includes(file.type)){alert('請選擇 JPG、PNG 或 WebP 圖片；HEIC 請先轉成 JPG。');return;}
   if(file.size>12*1024*1024){alert('原始圖片請小於 12MB');return;}
@@ -2669,7 +2672,7 @@ function saveBuy(){
   const memo=old?S.memo.map(m=>m.id===old.id?item:m):[...(S.memo||[]),item];
   const projectedBytes=new Blob([JSON.stringify({...S,memo})]).size;
   const currentBytes=new Blob([JSON.stringify(S)]).size;
-  if(projectedBytes>850000&&projectedBytes>=currentBytes){alert('旅程資料接近同步容量上限，請先移除一些商品圖片或縮小封面，再儲存。原資料尚未變更。');return;}
+  if(projectedBytes>850000&&projectedBytes>=currentBytes){alert('旅程資料接近同步容量上限，請到「待買 → 圖片空間」搬移舊圖片，或先移除一些圖片再儲存。原資料尚未變更。');return;}
   setD({memo,modal:null});
 }
 function deleteBuy(id){
@@ -2677,6 +2680,141 @@ function deleteBuy(id){
   if(!item||!confirm(`刪除待買商品「${item.text}」？`))return;
   tomb(id);setD({memo:S.memo.filter(m=>m.id!==id)});
   undoToast('已刪除待買商品',()=>setD({memo:[...S.memo,{...item,id:uid(),_u:Date.now()}]}));
+}
+// Cloudinary uses a restricted unsigned preset; no API secret belongs in this public app.
+function cloudImageConfig(){
+  const c=window.TRAVEL_APP_CLOUDINARY;
+  return c&&/^[a-z0-9_-]{1,80}$/.test(c.cloudName||'')&&/^[A-Za-z0-9_-]{1,120}$/.test(c.uploadPreset||'')?c:null;
+}
+function cloudImageUrl(value){
+  return typeof value==='string'&&value.length<=2048&&/^https:\/\/res\.cloudinary\.com\/[a-z0-9_-]+\/image\/upload\/[A-Za-z0-9_.,/%-]+\.(?:jpg|jpeg|png|webp|avif)$/i.test(value)?value:'';
+}
+function inlineTripImage(value){return typeof value==='string'&&value.length<=800000&&/^data:image\/(?:jpeg|png|webp);base64,[A-Za-z0-9+/]+={0,2}$/.test(value);}
+function compressCloudImage(file,cover=false){
+  return new Promise((resolve,reject)=>{
+    if(!file||!['image/jpeg','image/png','image/webp'].includes(file.type)){reject(Error('請選擇 JPG、PNG 或 WebP 圖片。'));return;}
+    if(file.size>12*1024*1024){reject(Error('原始圖片請小於 12MB。'));return;}
+    const img=new Image(),source=URL.createObjectURL(file);
+    const finish=(error,data)=>{URL.revokeObjectURL(source);error?reject(error):resolve(data);};
+    img.onerror=()=>finish(Error('無法讀取圖片，請換一張試試。'));
+    img.onload=()=>{
+      try{
+        if(!img.naturalWidth||!img.naturalHeight||img.naturalWidth*img.naturalHeight>40000000)throw Error('圖片尺寸太大，請先縮小後上傳。');
+        const canvas=document.createElement('canvas'),ctx=canvas.getContext('2d');
+        if(!ctx)throw Error('此瀏覽器無法處理圖片。');
+        let data='';
+        for(let edge=cover?1920:1200;edge>=300;edge=Math.floor(edge*.75)){
+          const scale=Math.min(1,edge/Math.max(img.naturalWidth,img.naturalHeight));
+          canvas.width=Math.max(1,Math.round(img.naturalWidth*scale));canvas.height=Math.max(1,Math.round(img.naturalHeight*scale));
+          ctx.fillStyle='#fff';ctx.fillRect(0,0,canvas.width,canvas.height);ctx.drawImage(img,0,0,canvas.width,canvas.height);
+          for(const quality of [.82,.7,.55]){data=canvas.toDataURL('image/jpeg',quality);if(data.length<=700000)break;}
+          if(data.length<=700000)break;
+        }
+        if(!inlineTripImage(data)||data.length>700000)throw Error('圖片壓縮後仍過大，請裁切後再上傳。');
+        finish(null,data);
+      }catch(e){finish(e);}
+    };
+    img.src=source;
+  });
+}
+function verifyCloudImage(url){
+  return new Promise((resolve,reject)=>{
+    const img=new Image();let timer;
+    const finish=error=>{clearTimeout(timer);img.onload=null;img.onerror=null;error?reject(error):resolve(url);};
+    timer=setTimeout(()=>finish(Error('圖片讀取逾時，原圖片已保留，請稍後重試。')),20000);
+    img.onload=()=>finish(img.naturalWidth?null:Error('上傳後無法顯示圖片，原圖片已保留。'));
+    img.onerror=()=>finish(Error('上傳後無法讀取圖片，原圖片已保留。'));
+    img.src=url;
+  });
+}
+async function sendCloudImage(data){
+  const config=cloudImageConfig();
+  if(!config)throw Error('尚未設定 Cloudinary 圖片空間。');
+  if(!inlineTripImage(data))throw Error('圖片資料格式不正確。');
+  if(navigator.onLine===false)throw Error('上傳圖片需要網路；原圖片已保留。');
+  const form=new FormData();form.append('file',data);form.append('upload_preset',config.uploadPreset);
+  const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),45000);
+  let result;
+  try{
+    const response=await fetch(`https://api.cloudinary.com/v1_1/${config.cloudName}/image/upload`,{method:'POST',body:form,signal:controller.signal,credentials:'omit'});
+    result=await response.json();
+    if(!response.ok)throw Error(response.status===400?'圖片上傳設定或檔案不符合限制，請確認 Cloudinary 的 Upload preset。':'Cloudinary 暫時無法上傳，請稍後再試。');
+  }catch(e){throw Error(e.name==='AbortError'?'圖片上傳逾時，原圖片已保留，請重試。':e.message||'圖片上傳失敗，原圖片已保留。');}
+  finally{clearTimeout(timer);}
+  const url=cloudImageUrl(result?.secure_url);
+  if(!url||!url.startsWith(`https://res.cloudinary.com/${config.cloudName}/image/upload/`))throw Error('圖片服務未回傳有效網址，原圖片已保留。');
+  await verifyCloudImage(url);
+  return url;
+}
+async function uploadCloudBuyImage(file){
+  if(!file||FM.buyImageBusy)return;
+  const draft=FM,modal=S.modal,trip=cloud.tripId;
+  const active=()=>FM===draft&&S.modal===modal&&modal?.t==='buy_edit'&&cloud.tripId===trip;
+  draft.buyImageBusy=true;_refreshHeroContent();
+  try{
+    const data=await compressCloudImage(file);
+    if(!active())return;
+    const url=await sendCloudImage(data);
+    if(active())draft.buyImage=url;
+  }catch(e){if(active())alert(e.message);}
+  finally{draft.buyImageBusy=false;if(active())_refreshHeroContent();}
+}
+let coverCloudBusy=false;
+async function uploadCloudCover(file){
+  if(!file||coverCloudBusy)return;
+  const modal=S.modal,trip=cloud.tripId,previous=S.cover;
+  const active=()=>S.modal===modal&&modal?.t==='cover'&&cloud.tripId===trip&&S.cover===previous;
+  coverCloudBusy=true;_refreshHeroContent();
+  try{
+    const data=await compressCloudImage(file,true);
+    if(!active())return;
+    const url=await sendCloudImage(data);
+    if(active())setD({cover:url,modal:null});
+  }catch(e){if(active())alert(e.message);}
+  finally{coverCloudBusy=false;if(S.modal?.t==='cover')_refreshHeroContent();}
+}
+let imageMigration={running:false,completed:0,failed:0,total:0,message:''};
+const migratedImageUrls=new Map();
+function embeddedTripImages(){
+  return [...(inlineTripImage(S.cover)?[{kind:'cover',image:S.cover}]:[]),...buyItems().filter(m=>inlineTripImage(m.image)).map(m=>({kind:'purchase',id:m.id,image:m.image}))];
+}
+function cloudImagesModal(){
+  const count=embeddedTripImages().length,bytes=new Blob([JSON.stringify(buildTrip())]).size;
+  return `<div class="mhd"><div class="mt">圖片空間</div><button class="mcl" aria-label="關閉" onclick="setU({modal:null})">✕</button></div>
+  <p>${cloudImageConfig()?'已設定 Cloudinary · 新上傳的商品圖片與封面會獨立儲存。':'Cloudinary 尚未設定完成，暫時使用原本的圖片儲存方式。'}</p>
+  <div class="tip">旅程資料約 ${Math.ceil(bytes/1000)} KB／850 KB，另有 ${count} 張舊圖片可搬移。圖片網址仍占少量空間。</div>
+  <p>搬移時會逐張上傳，確認圖片能顯示後才替換成網址。失敗的圖片保留原狀，可稍後重試。</p>
+  <div id="image-migration-status" role="status" aria-live="polite">${esc(imageMigration.message)}</div>
+  <button id="image-migration-start" class="btn bp" type="button" ${!cloudImageConfig()||!count||imageMigration.running?'disabled':''} onclick="migrateTripImages()">${imageMigration.running?'正在搬移…':`搬移 ${count} 張舊圖片`}</button>
+  <p class="tip">需保持網路連線並留在此旅程。搬移後，商品仍可展開／收合圖片；移除商品圖片只解除連結，Cloudinary 原檔可在後台管理。</p>`;
+}
+function showImageMigrationProgress(){if(S.modal?.t==='cloud_images')_refreshHeroContent();}
+async function migrateTripImages(){
+  if(imageMigration.running||!cloudImageConfig())return;
+  const trip=cloud.tripId,candidates=embeddedTripImages();
+  if(!candidates.length)return;
+  imageMigration={running:true,completed:0,failed:0,total:candidates.length,message:'正在準備搬移圖片…'};showImageMigrationProgress();
+  try{
+    for(const candidate of candidates){
+      if(cloud.tripId!==trip)break;
+      try{
+        let url=migratedImageUrls.get(candidate.image);
+        if(!url){url=await sendCloudImage(candidate.image);migratedImageUrls.set(candidate.image,url);}
+        if(cloud.tripId!==trip)break;
+        if(candidate.kind==='cover'){
+          if(S.cover!==candidate.image)continue;
+          setD({cover:url});
+        }else{
+          const current=buyItems().find(m=>m.id===candidate.id);
+          if(!current||current.image!==candidate.image)continue;
+          setD({memo:S.memo.map(m=>m.id===candidate.id?{...m,image:url,_u:Date.now()}:m)});
+        }
+        imageMigration.completed++;
+      }catch(e){imageMigration.failed++;imageMigration.message=e.message;}
+      imageMigration.message=`已搬移 ${imageMigration.completed}／${imageMigration.total} 張${imageMigration.failed?`，${imageMigration.failed} 張失敗（保留原圖）`:''}`;showImageMigrationProgress();
+    }
+    imageMigration.message=`${cloud.tripId===trip?'搬移結束':'已停止搬移'}：${imageMigration.completed} 張已換成網址${imageMigration.failed?`；${imageMigration.failed} 張失敗，請重試`:''}。`;
+  }finally{imageMigration.running=false;showImageMigrationProgress();}
 }
 const BUY_IMPORT_PROMPT=`請將我提供的購物清單、文字或圖片整理成 JSON 陣列，只輸出 JSON，不要加說明。
 每件商品一筆，欄位如下：
@@ -3431,7 +3569,7 @@ function wlConfirmImport(){
 
 // ════ HERO & SHEET modal engine ════════════════════════
 // Hero modal types (large forms) — open from trigger element
-const HERO_TYPES=new Set(['loc','exp','nd','ed','wl_add','wl_import','wl_edit','wl_day','wl_cat','import','tv','tvEdit','cover','tools','help','note','memo_add','memo_import','buy_edit','buy_import','tripGate']);
+const HERO_TYPES=new Set(['loc','exp','nd','ed','wl_add','wl_import','wl_edit','wl_day','wl_cat','import','tv','tvEdit','cover','tools','help','note','memo_add','memo_import','buy_edit','buy_import','cloud_images','tripGate']);
 // Sheet modal types (compact) — slide up from bottom
 const SHEET_TYPES=new Set([]);
 
@@ -3475,6 +3613,7 @@ function _getModalContent(m){
   if(m.t==='tripGate')c=mTripGate();
   else if(m.t==='buy_edit')c=buyModal();
   else if(m.t==='buy_import')c=buyImportModal();
+  else if(m.t==='cloud_images')c=cloudImagesModal();
   else if(m.t==='loc')c=mLoc();
   else if(m.t==='nd'||m.t==='ed')c=mDay();
   else if(m.t==='exp')c=mExp();
