@@ -1385,6 +1385,7 @@ function render(){
 function fabConfig(){
   if(S.modal||S.editTN||S.view==='split')return null;
   const cfg={
+    buy:{manual:'新增商品',manualSub:'手動填寫待買商品',manualIcon:TI('plus',20),ai:'AI 匯入待買',aiSub:'貼上 JSON，預覽後批次新增',aiIcon:TI('sparkles',19)},
     itinerary:{manual:'手動新增地點',manualSub:'新增一個行程地點',manualIcon:TI('plus',20),ai:'AI 匯入行程',aiSub:'貼上 AI 行程一次建立',aiIcon:TI('sparkles',19)},
     wishlist:{manual:'手動新增清單',manualSub:'加入想去的店家或景點',manualIcon:TI('plus',20),ai:'AI 匯入清單',aiSub:'批次加入推薦地點',aiIcon:TI('sparkles',19)},
     expenses:{manual:'新增記帳',manualSub:'手動輸入日常花費',manualIcon:TI('coin',20),ai:'AI 收據記帳',aiSub:'上傳收據自動帶入金額分類',aiIcon:TI('camera',19)},
@@ -1393,7 +1394,6 @@ function fabConfig(){
   return cfg[S.view]||null;
 }
 function globalFab(){
-  if(S.view==='buy'&&!S.modal&&!S.editTN)return `<div class="app-fab-wrap"><button class="app-fab-main" type="button" title="新增商品" aria-label="新增商品" onclick="openBuy(this)">${TI('plus',26)}</button></div>`;
   const cfg=fabConfig();
   if(!cfg)return'';
   const tmplRow=(S.view==='itinerary'&&S.wlFabOpen)?`<div class="app-fab-tmpls">${TMPL.map((t,i)=>`<button class="app-fab-tmpl" style="background:${CB[t.cat]};color:${CF[t.cat]};" onclick="fabTmpl(this,${i})">${TI(CTI[t.cat]||'map-pin',13)} ${esc(t.name)}</button>`).join('')}</div>`:'';
@@ -1409,6 +1409,7 @@ function fabManual(el){
   else if(S.view==='wishlist'){wlOpenAdd(el);}
   else if(S.view==='expenses'){_heroOrigin=el.getBoundingClientRect();oExp('',{ocr:false});}
   else if(S.view==='memo'){openModal(el,{t:'memo_add'});}
+  else if(S.view==='buy')openBuy(el);
 }
 function fabAi(el){
   S.wlFabOpen=false;
@@ -1416,6 +1417,7 @@ function fabAi(el){
   else if(S.view==='wishlist')openModal(el,{t:'wl_import'});
   else if(S.view==='expenses'){_heroOrigin=el.getBoundingClientRect();oExp('',{ocr:true});}
   else if(S.view==='memo')openModal(el,{t:'memo_import'});
+  else if(S.view==='buy')openBuyImport(el);
 }
 function hdr(te){
   const dated=(S.days||[]).filter(d=>/^\d{4}-\d{2}-\d{2}$/.test(d.date||'')).sort((a,b)=>a.date.localeCompare(b.date));
@@ -2676,6 +2678,108 @@ function deleteBuy(id){
   tomb(id);setD({memo:S.memo.filter(m=>m.id!==id)});
   undoToast('已刪除待買商品',()=>setD({memo:[...S.memo,{...item,id:uid(),_u:Date.now()}]}));
 }
+const BUY_IMPORT_PROMPT=`請將我提供的購物清單、文字或圖片整理成 JSON 陣列，只輸出 JSON，不要加說明。
+每件商品一筆，欄位如下：
+name：商品名稱（必填，最多 120 字）
+quantity：數量（1–999 整數，未指定填 1）
+categories：分類字串陣列，例如 ["美妝保養","伴手禮"]
+areas：購買地區字串陣列，例如 ["新宿","銀座"]
+shops：店家字串陣列，例如 ["Loft","唐吉訶德"]
+recipients：幫誰買的名字字串陣列，例如 ["自己","媽媽"]
+note：款式、規格及其他備註（字串，最多 1000 字）
+不知道的資訊填空陣列或空字串，不要猜測。分類、地區、代買對象各自合計最多 200 字；店家合計最多 400 字。
+同一商品、同款式、同代買對象的購買地點請合併在同一筆；不同款式請分開，商品名稱註明款式。
+每次最多 100 件，不要輸出圖片、ID 或完成狀態。`;
+function openBuyImport(el){
+  FM={buyImportText:'',buyImportSkip:true};
+  openModal(el,{t:'buy_import'});
+}
+function buyImportModal(){
+  return `<div class="mhd"><div class="mt">${TI('sparkles',17)} AI 匯入待買</div><button class="mcl" aria-label="關閉" onclick="setU({modal:null})">✕</button></div>
+  <p class="tip">先讓 AI 整理商品，再將 JSON 貼到下方。可保留多個分類、地區、店家與代買對象；商品圖片請在匯入後編輯上傳。</p>
+  <details><summary>給 AI 的指令</summary><textarea id="buy-import-prompt" class="import-area" readonly aria-label="給 AI 的指令">${esc(BUY_IMPORT_PROMPT)}</textarea></details>
+  <div class="ar" style="margin:12px 0"><button type="button" class="btn" onclick="copyBuyImportPrompt(this)">複製 AI 指令</button><button type="button" class="btn" onclick="pasteClipboard('buy-import-box','previewBuyImport')">從剪貼簿貼上</button></div>
+  <label class="fl" for="buy-import-box">AI 輸出的 JSON（每次最多 100 件）</label>
+  <textarea id="buy-import-box" class="import-area" maxlength="200000" placeholder='[{"name":"商品名稱","quantity":1,"categories":[],"areas":[],"shops":[],"recipients":[],"note":""}]' oninput="previewBuyImport()">${esc(FM.buyImportText||'')}</textarea>
+  <label style="display:flex;align-items:center;gap:8px;margin-top:12px"><input type="checkbox" style="width:auto" ${FM.buyImportSkip!==false?'checked':''} onchange="FM.buyImportSkip=this.checked;previewBuyImport()">略過重複商品</label>
+  <p class="tip">名稱、代買對象與備註相同視為重複（含本次清單內的重複）。取消勾選可另外新增；既有商品不會被覆蓋。</p>
+  <div id="buy-import-preview" role="status" aria-live="polite">${buyImportPreviewHtml(FM.buyImportText||'')}</div>
+  <div class="ar"><button type="button" class="btn" onclick="setU({modal:null})">取消</button><button id="buy-import-confirm" type="button" class="btn bp" onclick="confirmBuyImport()" ${buyImportPlan(FM.buyImportText||'').items.length?'':'disabled'}>確認匯入</button></div>`;
+}
+async function copyBuyImportPrompt(button){
+  try{await navigator.clipboard.writeText(BUY_IMPORT_PROMPT);button.textContent='已複製 AI 指令';}
+  catch{
+    const input=document.getElementById('buy-import-prompt');
+    if(input){input.parentElement.open=true;input.focus();input.select();}
+    alert('請長按或使用複製快捷鍵，複製已選取的 AI 指令。');
+  }
+}
+function parseBuyImport(text){
+  if(typeof text!=='string'||text.length>200000)throw Error('內容太長，請分批貼上（每次最多 100 件）。');
+  const source=text.trim().replace(/^```(?:json)?\s*\n?([\s\S]*?)\n?```$/i,'$1');
+  let rows;
+  try{rows=JSON.parse(source);}catch{throw Error('JSON 格式無法讀取，請貼上完整的 [ … ] 陣列，不要包含額外說明。');}
+  if(!Array.isArray(rows)||!rows.length)throw Error('請提供至少一件商品的 JSON 陣列。');
+  if(rows.length>100)throw Error('一次最多匯入 100 件，請分批貼上。');
+  return rows.map((row,i)=>{
+    const fail=message=>{throw Error(`第 ${i+1} 件：${message}`);};
+    if(!row||typeof row!=='object'||Array.isArray(row))fail('商品必須是 JSON 物件。');
+    if(typeof row.name!=='string'||!row.name.trim())fail('缺少商品名稱 name。');
+    const name=row.name.trim();if(name.length>120)fail('商品名稱最多 120 字。');
+    const quantity=row.quantity===undefined?1:row.quantity;
+    if(typeof quantity!=='number'||!Number.isInteger(quantity)||quantity<1||quantity>999)fail('quantity 請填 1–999 的整數。');
+    const list=(key,max)=>{
+      const value=row[key]??[];
+      if(typeof value!=='string'&&(!Array.isArray(value)||value.some(v=>typeof v!=='string')))fail(`${key} 請填字串陣列。`);
+      const joined=buyValues(value).join('、');if(joined.length>max)fail(`${key} 合計最多 ${max} 字。`);
+      return joined;
+    };
+    const note=row.note??'';if(typeof note!=='string'||note.length>1000)fail('note 請填最多 1000 字的文字。');
+    return {kind:'purchase',cat:'待買',text:name,quantity,purchaseCategory:list('categories',200)||'其他',area:list('areas',200),shop:list('shops',400),recipients:list('recipients',200),note:note.trim(),image:'',done:false};
+  });
+}
+function buyImportKey(item){
+  const norm=v=>String(v||'').normalize('NFKC').trim().replace(/\s+/g,' ').toLowerCase();
+  return JSON.stringify([norm(item.text),[...new Set(buyValues(item.recipients).map(norm))].sort(),norm(item.note)]);
+}
+function buyImportPlan(text){
+  if(!text.trim())return {items:[],rows:[],duplicates:0,error:''};
+  try{
+    const seen=new Set(buyItems().map(buyImportKey)),items=[];
+    let duplicates=0;
+    const rows=parseBuyImport(text).map(item=>{
+      const key=buyImportKey(item),duplicate=seen.has(key);seen.add(key);
+      if(duplicate)duplicates++;
+      const skip=duplicate&&FM.buyImportSkip!==false;
+      if(!skip)items.push(item);
+      return {item,duplicate,skip};
+    });
+    return {items,rows,duplicates,error:''};
+  }catch(e){return {items:[],rows:[],duplicates:0,error:e.message};}
+}
+function buyImportPreviewHtml(text){
+  const plan=buyImportPlan(text);
+  if(plan.error)return `<div class="import-err">${esc(plan.error)}<br>尚未匯入任何商品，修正後會重新預覽。</div>`;
+  if(!plan.rows.length)return '<p class="tip">貼上後會在這裡顯示預覽。</p>';
+  return `<p><strong>可新增 ${plan.items.length} 件</strong> · ${plan.duplicates} 件重複${FM.buyImportSkip!==false?'（已略過）':''}</p><div class="import-preview">${plan.rows.map(({item,duplicate,skip})=>`<div style="padding:8px 0;border-bottom:1px solid var(--line)"><strong>${esc(item.text)} × ${item.quantity}</strong>${duplicate?` · ${skip?'略過重複':'重複，仍新增'}`:''}<div>${esc(item.purchaseCategory)} · ${esc(item.area||'未指定地區')}</div>${item.shop?`<div>哪裡買｜${esc(item.shop)}</div>`:''}${item.recipients?`<div>幫誰買｜${esc(item.recipients)}</div>`:''}${item.note?`<div>${esc(item.note)}</div>`:''}</div>`).join('')}</div>`;
+}
+function previewBuyImport(){
+  const input=document.getElementById('buy-import-box');if(input)FM.buyImportText=input.value;
+  const text=FM.buyImportText||'',preview=document.getElementById('buy-import-preview'),button=document.getElementById('buy-import-confirm');
+  if(preview)preview.innerHTML=buyImportPreviewHtml(text);
+  if(button)button.disabled=!buyImportPlan(text).items.length;
+}
+function confirmBuyImport(){
+  if(S.modal?.t!=='buy_import')return;
+  previewBuyImport();
+  // Recheck against the latest synced list at commit time, including other travelers' additions.
+  const plan=buyImportPlan(FM.buyImportText||'');
+  if(plan.error||!plan.items.length)return;
+  const memo=[...(S.memo||[]),...plan.items.map(item=>({...item,id:uid(),_u:Date.now()}))];
+  if(new Blob([JSON.stringify({...S,memo})]).size>850000){alert('旅程資料接近同步容量上限，請減少本次商品或先移除一些圖片。尚未匯入任何商品。');return;}
+  setD({memo,modal:null});
+  alert(`已新增 ${plan.items.length} 件待買商品${FM.buyImportSkip!==false&&plan.duplicates?`，略過 ${plan.duplicates} 件重複`:''}。`);
+}
 function memoView(){
   const items=(S.memo||[]).filter(m=>m.kind!=='purchase');
   const done=items.filter(m=>m.done).length;
@@ -3327,7 +3431,7 @@ function wlConfirmImport(){
 
 // ════ HERO & SHEET modal engine ════════════════════════
 // Hero modal types (large forms) — open from trigger element
-const HERO_TYPES=new Set(['loc','exp','nd','ed','wl_add','wl_import','wl_edit','wl_day','wl_cat','import','tv','tvEdit','cover','tools','help','note','memo_add','memo_import','buy_edit','tripGate']);
+const HERO_TYPES=new Set(['loc','exp','nd','ed','wl_add','wl_import','wl_edit','wl_day','wl_cat','import','tv','tvEdit','cover','tools','help','note','memo_add','memo_import','buy_edit','buy_import','tripGate']);
 // Sheet modal types (compact) — slide up from bottom
 const SHEET_TYPES=new Set([]);
 
@@ -3370,6 +3474,7 @@ function _getModalContent(m){
   let c='';
   if(m.t==='tripGate')c=mTripGate();
   else if(m.t==='buy_edit')c=buyModal();
+  else if(m.t==='buy_import')c=buyImportModal();
   else if(m.t==='loc')c=mLoc();
   else if(m.t==='nd'||m.t==='ed')c=mDay();
   else if(m.t==='exp')c=mExp();
