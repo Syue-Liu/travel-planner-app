@@ -804,11 +804,9 @@ body{background:radial-gradient(ellipse at 5% 5%,var(--journal-gold-wash),transp
 .cover{border-bottom:4px solid #d4b57d}
 .hdr-title{letter-spacing:.015em;line-height:1.22}.cover-bottom{gap:9px;padding-bottom:22px}
 .stats-strip{background:var(--paper);box-shadow:none;border-bottom:0}
-.stat-cell{padding:18px 16px;background:var(--journal-green-wash)}
-.stat-cell:nth-child(2){background:var(--journal-blue-wash)}.stat-cell:nth-child(3){background:var(--journal-gold-wash)}
-.stat-cell+.stat-cell::before{display:none}
-.stat-cell .stat-n{font-size:26px;color:var(--journal-green-ink);font-variant-numeric:tabular-nums}
-.stat-cell:nth-child(2) .stat-n{color:var(--journal-blue-ink)}.stat-cell:nth-child(3) .stat-n{color:var(--journal-gold-ink)}
+.stat-cell{padding:18px 16px;background:transparent}
+.stat-cell+.stat-cell::before{display:block}
+.stat-cell .stat-n{font-size:26px;color:var(--ink);font-variant-numeric:tabular-nums}
 .stat-cell .stat-l{color:var(--muted);letter-spacing:.035em}
 .nav{padding:12px 14px;gap:7px;box-shadow:0 4px 18px rgba(40,49,37,.035)}
 .nav-btn{border-radius:13px;color:var(--accent);background:var(--accent-wash);border:1px solid transparent;min-height:44px}
