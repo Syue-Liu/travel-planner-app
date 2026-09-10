@@ -139,3 +139,32 @@ console.log('PASS: purchase regressions, multi-select, recipients and AI import 
   ctx.S.memo.push({id:'switch',kind:'purchase',text:'原旅程',image:'data:image/jpeg;base64,amts'});ctx.sendCloudImage=async()=>{ctx.cloud.tripId='other-trip';return cloudUrl;};await ctx.migrateTripImages();assert.equal(ctx.S.memo.find(m=>m.id==='switch').image,'data:image/jpeg;base64,amts');
   console.log('PASS: Cloudinary config, trusted URLs, upload failures, verified delivery, stale drafts, cover races, migration preservation and trip isolation');
 })().catch(e=>{console.error(e);process.exitCode=1;});
+// In-store shopping: aliases, branch keywords, multi-store entries, and independent filters.
+const storeSavedMemo=ctx.S.memo;ctx.S.memo=[
+ {id:'store1',kind:'purchase',text:'MUJI待買',shop:'無印良品 銀座旗艦店／無印良品 新宿 LUMINE',area:'銀座、新宿',done:false,purchaseCategory:'生活雜貨'},
+ {id:'store2',kind:'purchase',text:'已買商品',shop:'MUJI 銀座',area:'銀座',done:true},
+ {id:'store3',kind:'purchase',text:'多店商品',shop:'唐吉訶德新宿東南口 / Loft',done:false},
+ {id:'store4',kind:'purchase',text:'MUJI只在品名',shop:'伊東屋',note:'無印良品',done:false},
+ {id:'store5',kind:'purchase',text:'相機',shop:'Bic Camera 新宿東口',done:false},
+ {id:'store6',kind:'purchase',text:'餅乾',shop:'7-ELEVEN',done:false}
+];
+for(const q of ['MUJI','無印','無印良品','ｍｕｊｉ','無印 銀座','銀座 muji'])assert(ctx.buyMatchesStore(ctx.S.memo[0],q),q);
+assert(!ctx.buyMatchesStore(ctx.S.memo[0],'無印 原宿'));assert(!ctx.buyMatchesStore(ctx.S.memo[0],'銀座 新宿'),'keywords must match the same store');
+assert(!ctx.buyMatchesStore(ctx.S.memo[3],'MUJI'),'do not match product name or notes');
+for(const q of ['donki','don quijote','ドンキ','唐吉','Loft'])assert(ctx.buyMatchesStore(ctx.S.memo[2],q),q);
+for(const q of ['bic camera','ビックカメラ','Ｂｉｃ　Ｃａｍｅｒａ 新宿'])assert(ctx.buyMatchesStore(ctx.S.memo[4],q),q);
+assert(ctx.buyMatchesStore(ctx.S.memo[5],'7-11'));
+const mujiChoice=ctx.buyStoreChoices().find(c=>c.name==='無印良品');assert.equal(mujiChoice.total,2);assert.equal(mujiChoice.pending,1);
+ctx.render=()=>{};ctx.selectBuyStore('無印良品');assert.equal(ctx.buyVisibleItems().length,1);assert.equal(ctx.buyVisibleItems()[0].id,'store1');
+assert(ctx.buyResults().includes('符合目前篩選 1 件'),'multi-area item counted once');assert.equal((ctx.buyResults().match(/class="buy-card/g)||[]).length,1,'show multi-area item only once at a store');
+vm.runInContext("buyFilter='all'",ctx);assert.equal(ctx.buyVisibleItems().length,2);
+vm.runInContext("buyCategoryFilter='生活雜貨'",ctx);assert.equal(ctx.buyVisibleItems().length,1);
+// Updating search replaces results only, keeping the input and Chinese IME composition intact.
+let focused=false;const searchNodes={'buy-results':{},'buy-store-shortcuts':{},'buy-store-clear':{},'buy-store-search':{value:'MUJI',focus(){focused=true;}}};
+ctx.document={getElementById:id=>searchNodes[id]};ctx.render=()=>{throw Error('Typing must not rerender the whole page');};
+const inputIdentity=searchNodes['buy-store-search'];ctx.updateBuyStoreSearch('MUJI');assert.equal(searchNodes['buy-store-search'],inputIdentity);assert.equal(searchNodes['buy-store-clear'].hidden,false);
+ctx.updateBuyStoreSearch('<img src=x onerror=evil>');assert(!searchNodes['buy-results'].innerHTML.includes('<img src=x'));assert(searchNodes['buy-results'].innerHTML.includes('&lt;img'));
+ctx.clearBuyStoreSearch();assert.equal(searchNodes['buy-store-search'].value,'');assert.equal(searchNodes['buy-store-clear'].hidden,true);assert(focused);
+assert(html.includes('if(!event.isComposing)updateBuyStoreSearch(this.value)'));assert(html.includes('oncompositionend="updateBuyStoreSearch(this.value)"'));
+ctx.S.memo=storeSavedMemo;
+console.log('PASS: store aliases, branch matching, multi-store uniqueness, pending/category filters, safe search rendering and IME-preserving updates');
