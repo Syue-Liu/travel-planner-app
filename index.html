@@ -765,6 +765,91 @@ input,select,textarea{background:var(--paper);color:var(--ink);border-color:var(
 input::placeholder,textarea::placeholder{color:var(--muted);opacity:.75}
 ::selection{background:var(--mint);color:var(--ink)}
 :root[data-theme="dark"] ::selection{background:var(--teal-fill);color:#fff}
+/* ── Travel journal palette: warm paper, lake blue and terracotta ── */
+:root{
+  --bg:#eee9df;--bg-2:#e8eeeb;--paper:#fffdf8;--soft:#f4f0e7;--card:var(--paper);
+  --app-veil:#faf8f2;--app-ring:#e4ded2;--nav-bg:rgba(255,253,248,.96);
+  --ink:#29362f;--muted:#60675f;--line:#e2ded3;--line-2:#c4c5b8;--line-a:#e2ded3;
+  --teal:#245e52;--teal-fill:#245e52;--teal-fill-2:#183f3a;--teal-grad-2:#397d6d;
+  --teal-edge:#a5c6b4;--mint:#e2efe7;--r:18px;
+  --journal-blue:#2c657e;--journal-blue-ink:#285e77;--journal-blue-wash:#e7f0f4;
+  --journal-clay:#a54a32;--journal-clay-ink:#93452f;--journal-clay-wash:#f9ece2;
+  --journal-gold:#825e22;--journal-gold-ink:#775721;--journal-gold-wash:#f6efd9;
+  --journal-violet:#685581;--journal-violet-ink:#655078;--journal-violet-wash:#eeeaf3;
+  --journal-green:#245e52;--journal-green-ink:#245e52;--journal-green-wash:#e5eee5;
+  --journal-aqua:#286969;--journal-aqua-ink:#286969;--journal-aqua-wash:#e3efec;
+  --accent:var(--journal-green-ink);--accent-fill:var(--journal-green);--accent-wash:var(--journal-green-wash);
+  --shadow:0 16px 44px rgba(63,56,37,.11);--journal-shadow:0 5px 20px rgba(63,56,37,.055);
+}
+:root[data-theme="dark"]{
+  --bg:#151c1c;--bg-2:#212323;--paper:#222d2c;--soft:#293532;--app-veil:#1b2523;--app-ring:#35413b;
+  --nav-bg:rgba(30,40,37,.96);--ink:#eeeae0;--muted:#b0b9ae;--line:#3b4640;--line-2:#586358;--line-a:#3b4640;
+  --teal:#a1d0ba;--teal-fill:#245e52;--teal-fill-2:#214e45;--teal-grad-2:#397d6d;--teal-edge:#527866;--mint:#304b3d;
+  --journal-blue-ink:#a4cede;--journal-blue-wash:#263c46;
+  --journal-clay-ink:#f0b396;--journal-clay-wash:#45312a;
+  --journal-gold-ink:#e6c88b;--journal-gold-wash:#3e3827;
+  --journal-violet-ink:#c9b9e0;--journal-violet-wash:#363145;
+  --journal-green-ink:#a1d0ba;--journal-green-wash:#2c4034;
+  --journal-aqua-ink:#a0d4cd;--journal-aqua-wash:#293f3d;
+  --journal-shadow:0 5px 20px rgba(0,0,0,.16);
+}
+.app[data-view="itinerary"],.nav-btn[data-view="itinerary"]{--accent:var(--journal-blue-ink);--accent-fill:var(--journal-blue);--accent-wash:var(--journal-blue-wash)}
+.app[data-view="wishlist"],.nav-btn[data-view="wishlist"]{--accent:var(--journal-violet-ink);--accent-fill:var(--journal-violet);--accent-wash:var(--journal-violet-wash)}
+.app[data-view="buy"],.nav-btn[data-view="buy"]{--accent:var(--journal-clay-ink);--accent-fill:var(--journal-clay);--accent-wash:var(--journal-clay-wash)}
+.app[data-view="expenses"],.nav-btn[data-view="expenses"]{--accent:var(--journal-gold-ink);--accent-fill:var(--journal-gold);--accent-wash:var(--journal-gold-wash)}
+.app[data-view="split"],.nav-btn[data-view="split"]{--accent:var(--journal-aqua-ink);--accent-fill:var(--journal-aqua);--accent-wash:var(--journal-aqua-wash)}
+.nav-btn[data-view="memo"]{--accent:var(--journal-green-ink);--accent-fill:var(--journal-green);--accent-wash:var(--journal-green-wash)}
+body{background:radial-gradient(ellipse at 5% 5%,var(--journal-gold-wash),transparent 55%),linear-gradient(150deg,var(--bg),var(--bg-2));background-attachment:fixed}
+.app{box-shadow:0 0 0 1px var(--app-ring),0 24px 80px rgba(39,53,45,.08)}
+.cover{border-bottom:4px solid #d4b57d}
+.hdr-title{letter-spacing:.015em;line-height:1.22}.cover-bottom{gap:9px;padding-bottom:22px}
+.stats-strip{background:var(--paper);box-shadow:none;border-bottom:0}
+.stat-cell{padding:18px 16px;background:var(--journal-green-wash)}
+.stat-cell:nth-child(2){background:var(--journal-blue-wash)}.stat-cell:nth-child(3){background:var(--journal-gold-wash)}
+.stat-cell+.stat-cell::before{display:none}
+.stat-cell .stat-n{font-size:26px;color:var(--journal-green-ink);font-variant-numeric:tabular-nums}
+.stat-cell:nth-child(2) .stat-n{color:var(--journal-blue-ink)}.stat-cell:nth-child(3) .stat-n{color:var(--journal-gold-ink)}
+.stat-cell .stat-l{color:var(--muted);letter-spacing:.035em}
+.nav{padding:12px 14px;gap:7px;box-shadow:0 4px 18px rgba(40,49,37,.035)}
+.nav-btn{border-radius:13px;color:var(--accent);background:var(--accent-wash);border:1px solid transparent;min-height:44px}
+.nav-btn.on{background:var(--accent-fill);color:#fff;box-shadow:0 4px 10px rgba(31,45,37,.15);border-color:var(--accent-fill)}
+.body{background:linear-gradient(180deg,var(--accent-wash),transparent 260px);padding-top:20px}
+.section-head{padding:5px 0 12px}.section-title{font-size:19px;letter-spacing:.02em}
+.dtab{border-radius:12px;box-shadow:none}.dtab.on{background:var(--accent-fill);border-color:var(--accent-fill)}
+.day-summary-chip{background:var(--paper);color:var(--accent);border-color:var(--line)}
+.card,.wl-card,.buy-card,.travel-toolkit,.stat{border-color:var(--line);box-shadow:var(--journal-shadow);border-radius:18px}
+.card{margin-bottom:12px}.loc-wrap{padding:15px}.loc-note{background:var(--accent-wash);border-left-color:var(--accent)}
+.loc-note-text{color:var(--ink)}.note-link{color:var(--t-blue-fg)}
+.loc-card-wrap.loc-now>.card{background:linear-gradient(150deg,var(--t-green-bg),var(--paper) 65%)!important}
+.tl-rail::before{background:var(--line-2)}.tl-time{color:var(--accent)}
+.travel-toolkit{background:linear-gradient(140deg,var(--paper),var(--journal-gold-wash));padding:18px}
+.important-heading-icon{background:var(--journal-gold);border-radius:11px;box-shadow:0 4px 12px rgba(99,72,26,.14)}
+.travel-key{box-shadow:var(--journal-shadow);border-radius:16px}.key-ticket-top{padding:16px;border-bottom:1px dashed var(--line-2)}
+.key-time{letter-spacing:-.04em}.key-actions{background:var(--key-tint)}
+.buy-hero{position:relative;isolation:isolate;overflow:hidden;padding:26px 24px;background:linear-gradient(125deg,#593d30,#8d452f 65%,#a9613e);border:1px solid rgba(255,255,255,.12);box-shadow:0 10px 26px rgba(109,62,37,.15)}
+.buy-hero::after{content:'';position:absolute;z-index:-1;pointer-events:none;right:-70px;top:-95px;width:260px;height:260px;border:1px solid rgba(245,212,165,.26);border-radius:50%;box-shadow:0 0 0 24px rgba(245,212,165,.07),0 0 0 48px rgba(245,212,165,.045)}
+.buy-hero h2{letter-spacing:.045em;line-height:1.35}.buy-hero progress{accent-color:#edc587!important}
+.buy-store{background:var(--paper);border:1px solid var(--line);border-top:3px solid var(--accent-fill);box-shadow:var(--journal-shadow)}
+.buy-store label,.buy-recipient{color:var(--accent)}.buy-store-input input{background:var(--accent-wash);border-color:var(--line-2)}
+.buy-store-shortcuts .buy-quick-btn{background:var(--accent-wash);color:var(--accent)}
+.buy-store-shortcuts .buy-quick-btn[aria-pressed="true"]{background:var(--accent-fill);color:#fff;border-color:var(--accent-fill)}
+.buy-tools .bp,.app .btn.bp{background:var(--accent-fill);border-color:var(--accent-fill);color:#fff}
+.buy-area-title{color:var(--accent);background:var(--accent-wash);border-left-color:var(--accent-fill);font-size:17px}
+.buy-card{border-left:3px solid var(--accent-fill);padding:18px 16px}.buy-card.done{border-left-color:var(--line-2);box-shadow:none}
+.buy-check{accent-color:var(--accent-fill)}.buy-category{background:var(--journal-gold-wash);color:var(--journal-gold-ink)}
+.buy-category[data-category="美妝保養"]{background:var(--t-rose-bg);color:var(--t-rose-fg)}
+.buy-category[data-category="服飾配件"]{background:var(--journal-violet-wash);color:var(--journal-violet-ink)}
+.buy-category[data-category="生活雜貨"]{background:var(--journal-blue-wash);color:var(--journal-blue-ink)}
+.buy-photo summary{background:var(--accent-wash);color:var(--accent)}
+.wl-card{border-top:3px solid var(--accent-fill);padding:16px}.wl-filter-btn.on{background:var(--accent-fill);border-color:var(--accent-fill)}
+.wl-day-btn{background:var(--accent-wash);color:var(--accent)}.wl-group-label{color:var(--accent);letter-spacing:.06em}
+.stat{background:var(--journal-green-wash)}.stat:nth-child(2){background:var(--journal-gold-wash)}
+.app-fab-main{background:linear-gradient(145deg,#a54a32,#874027);box-shadow:0 8px 24px rgba(111,54,30,.3),0 0 0 4px var(--paper)}
+.btn,.btn-ic{box-shadow:0 2px 5px rgba(38,49,36,.025)}
+.cover-menu button:hover,.cover-menu button:active{background:var(--soft)}.cover-menu .mi{background:var(--mint)}
+:root[data-theme="dark"] .tv-stat-cell{background:var(--soft)}
+@media(min-width:700px){.body{padding:24px 26px 90px}.nav{padding-left:24px;padding-right:24px}.nav-btn{font-size:14px}.stat-cell{padding:20px 26px}}
+@media(max-width:480px){.nav{gap:5px;padding:9px 10px}.nav-btn{min-width:60px;padding:8px 6px;font-size:13px}.stat-cell{padding:15px 13px}.stat-cell .stat-n{font-size:24px}.buy-hero{padding:22px 18px}.buy-hero h2{font-size:22px}.travel-toolkit{padding:13px}.buy-card{padding:15px 12px}.hdr-title{font-size:25px}}
 </style>
 </head>
 <body>
@@ -1374,7 +1459,7 @@ function render(){
   const ad=S.days[si];
   const te=S.expenses.reduce((s,e)=>s+expValue(e),0);
   const {b,tx}=settle(S.expenses,S.travelers);
-  root.innerHTML=`<div class="app">${hdr(te)}${gnav()}<main class="body">${S.view==='memo'?memoView():''}${S.view==='buy'?buyView():''}${S.view==='itinerary'?itin(ad,si):''}${S.view==='wishlist'?wishlistView():''}${S.view==='expenses'?exps(te):''}${S.view==='split'?splt(b,tx,te):''}</main></div>${globalFab()}`;
+  root.innerHTML=`<div class="app" data-view="${esc(S.view)}">${hdr(te)}${gnav()}<main class="body">${S.view==='memo'?memoView():''}${S.view==='buy'?buyView():''}${S.view==='itinerary'?itin(ad,si):''}${S.view==='wishlist'?wishlistView():''}${S.view==='expenses'?exps(te):''}${S.view==='split'?splt(b,tx,te):''}</main></div>${globalFab()}`;
 
   setTimeout(()=>{
     const t=document.querySelector('.day-tabs .dtab.on');
@@ -1448,7 +1533,7 @@ function hdr(te){
 function saveTN(){const v=document.getElementById('tn-in')?.value?.trim()||S.tnDraft.trim()||'未命名旅程';setD({tripName:v,editTN:false});}
 function gnav(){
   const ts=[['memo','checklist','備忘'],['itinerary','route','行程'],['wishlist','star','清單'],['buy','shopping-bag','待買'],['expenses','coin','記帳'],['split','scale','分帳']];
-  return`<nav class="nav">${ts.map(([k,ic,l])=>`<button class="nav-btn${S.view===k?' on':''}" onclick="switchTab('${k}')">${TI(ic,15)} ${l}</button>`).join('')}</nav>`;
+  return`<nav class="nav">${ts.map(([k,ic,l])=>`<button class="nav-btn${S.view===k?' on':''}" data-view="${k}" aria-current="${S.view===k?'page':'false'}" onclick="switchTab('${k}')">${TI(ic,15)} ${l}</button>`).join('')}</nav>`;
 }
 function itineraryMap(day){
   const locs=dayMapLocs(day);
@@ -2629,7 +2714,7 @@ function buyView(){
 }
 function buyCard(m){
   const photo=safeBuyImage(m.image);
-  return `<article class="buy-card${m.done?' done':''}"><input class="buy-check" type="checkbox" ${m.done?'checked':''} aria-label="${esc(m.text)}：已買" onchange="toggleMemo('${m.id}')"><div class="buy-main"><div class="buy-name">${esc(m.text)} <span style="font-size:12px;color:var(--muted)">× ${Number(m.quantity)||1}</span></div>${buyCategories(m).map(c=>`<span class="buy-category">${esc(c)}</span>`).join(' ')}${buyValues(m.recipients).length?`<div class="buy-meta buy-recipient">幫誰買｜${esc(buyValues(m.recipients).join('、'))}</div>`:''}${m.shop?`<div class="buy-meta">哪裡買｜${esc(m.shop)}</div>`:''}${m.note?`<div class="buy-meta">${esc(m.note)}</div>`:''}${photo?`<details class="buy-photo" ${buyPhotoOpen.has(m.id)?'open':''} ontoggle="if(this.open)buyPhotoOpen.add('${m.id}');else buyPhotoOpen.delete('${m.id}')"><summary>商品圖片 · 點擊展開／收合</summary><img loading="lazy" src="${photo}" alt="${esc(m.text)} 商品參考圖"></details>`:''}</div><div class="buy-actions"><button class="btn-ic" aria-label="編輯商品" onclick="openBuy(this,'${m.id}')">${TI('pencil',16)}</button><button class="btn-ic" aria-label="刪除商品" onclick="deleteBuy('${m.id}')">${TI('trash',16)}</button></div></article>`;
+  return `<article class="buy-card${m.done?' done':''}"><input class="buy-check" type="checkbox" ${m.done?'checked':''} aria-label="${esc(m.text)}：已買" onchange="toggleMemo('${m.id}')"><div class="buy-main"><div class="buy-name">${esc(m.text)} <span style="font-size:12px;color:var(--muted)">× ${Number(m.quantity)||1}</span></div>${buyCategories(m).map(c=>`<span class="buy-category" data-category="${esc(c)}">${esc(c)}</span>`).join(' ')}${buyValues(m.recipients).length?`<div class="buy-meta buy-recipient">幫誰買｜${esc(buyValues(m.recipients).join('、'))}</div>`:''}${m.shop?`<div class="buy-meta">哪裡買｜${esc(m.shop)}</div>`:''}${m.note?`<div class="buy-meta">${esc(m.note)}</div>`:''}${photo?`<details class="buy-photo" ${buyPhotoOpen.has(m.id)?'open':''} ontoggle="if(this.open)buyPhotoOpen.add('${m.id}');else buyPhotoOpen.delete('${m.id}')"><summary>商品圖片 · 點擊展開／收合</summary><img loading="lazy" src="${photo}" alt="${esc(m.text)} 商品參考圖"></details>`:''}</div><div class="buy-actions"><button class="btn-ic" aria-label="編輯商品" onclick="openBuy(this,'${m.id}')">${TI('pencil',16)}</button><button class="btn-ic" aria-label="刪除商品" onclick="deleteBuy('${m.id}')">${TI('trash',16)}</button></div></article>`;
 }
 function openBuy(el,id=''){
   const item=buyItems().find(m=>m.id===id);
