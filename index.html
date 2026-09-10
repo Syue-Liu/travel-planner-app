@@ -123,6 +123,14 @@ a{text-decoration:none}
 .buy-hero{padding:22px;border-radius:22px;background:linear-gradient(135deg,var(--teal-fill),#356e65);color:#fff;margin-bottom:18px}
 .buy-hero h2{margin:0 0 8px;font-size:23px}
 .buy-tools{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px}
+.buy-store{padding:16px;margin-bottom:16px;border:1px solid var(--line);border-radius:16px;background:var(--paper)}
+.buy-store label{display:block;font-size:15px;font-weight:800;margin-bottom:9px;color:var(--teal)}
+.buy-store-input{display:flex;align-items:center;gap:8px}
+.buy-store-input input{flex:1;min-width:0;width:100%;min-height:44px;font-size:16px;border:1px solid var(--line);border-radius:12px;padding:10px 12px;background:var(--soft);color:var(--ink)}
+.buy-store-input button{flex-shrink:0}.buy-store-input [hidden]{display:none}
+.buy-store-help,.buy-store-count{font-size:12px;color:var(--muted);margin:9px 0}
+.buy-store-shortcuts{display:flex;gap:7px;overflow-x:auto;padding:3px 0 5px;scrollbar-width:thin}
+.buy-store-shortcuts button{flex-shrink:0;max-width:220px}
 .buy-card{display:flex;align-items:flex-start;gap:12px;padding:16px;margin-bottom:10px;border:1px solid var(--line);border-radius:16px;background:var(--paper)}
 .buy-check{width:24px;height:24px;flex-shrink:0;accent-color:var(--teal);margin-top:3px;cursor:pointer}
 .buy-main{flex:1;min-width:0;overflow-wrap:anywhere}
@@ -2552,6 +2560,8 @@ const MEMO_TI={證件:'id',行李:'luggage',預訂:'calendar-check',其他:'map-
 // A discriminator keeps purchases separate from pre-trip tasks without a rules migration.
 let buyFilter='all';
 let buyCategoryFilter='all';
+let buyShopQuery='';
+const BUY_STORE_ALIASES=[['無印良品',['無印良品','無印','muji']],['唐吉訶德',['唐吉訶德','唐吉','don quijote','donki','ドン・キホーテ','ドンキ']],['Bic Camera',['bic camera','biccamera','ビックカメラ']],['Loft',['loft','ロフト']],['HANDS',['hands','東急手創館','東急ハンズ','ハンズ']],['松本清',['松本清','マツモトキヨシ','matsumoto kiyoshi','matsukiyo']],['SUNDRUG',['sundrug','サンドラッグ']],['7-ELEVEN',['7-eleven','7 eleven','7-11','711','seven eleven','セブンイレブン']],['伊勢丹',['伊勢丹','isetan']]];
 const buyPhotoOpen=new Set();
 const BUY_CATEGORIES=['伴手禮','零食飲料','美妝保養','服飾配件','生活雜貨','電器','其他'];
 // Keep legacy string fields; the ideographic comma separates multiple selections.
@@ -2567,14 +2577,55 @@ function buyGroups(items){
 }
 function safeBuyImage(value){return cloudImageUrl(value)||(typeof value==='string'&&value.length<=40000&&/^data:image\/jpeg;base64,[A-Za-z0-9+/]+={0,2}$/.test(value)?value:'');}
 function buyItems(){return (S.memo||[]).filter(m=>m.kind==='purchase');}
+function buyStoreText(value){
+  const aliases=BUY_STORE_ALIASES.flatMap(([name,values])=>values.map(alias=>[alias.toLowerCase(),name.toLowerCase()])).sort((a,b)=>b[0].length-a[0].length);
+  const pattern=aliases.map(([alias])=>alias.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')).join('|');
+  return String(value||'').normalize('NFKC').toLowerCase().replace(new RegExp(pattern,'g'),match=>aliases.find(([alias])=>alias===match)[1]);
+}
+function buyStoreKey(value){return buyStoreText(value).replace(/[\s・．.\-_－]/g,'');}
+function buyStores(item){return buyValues(String(item.shop||'').replace(/[／/｜|]+/g,'、'));}
+function buyMatchesStore(item,query=buyShopQuery){
+  if(!String(query).trim())return true;
+  const words=buyStoreText(query).split(/[\s、,，;；]+/).filter(Boolean).map(word=>word.replace(/[・．.\-_－]/g,''));
+  return buyStores(item).some(shop=>words.every(word=>buyStoreKey(shop).includes(word)));
+}
+function buyStoreChoices(){
+  const choices=new Map();
+  for(const item of buyItems()){
+    const names=new Set(buyStores(item).map(shop=>BUY_STORE_ALIASES.find(([name])=>buyStoreKey(shop).includes(buyStoreKey(name)))?.[0]||shop));
+    for(const name of names){const c=choices.get(name)||{name,total:0,pending:0};c.total++;if(!item.done)c.pending++;choices.set(name,c);}
+  }
+  return [...choices.values()].sort((a,b)=>b.pending-a.pending||a.name.localeCompare(b.name,'zh-Hant'));
+}
+function buyStoreShortcuts(){
+  return `<button type="button" class="buy-quick-btn" data-shop="" aria-pressed="${!buyShopQuery.trim()}" onclick="selectBuyStore(this.dataset.shop)">所有店家</button>`+buyStoreChoices().map(c=>`<button type="button" class="buy-quick-btn" data-shop="${esc(c.name)}" aria-pressed="${buyStoreKey(buyShopQuery)===buyStoreKey(c.name)}" onclick="selectBuyStore(this.dataset.shop)">${esc(c.name)} · ${c.pending} 件未買</button>`).join('');
+}
+function selectBuyStore(value){buyShopQuery=value;buyFilter='pending';buyCategoryFilter='all';render();}
+function updateBuyStoreSearch(value){
+  buyShopQuery=String(value).slice(0,120);
+  const results=document.getElementById('buy-results');if(results)results.innerHTML=buyResults();
+  const shortcuts=document.getElementById('buy-store-shortcuts');if(shortcuts)shortcuts.innerHTML=buyStoreShortcuts();
+  const clear=document.getElementById('buy-store-clear');if(clear)clear.hidden=!buyShopQuery;
+}
+function clearBuyStoreSearch(){
+  const input=document.getElementById('buy-store-search');if(input){input.value='';input.focus({preventScroll:true});}updateBuyStoreSearch('');
+}
+function buyVisibleItems(){
+  return buyItems().filter(m=>(buyFilter==='all'||(buyFilter==='done'?m.done:!m.done))&&(buyCategoryFilter==='all'||buyCategories(m).includes(buyCategoryFilter))&&buyMatchesStore(m)).slice().sort((a,b)=>Number(a.done)-Number(b.done));
+}
+function buyResults(){
+  const visible=buyVisibleItems();
+  const summary=`<p class="buy-store-count" role="status" aria-live="polite">${buyShopQuery.trim()?`「${esc(buyShopQuery.trim())}」・`:''}符合目前篩選 ${visible.length} 件，其中 ${visible.filter(m=>!m.done).length} 件未買</p>`;
+  const groups=buyShopQuery.trim()?visible.map(buyCard).join(''):buyGroups(visible).map(([area,list])=>`<section><h3 class="buy-area-title"><span>📍 ${esc(area)}</span><small>${list.filter(m=>!m.done).length} 件未買 / ${list.length} 件</small></h3>${list.map(buyCard).join('')}</section>`).join('');
+  return summary+(groups||`<div class="empty">${buyItems().length?'沒有符合的商品，試試縮短店名、切換「全部」或「所有分類」。':'還沒有待買商品，點右下角「＋」開始記錄。'}</div>`);
+}
 function buyView(){
   const items=buyItems(),done=items.filter(m=>m.done).length;
-  const visible=items.filter(m=>(buyFilter==='all'||(buyFilter==='done'?m.done:!m.done))&&(buyCategoryFilter==='all'||buyCategories(m).includes(buyCategoryFilter))).slice().sort((a,b)=>Number(a.done)-Number(b.done));
   const filters=[['all','全部'],['pending','未買'],['done','已買']].map(([id,label])=>`<button class="btn ${buyFilter===id?'bp':''}" aria-pressed="${buyFilter===id}" onclick="buyFilter='${id}';render()">${label}</button>`).join('');
   const categories=[...new Set([...BUY_CATEGORIES,...items.flatMap(buyCategories),...(buyCategoryFilter==='all'?[]:[buyCategoryFilter])])];
   const categorySelect=`<select aria-label="篩選商品分類" onchange="buyCategoryFilter=this.value;render()"><option value="all">所有分類</option>${categories.map(c=>`<option ${c===buyCategoryFilter?'selected':''} value="${esc(c)}">${esc(c)}</option>`).join('')}</select>`;
-  const groups=buyGroups(visible).map(([area,list])=>`<section><h3 class="buy-area-title"><span>📍 ${esc(area)}</span><small>${list.filter(m=>!m.done).length} 件未買 / ${list.length} 件</small></h3>${list.map(buyCard).join('')}</section>`).join('');
-  return `<section class="buy-hero"><h2>🛍️ 旅行待買清單</h2><div>依地區一起買，商品圖片隨手展開。</div><div style="margin-top:16px;font-weight:800">已買 ${done} / ${items.length} 件 · 還有 ${items.length-done} 件待買</div><progress aria-label="採買完成進度" value="${done}" max="${items.length||1}" style="width:100%;margin-top:10px;accent-color:#e7c782"></progress></section><div class="buy-tools">${filters}${categorySelect}<button class="btn" type="button" onclick="openModal(this,{t:'cloud_images'})">圖片空間</button></div>${groups||`<div class="empty">${items.length?'這個篩選下沒有商品':'還沒有待買商品，點右下角「＋」開始記錄。'}</div>`}`;
+  const store=`<section class="buy-store"><label for="buy-store-search">${TI('search',16)} 我現在在哪家店？</label><div class="buy-store-input"><input id="buy-store-search" type="search" maxlength="120" autocomplete="off" placeholder="搜尋店家，例如：無印、唐吉、Loft" value="${esc(buyShopQuery)}" oninput="if(!event.isComposing)updateBuyStoreSearch(this.value)" oncompositionend="updateBuyStoreSearch(this.value)"><button id="buy-store-clear" class="btn" type="button" ${buyShopQuery?'':'hidden'} onclick="clearBuyStoreSearch()">清除</button></div><p class="buy-store-help">可加上分店搜尋，例如「無印 銀座」。下方點選店家，直接查看未買商品。</p><div id="buy-store-shortcuts" class="buy-store-shortcuts" aria-label="店家快捷篩選">${buyStoreShortcuts()}</div></section>`;
+  return `<section class="buy-hero"><h2>🛍️ 旅行待買清單</h2><div>到店搜尋一起買，商品圖片隨手展開。</div><div style="margin-top:16px;font-weight:800">已買 ${done} / ${items.length} 件 · 還有 ${items.length-done} 件待買</div><progress aria-label="採買完成進度" value="${done}" max="${items.length||1}" style="width:100%;margin-top:10px;accent-color:#e7c782"></progress></section>${store}<div class="buy-tools">${filters}${categorySelect}<button class="btn" type="button" onclick="openModal(this,{t:'cloud_images'})">圖片空間</button></div><div id="buy-results">${buyResults()}</div>`;
 }
 function buyCard(m){
   const photo=safeBuyImage(m.image);
