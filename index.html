@@ -848,6 +848,14 @@ body{background:radial-gradient(ellipse at 5% 5%,var(--journal-gold-wash),transp
 :root[data-theme="dark"] .tv-stat-cell{background:var(--soft)}
 @media(min-width:700px){.body{padding:24px 26px 90px}.nav{padding-left:24px;padding-right:24px}.nav-btn{font-size:14px}.stat-cell{padding:20px 26px}}
 @media(max-width:480px){.nav{gap:5px;padding:9px 10px}.nav-btn{min-width:60px;padding:8px 6px;font-size:13px}.stat-cell{padding:15px 13px}.stat-cell .stat-n{font-size:24px}.buy-hero{padding:22px 18px}.buy-hero h2{font-size:22px}.travel-toolkit{padding:13px}.buy-card{padding:15px 12px}.hdr-title{font-size:25px}}
+
+/* Memo completion views */
+.memo-filters{display:flex;gap:8px;flex-wrap:wrap;margin:18px 0}.memo-filters .btn{min-height:42px;padding:9px 14px}
+.memo-status-heading{display:flex;align-items:center;justify-content:space-between;gap:10px;font-size:17px;color:var(--ink);margin:12px 0}
+.memo-status-heading span,.memo-cat-count{font-size:12px;color:var(--muted);font-weight:600}
+.memo-cat-count{margin-left:6px}.memo-completed{border:1px solid var(--line);border-radius:16px;background:var(--paper);padding:0 14px;margin-top:22px}
+.memo-completed>summary{cursor:pointer;padding:15px 0;font-weight:800;color:var(--ink)}.memo-completed>summary span{float:right;font-size:12px;color:var(--muted);font-weight:500}
+.memo-completed[open]{padding-bottom:12px}.memo-cb{padding:0;background:var(--paper);color:var(--ink)}
 </style>
 </head>
 <body>
@@ -3052,17 +3060,24 @@ function confirmBuyImport(){
   setD({memo,modal:null});
   alert(`已新增 ${plan.items.length} 件待買商品${FM.buyImportSkip!==false&&plan.duplicates?`，略過 ${plan.duplicates} 件重複`:''}。`);
 }
+let memoFilter='all';
 function memoView(){
   const items=(S.memo||[]).filter(m=>m.kind!=='purchase');
-  const done=items.filter(m=>m.done).length;
-  const groups=MEMO_CATS.map(cat=>{
-    const its=items.filter(m=>m.cat===cat);
+  const completed=items.filter(m=>m.done),pending=items.filter(m=>!m.done),done=completed.length;
+  const renderGroups=list=>[...new Set([...MEMO_CATS,...list.map(m=>m.cat||'其他')])].map(cat=>{
+    const its=list.filter(m=>(m.cat||'其他')===cat);
     if(!its.length)return'';
-    return`<div class="memo-cat-hd">${TI(MEMO_TI[cat]||'map-pin',13)} ${cat}</div>${its.map(m=>`<div class="memo-item${m.done?' done':''}" id="memo-${m.id}"><div class="memo-cb${m.done?' on':''}" onclick="toggleMemo('${m.id}')">${m.done?'✓':''}</div><div class="memo-text" onclick="editMemo('${m.id}')">${linkify(m.text)}</div><div class="memo-actions"><button class="memo-edit" onclick="editMemo('${m.id}')" title="編輯">${TI('pencil',13)}</button><button class="memo-del" onclick="delMemo('${m.id}')" title="刪除">×</button></div></div>`).join('')}`;
+    return`<div class="memo-cat-hd">${TI(MEMO_TI[cat]||'map-pin',13)} ${esc(cat)} <span class="memo-cat-count">${its.length}</span></div>${its.map(m=>`<div class="memo-item${m.done?' done':''}" id="memo-${m.id}"><button type="button" class="memo-cb${m.done?' on':''}" aria-label="${esc(m.text)}：完成狀態" aria-pressed="${!!m.done}" onclick="toggleMemo('${m.id}')">${m.done?'✓':''}</button><div class="memo-text" onclick="editMemo('${m.id}')">${linkify(m.text)}</div><div class="memo-actions"><button class="memo-edit" onclick="editMemo('${m.id}')" title="編輯">${TI('pencil',13)}</button><button class="memo-del" onclick="delMemo('${m.id}')" title="刪除">×</button></div></div>`).join('')}`;
   }).join('');
+  const filters=`<div class="memo-filters" aria-label="備忘完成狀態">${[['all','全部',items.length],['pending','未完成',pending.length],['done','已完成',done]].map(([key,label,count])=>`<button type="button" class="btn ${memoFilter===key?'bp':''}" aria-pressed="${memoFilter===key}" onclick="memoFilter='${key}';render()">${label} ${count}</button>`).join('')}</div>`;
+  let groups='';
+  if(memoFilter!=='done'&&pending.length)groups+=`<section aria-label="未完成備忘"><h3 class="memo-status-heading">未完成 <span>${pending.length} 項待確認</span></h3>${renderGroups(pending)}</section>`;
+  if(memoFilter==='done'&&done)groups=`<section aria-label="已完成備忘"><h3 class="memo-status-heading">已完成 <span>${done} 項</span></h3>${renderGroups(completed)}</section>`;
+  if(memoFilter==='all'&&done)groups+=`<details class="memo-completed" ${pending.length?'':'open'}><summary>已完成 ${done} 項<span>展開／收合</span></summary>${renderGroups(completed)}</details>`;
+  const empty=items.length?(memoFilter==='pending'?'全部完成了，出發前再確認一次就好！':'目前還沒有已完成的備忘。'):'還沒有備忘項目，點右下角「＋」開始新增。';
   const progress=items.length?`<div style="margin-bottom:14px;"><div style="display:flex;justify-content:space-between;font-size:12px;font-weight:700;color:var(--muted);margin-bottom:5px;"><span>行前清單進度</span><span>${done} / ${items.length} 完成</span></div><div class="budget-line"><div class="budget-fill" style="width:${items.length?Math.round(done/items.length*100):0}%;"></div></div></div>`:'';
   const catSel=MEMO_CATS.map(c=>`<option value="${c}">${MEMO_IC[c]} ${c}</option>`).join('');
-  return`<div class="memo-toolbar mobile-fab-replaced"><button class="memo-ai-btn" onclick="openModal(this,{t:'memo_import'})">${TI('sparkles',14)} AI 產生備忘清單</button></div>${progress}${groups||'<div class="empty"><div style="font-size:30px;margin-bottom:8px;">📝</div>還沒有備忘項目<br><span style="font-size:12px;">點右下角 ＋ 新增備忘，或用 AI 一鍵產生</span></div>'}<div class="memo-add-row mobile-fab-replaced"><select class="memo-cat-sel" id="memo-cat">${catSel}</select><textarea id="memo-inp" rows="1" placeholder="例：護照、訂飯店確認信...（可貼網址，Shift+Enter 換行）" style="flex:1;resize:none;overflow:hidden;min-height:44px;line-height:1.5;" oninput="this.style.height='auto';this.style.height=this.scrollHeight+'px'" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();addMemo();}"></textarea><button class="btn bp" style="padding:0 16px;flex-shrink:0;" onclick="addMemo()">新增</button></div>`;
+  return`<div class="memo-toolbar mobile-fab-replaced"><button class="memo-ai-btn" onclick="openModal(this,{t:'memo_import'})">${TI('sparkles',14)} AI 產生備忘清單</button></div>${progress}${filters}${groups||`<div class="empty" role="status">${empty}</div>`}<div class="memo-add-row mobile-fab-replaced"><select class="memo-cat-sel" id="memo-cat">${catSel}</select><textarea id="memo-inp" rows="1" placeholder="例：護照、訂飯店確認信...（可貼網址，Shift+Enter 換行）" style="flex:1;resize:none;overflow:hidden;min-height:44px;line-height:1.5;" oninput="this.style.height='auto';this.style.height=this.scrollHeight+'px'" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();addMemo();}"></textarea><button class="btn bp" style="padding:0 16px;flex-shrink:0;" onclick="addMemo()">新增</button></div>`;
 }
 function mMemoAdd(){
   const catSel=MEMO_CATS.map(c=>`<option value="${c}">${MEMO_IC[c]} ${c}</option>`).join('');
