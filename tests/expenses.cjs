@@ -4,7 +4,7 @@ function fn(name){const start=html.search(new RegExp('^function '+name+'\\(','m'
 const alerts=[];let writes=0,inputs=[];
 const ctx={S:{travelers:['甲','乙','丙'],expenses:[],settleCurrency:'TWD',modal:{}},FM:{},FX:{rates:null,status:'測試匯率'},CUR:{TWD:1,JPY:.22},CUR_LABEL:{TWD:'NT$',JPY:'¥'},CTI:{},TI:()=>'',getTvColor:()=>({}),alert:m=>alerts.push(m),uid:()=> 'new',ac:()=> '其他',normalizeExpenseDate:s=>s,localDate:()=> '2026-09-20',bindExpenseIds:()=>{},setD:u=>{writes++;Object.assign(ctx.S,u);},document:{querySelectorAll:()=>inputs}};
 vm.createContext(ctx);
-for(const name of ['esc','jsq','convertAmount','expValue','fmtSettlement','isPersonalExp','expenseAllocations','expenseAdvanceHtml','expenseDraftPreview','settlementSummary','settle','splt','sExp'])vm.runInContext(fn(name),ctx);
+for(const name of ['esc','jsq','convertAmount','expValue','fmtSettlement','isPersonalExp','expenseAllocations','expenseAdvanceHtml','expenseDraftPreview','settlementEntry','settlementSummary','settle','splt','sExp'])vm.runInContext(fn(name),ctx);
 const expense=(amount,paidBy,splitWith,currency='TWD',shares=null)=>({item:'晚餐',amount,paidBy,splitWith,currency,shares,expenseMode:'shared'});
 const close=(actual,expected)=>assert(Math.abs(actual-expected)<1e-8,`${actual} != ${expected}`);
 // A full advance for one other traveler: payer has no own consumption.
@@ -26,6 +26,15 @@ assert.equal(ctx.fmtSettlement(10839.6),'NT$10,839.6');
 result=ctx.settle([expense(377.6,'甲',['乙'])],ctx.S.travelers);assert.equal(result.tx[0].amount,377.6);
 result=ctx.settle([expense(.01,'甲',['乙'])],ctx.S.travelers);assert.equal(result.tx[0].amount,.01);
 for(const [currency,expected] of [['JPY',1500],['TWD',330]]){ctx.S.settleCurrency=currency;close(ctx.settle([e],ctx.S.travelers).b['甲'],expected);}ctx.S.settleCurrency='TWD';
+// Non-divisible totals and FX rounding balance exactly at cent precision.
+for(const amount of [1,.01,2032.18,1802.95]){
+  const r=ctx.settle([expense(amount,'甲',['甲','乙','丙'])],ctx.S.travelers);
+  assert.equal(Object.values(r.b).reduce((sum,v)=>sum+Math.round(v*100),0),0);
+  const remaining=Object.fromEntries(Object.entries(r.b).map(([n,v])=>[n,Math.round(v*100)]));
+  for(const t of r.tx){remaining[t.from]+=Math.round(t.amount*100);remaining[t.to]-=Math.round(t.amount*100);}
+  Object.values(remaining).forEach(v=>assert.equal(v,0));
+  assert.equal(ctx.settlementEntry(expense(amount,'甲',['甲','乙','丙'])).shares.reduce((s,x)=>s+x.cents,0),Math.round(amount*100));
+}
 // Clear selection must not silently charge everyone. Invalid drafts never save.
 ctx.S.expenses=[];const draft={item:'代買',amount:'3000',currency:'JPY',expenseMode:'shared',paidBy:'甲',splitMode:'equal',splitWith:[]};ctx.FM={...draft};ctx.sExp();assert.equal(writes,0);assert(alerts.at(-1).includes('至少一位'));
 ctx.FM={...draft,splitWith:['乙'],paidBy:''};ctx.sExp();assert.equal(writes,0);
