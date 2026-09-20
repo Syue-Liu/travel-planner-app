@@ -1277,16 +1277,26 @@ function fmtSettlement(n,c=S.settleCurrency||'TWD'){
   const value=Math.round((Number(n)||0)*100)/100;
   return `${CUR_LABEL[c]||c+' '}${(Object.is(value,-0)?0:value).toLocaleString('zh-TW',{maximumFractionDigits:2})}`;
 }
+// Allocate each converted expense in cents, with deterministic largest-remainder rounding.
+function settlementEntry(e){
+  const total=Math.round(expValue(e)*100),raw=expenseAllocations(e),sum=raw.reduce((v,x)=>v+x.amount,0);
+  if(!raw.length||!Number.isSafeInteger(total)||total<0||sum<=0)return {total:0,shares:[]};
+  const shares=raw.map((x,index)=>{const exact=total*x.amount/sum,cents=Math.floor(exact);return {person:x.person,cents,remainder:exact-cents,index};});
+  const order=[...shares].sort((a,b)=>b.remainder-a.remainder||a.index-b.index);
+  const remaining=total-shares.reduce((v,x)=>v+x.cents,0);
+  for(let i=0;i<remaining;i++)order[i%order.length].cents++;
+  return {total,shares};
+}
 function settlementSummary(b,expenses){
   const max=Math.max(1,...S.travelers.map(t=>Math.abs(b[t]||0)));
-  const total=expenses.reduce((sum,e)=>sum+expValue(e),0);
+  const total=expenses.reduce((sum,e)=>sum+settlementEntry(e).total,0)/100;
   const rows=S.travelers.map(t=>{
     const v=b[t]||0,neutral=Math.abs(v)<.005,receive=v>0,width=Math.min(100,Math.abs(v)/max*100);
     const label=neutral?'收支平衡':`${receive?'應收':'應付'} ${fmtSettlement(Math.abs(v))}`;
     const bar=`<span class="balance-bar ${receive?'receive':'pay'}" style="width:${width}%"></span><span class="balance-amount">${receive?'+':'−'}${fmtSettlement(Math.abs(v))}</span>`;
     return `<button type="button" class="balance-chart-row" aria-label="${esc(t+'，'+label+'，查看計算明細')}" aria-expanded="${S.splitExpanded===t}" onclick="toggleSplitPerson('${jsq(t)}')"><span class="balance-side debt">${!neutral&&!receive?bar:''}</span><span class="balance-person"><span>${esc(S.travelerIcons?.[t]||'🙂')}</span><span>${esc(t)}</span>${neutral?'<small>收支平衡</small>':''}</span><span class="balance-side credit">${!neutral&&receive?bar:''}</span></button>`;
   }).join('');
-  return `<section class="settlement-summary" aria-label="結餘總覽"><div class="settlement-summary-head"><div><div class="sh">結餘總覽</div><div class="mini">共同消費 ${fmtSettlement(total)} · ${expenses.length} 筆</div></div><button class="btn" onclick="setU({modal:{t:'tools'}})">${esc(S.settleCurrency||'TWD')} 結算</button></div><div class="tip">先付款 − 應負擔 = 個人結餘。點旅伴查看下方計算明細。</div><div class="balance-legend"><span>← 應付給旅伴</span><span>應向旅伴收回 →</span></div>${rows||'<div class="empty">新增旅伴後即可查看結餘</div>'}<div class="mini">僅計入「代墊／共同分帳」，純記帳不列入。${esc(FX.status||'')}；外幣依目前匯率換算，金額顯示至小數 2 位。</div></section>`;
+  return `<section class="settlement-summary" aria-label="結餘總覽"><div class="settlement-summary-head"><div><div class="sh">結餘總覽</div><div class="mini">共同消費 ${fmtSettlement(total)} · ${expenses.length} 筆</div></div><button class="btn" onclick="setU({modal:{t:'tools'}})">${esc(S.settleCurrency||'TWD')} 結算</button></div><div class="tip">先付款 − 應負擔 = 個人結餘。點旅伴查看下方計算明細。</div><div class="balance-legend"><span>← 應付給旅伴</span><span>應向旅伴收回 →</span></div>${rows||'<div class="empty">新增旅伴後即可查看結餘</div>'}<div class="mini">僅計入「代墊／共同分帳」，純記帳不列入。${esc(FX.status||'')}；外幣依目前匯率換算，以小數 2 位結算，分攤尾差按比例分配，確保收付總額一致。</div></section>`;
 }
 function expenseAllocations(e){
   if(isPersonalExp(e))return [];
@@ -1330,22 +1340,18 @@ function canSharedStorage(){return !!(window.storage&&window.storage.get&&window
 async function getSaved(key){if(canSharedStorage()){const r=await window.storage.get(key,true);return r?.value||null;}return localStorage.getItem(key);}
 async function setSaved(key,value){if(canSharedStorage())await window.storage.set(key,value,true);else localStorage.setItem(key,value);}
 function settle(exps,tvls){
-  const b=Object.fromEntries(tvls.map(t=>[t,0]));
-  const cur=S.settleCurrency||'TWD';
+  const cents=Object.fromEntries(tvls.map(t=>[t,0]));
   for(const e of exps){
     if(isPersonalExp(e))continue;
-    const shares=e.shares||null;
-    if(shares){
-      for(const [p,raw] of Object.entries(shares)){const sh=convertAmount(raw,e.currency||'TWD',cur);if(p===e.paidBy)continue;if(p in b)b[p]-=sh;if(e.paidBy in b)b[e.paidBy]+=sh;}
-      continue;
-    }
-    if(!e.splitWith?.length)continue;const sh=expValue(e,cur)/e.splitWith.length;for(const p of e.splitWith){if(p===e.paidBy)continue;if(p in b)b[p]-=sh;if(e.paidBy in b)b[e.paidBy]+=sh;}
+    const entry=settlementEntry(e);
+    if(e.paidBy in cents)cents[e.paidBy]+=entry.total;
+    for(const share of entry.shares)if(share.person in cents)cents[share.person]-=share.cents;
   }
-  let cr=Object.entries(b).filter(([,v])=>v>0.005).map(([n,v])=>({n,v})).sort((a,x)=>x.v-a.v);
-  let de=Object.entries(b).filter(([,v])=>v<-0.005).map(([n,v])=>({n,v:-v})).sort((a,x)=>x.v-a.v);
+  const cr=Object.entries(cents).filter(([,v])=>v>0).map(([n,v])=>({n,v})).sort((a,b)=>b.v-a.v);
+  const de=Object.entries(cents).filter(([,v])=>v<0).map(([n,v])=>({n,v:-v})).sort((a,b)=>b.v-a.v);
   const tx=[];
-  while(cr.length&&de.length){const c=cr[0],d=de[0],am=Math.min(c.v,d.v);if(am>0.005)tx.push({from:d.n,to:c.n,amount:Math.round(am*100)/100});c.v-=am;d.v-=am;if(c.v<0.005)cr.shift();if(d.v<0.005)de.shift();}
-  return{b,tx};
+  while(cr.length&&de.length){const c=cr[0],d=de[0],amount=Math.min(c.v,d.v);tx.push({from:d.n,to:c.n,amount:amount/100});c.v-=amount;d.v-=amount;if(!c.v)cr.shift();if(!d.v)de.shift();}
+  return {b:Object.fromEntries(Object.entries(cents).map(([n,v])=>[n,v/100])),tx};
 }
 let S={tripName:'2026 旅遊計畫',cover:COVERS[0][1],coverPos:'30%',budget:0,settleCurrency:'TWD',days:[{id:'d1',title:'第一天',date:'',locations:[]}],travelers:['旅伴A','旅伴B'],travelerIcons:{旅伴A:'🙂',旅伴B:'😎'},expenses:[],memo:[],view:'itinerary',dayIdx:0,modal:null,editTN:false,tnDraft:'',wishlist:[],wlCats:[],wlFabOpen:false,travelerMeta:{},tvExpanded:'',sortMode:false,trash:{}};
 let FM={};
@@ -1697,19 +1703,16 @@ function exps(te){
 function splt(b,tx,te){
   const sharedExpenses=S.expenses.filter(e=>!isPersonalExp(e));
   const personMini=t=>{const c=getTvColor(t),ic=S.travelerIcons?.[t]||'🙂';return`<div class="split-txn-person" style="--tv-bg:${c.bg};--tv-fg:${c.fg};--tv-ac:${c.accent};"><div class="split-avatar">${ic}</div><div class="split-txn-name">${esc(t)}</div></div>`;};
-  const personShare=(e,t)=>{
-    if(e.shares)return Number(e.shares[t]||0);
-    return (e.splitWith||[]).includes(t)?Number(e.amount||0)/Math.max(1,(e.splitWith||[]).length):0;
-  };
+  const personShare=(e,t)=>(settlementEntry(e).shares.find(x=>x.person===t)?.cents||0)/100;
   const br=S.travelers.map(t=>{
-    const v=b[t]||0,paid=sharedExpenses.filter(e=>e.paidBy===t).reduce((s,e)=>s+expValue(e),0),count=sharedExpenses.filter(e=>e.paidBy===t).length,shared=sharedExpenses.filter(e=>(e.splitWith||[]).includes(t)||e.shares?.[t]).length,pos=v>=0;
+    const v=b[t]||0,paid=sharedExpenses.filter(e=>e.paidBy===t).reduce((s,e)=>s+settlementEntry(e).total,0)/100,count=sharedExpenses.filter(e=>e.paidBy===t).length,shared=sharedExpenses.filter(e=>(e.splitWith||[]).includes(t)||e.shares?.[t]).length,pos=v>=0;
     const ic=S.travelerIcons?.[t]||'🙂',c=getTvColor(t),meta=(S.travelerMeta||{})[t]||{};
     const open=S.splitExpanded===t;
-    const owed=sharedExpenses.reduce((sum,e)=>sum+convertAmount(personShare(e,t),e.currency||'TWD',S.settleCurrency||'TWD'),0);
+    const owed=sharedExpenses.reduce((sum,e)=>sum+Math.round(personShare(e,t)*100),0)/100;
     const related=sharedExpenses.filter(e=>e.paidBy===t||personShare(e,t)>0);
     const detail=related.length?`<div class="split-detail-title">相關分帳明細</div>${related.map(e=>{
       const share=personShare(e,t),isPayer=e.paidBy===t;
-      return`<div class="split-exp-mini"><div class="split-exp-line"><div class="split-exp-name">${TI(CTI[e.category]||'map-pin',13)} ${esc(e.item)}</div><div style="font-weight:900;">${fmtSettlement(expValue(e))}</div></div><div class="split-exp-meta">${isPayer?'先付款（含替他人代墊）':'分攤這筆消費'}${share?` · 負擔 ${fmtSettlement(convertAmount(share,e.currency||'TWD',S.settleCurrency||'TWD'))}`:''}${e.paidBy?` · 先付款的人 ${esc(S.travelerIcons?.[e.paidBy]||'')} ${esc(e.paidBy)}`:''}</div></div>`;
+      return`<div class="split-exp-mini"><div class="split-exp-line"><div class="split-exp-name">${TI(CTI[e.category]||'map-pin',13)} ${esc(e.item)}</div><div style="font-weight:900;">${fmtSettlement(expValue(e))}</div></div><div class="split-exp-meta">${isPayer?'先付款（含替他人代墊）':'分攤這筆消費'}${share?` · 負擔 ${fmtSettlement(share)}`:''}${e.paidBy?` · 先付款的人 ${esc(S.travelerIcons?.[e.paidBy]||'')} ${esc(e.paidBy)}`:''}</div></div>`;
     }).join('')}`:`<div class="split-detail-title">相關分帳明細</div><div class="mini">目前沒有共同分帳明細</div>`;
     return`<div class="split-person${open?' open':''}" style="--tv-bg:${c.bg};--tv-fg:${c.fg};--tv-ac:${c.accent};" onclick="toggleSplitPerson('${jsq(t)}')">
       <div class="split-person-head"><div class="split-avatar">${ic}</div><div style="min-width:0;flex:1;"><div class="split-name-row"><div class="split-name">${esc(t)}</div>${meta.role?`<div class="split-role">${esc(meta.role)}</div>`:''}</div>${meta.bio?`<div class="split-bio-inline">${TI('message-circle',12)} ${esc(meta.bio)}</div>`:''}</div><div class="split-toggle">⌄</div></div>
