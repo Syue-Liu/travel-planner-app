@@ -856,6 +856,28 @@ body{background:radial-gradient(ellipse at 5% 5%,var(--journal-gold-wash),transp
 .memo-cat-count{margin-left:6px}.memo-completed{border:1px solid var(--line);border-radius:16px;background:var(--paper);padding:0 14px;margin-top:22px}
 .memo-completed>summary{cursor:pointer;padding:15px 0;font-weight:800;color:var(--ink)}.memo-completed>summary span{float:right;font-size:12px;color:var(--muted);font-weight:500}
 .memo-completed[open]{padding-bottom:12px}.memo-cb{padding:0;background:var(--paper);color:var(--ink)}
+
+/* Expense advances show original-currency allocation, separately from net settlement. */
+.expense-advance{margin:0 14px 14px;padding:12px 14px;border:1px solid var(--line);border-radius:12px;background:var(--t-amber-bg);color:var(--ink);overflow-wrap:anywhere}
+.expense-advance-title{display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;font-size:13px;font-weight:800}.expense-advance-title span{font-size:11px;font-weight:600;color:var(--muted)}
+.expense-advance-people{font-size:12px;margin-top:5px;color:var(--muted)}
+.expense-advance-row{display:flex;justify-content:space-between;align-items:baseline;gap:12px;font-size:13px;margin-top:9px}.expense-advance-row>span{min-width:0}.expense-advance-row strong{white-space:nowrap;color:var(--t-amber-fg)}
+.expense-advance-note{font-size:11px;color:var(--muted);margin-top:10px;line-height:1.6}
+.expense-people-actions{display:flex;gap:8px;margin:10px 0}.expense-people-actions .btn{font-size:12px}
+#expense-advance-preview .expense-advance{margin:0 0 14px}
+
+/* Diverging balance overview: debts left, receivables right. */
+.settlement-summary{padding:18px;background:var(--paper);border:1px solid var(--line);border-radius:18px;margin-bottom:22px}
+.settlement-summary-head{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:12px}.settlement-summary-head .sh{margin:0 0 5px}.settlement-summary-head .btn{white-space:nowrap}
+.balance-legend{display:flex;justify-content:space-between;font-size:11px;color:var(--muted);margin:20px 0 8px}
+.balance-chart-row{display:grid;grid-template-columns:minmax(0,1fr) 100px minmax(0,1fr);align-items:stretch;width:100%;border:0;border-radius:8px;background:transparent;color:var(--ink);font:inherit;padding:4px 0;cursor:pointer;min-height:64px}
+.balance-chart-row:hover,.balance-chart-row[aria-expanded="true"]{background:var(--cream)}.balance-chart-row:focus-visible{outline:2px solid var(--teal);outline-offset:2px}
+.balance-person{display:flex;align-items:center;justify-content:center;flex-direction:column;font-size:12px;font-weight:800;padding:2px 5px;overflow-wrap:anywhere}.balance-person>span:first-child{font-size:22px}.balance-person small{font-size:10px;font-weight:400;color:var(--muted)}
+.balance-side{position:relative;display:flex;align-items:center;min-width:0}.balance-side.debt{justify-content:flex-end;border-right:1px solid var(--line)}.balance-side.credit{justify-content:flex-start;border-left:1px solid var(--line)}
+.balance-bar{position:absolute;min-width:3px;height:85%;border-radius:5px;opacity:.28}.debt .balance-bar{right:0;background:var(--t-red-fg,#b94747)}.credit .balance-bar{left:0;background:var(--teal)}
+.balance-amount{position:relative;font-size:14px;font-weight:800;padding:5px;overflow-wrap:anywhere;font-variant-numeric:tabular-nums}.debt .balance-amount{color:var(--t-red-fg,#b94747)}.credit .balance-amount{color:var(--teal)}
+.settlement-summary>.mini{margin-top:14px;line-height:1.6}.split-calculation{padding:10px 0;font-size:12px;font-weight:700;line-height:1.7;color:var(--muted)}
+@media(max-width:480px){.settlement-summary{padding:12px}.balance-chart-row{grid-template-columns:minmax(0,1fr) 76px minmax(0,1fr)}.balance-amount{font-size:12px;padding:4px}}
 </style>
 </head>
 <body>
@@ -1250,6 +1272,47 @@ function fmt(n,c=S.settleCurrency||'TWD'){
 function isPersonalExp(e){
   return e?.expenseMode==='personal'||(!e?.paidBy&&!(e?.splitWith||[]).length&&!e?.shares);
 }
+// Amounts in the original currency; convert only when presenting a settlement total.
+function fmtSettlement(n,c=S.settleCurrency||'TWD'){
+  const value=Math.round((Number(n)||0)*100)/100;
+  return `${CUR_LABEL[c]||c+' '}${(Object.is(value,-0)?0:value).toLocaleString('zh-TW',{maximumFractionDigits:2})}`;
+}
+function settlementSummary(b,expenses){
+  const max=Math.max(1,...S.travelers.map(t=>Math.abs(b[t]||0)));
+  const total=expenses.reduce((sum,e)=>sum+expValue(e),0);
+  const rows=S.travelers.map(t=>{
+    const v=b[t]||0,neutral=Math.abs(v)<.005,receive=v>0,width=Math.min(100,Math.abs(v)/max*100);
+    const label=neutral?'收支平衡':`${receive?'應收':'應付'} ${fmtSettlement(Math.abs(v))}`;
+    const bar=`<span class="balance-bar ${receive?'receive':'pay'}" style="width:${width}%"></span><span class="balance-amount">${receive?'+':'−'}${fmtSettlement(Math.abs(v))}</span>`;
+    return `<button type="button" class="balance-chart-row" aria-label="${esc(t+'，'+label+'，查看計算明細')}" aria-expanded="${S.splitExpanded===t}" onclick="toggleSplitPerson('${jsq(t)}')"><span class="balance-side debt">${!neutral&&!receive?bar:''}</span><span class="balance-person"><span>${esc(S.travelerIcons?.[t]||'🙂')}</span><span>${esc(t)}</span>${neutral?'<small>收支平衡</small>':''}</span><span class="balance-side credit">${!neutral&&receive?bar:''}</span></button>`;
+  }).join('');
+  return `<section class="settlement-summary" aria-label="結餘總覽"><div class="settlement-summary-head"><div><div class="sh">結餘總覽</div><div class="mini">共同消費 ${fmtSettlement(total)} · ${expenses.length} 筆</div></div><button class="btn" onclick="setU({modal:{t:'tools'}})">${esc(S.settleCurrency||'TWD')} 結算</button></div><div class="tip">先付款 − 應負擔 = 個人結餘。點旅伴查看下方計算明細。</div><div class="balance-legend"><span>← 應付給旅伴</span><span>應向旅伴收回 →</span></div>${rows||'<div class="empty">新增旅伴後即可查看結餘</div>'}<div class="mini">僅計入「代墊／共同分帳」，純記帳不列入。${esc(FX.status||'')}；外幣依目前匯率換算，金額顯示至小數 2 位。</div></section>`;
+}
+function expenseAllocations(e){
+  if(isPersonalExp(e))return [];
+  if(e.shares)return Object.entries(e.shares).map(([person,amount])=>({person,amount:Number(amount)})).filter(x=>Number.isFinite(x.amount)&&x.amount>0);
+  const people=e.splitWith||[],amount=Number(e.amount)||0;
+  return people.map(person=>({person,amount:amount/Math.max(1,people.length)}));
+}
+function expenseAdvanceHtml(e){
+  if(isPersonalExp(e))return '';
+  const shares=expenseAllocations(e),others=shares.filter(x=>x.person!==e.paidBy&&x.amount>0),own=shares.find(x=>x.person===e.paidBy)?.amount||0;
+  const currency=e.currency||'TWD';
+  return `<div class="expense-advance"><div class="expense-advance-title">先付款：${esc(e.paidBy||'尚未選擇')}<span>${e.shares?'自訂分攤':'平均分攤'}</span></div><div class="expense-advance-people">分攤對象：${shares.length?shares.map(x=>esc(x.person)).join('、'):'尚未選擇'}</div>${others.map(x=>`<div class="expense-advance-row"><span>${esc(e.paidBy)} 代墊 → ${esc(x.person)}</span><strong>${esc(fmtSettlement(x.amount,currency))}</strong></div>`).join('')}${own?`<div class="expense-advance-people">${esc(e.paidBy)} 自己負擔 ${esc(fmtSettlement(own,currency))}</div>`:''}<div class="expense-advance-note">${others.length?'以上是本筆代墊金額；合併其他帳目後的應收／應付，請看「分帳」。':'本筆由付款人自行負擔，沒有代墊給其他人。'}</div></div>`;
+}
+function expenseDraftPreview(){
+  if((FM.expenseMode||'personal')==='personal')return '';
+  const amount=Number(FM.amount),custom=FM.splitMode==='custom';
+  if(!FM.paidBy)return '<div class="tip">先選擇實際付款的人，再選這筆消費由誰負擔。</div>';
+  if(!Number.isFinite(amount)||amount<=0)return '<div class="tip">輸入金額後，會顯示每人的分攤與代墊金額。</div>';
+  const e={...FM,amount,shares:custom?(FM.shares||{}):null};
+  const shares=expenseAllocations(e);
+  if(!shares.length)return '<div class="tip">請選擇至少一位分攤對象。只幫別人付，就不用勾選付款人。</div>';
+  if(custom&&Math.abs(shares.reduce((sum,x)=>sum+x.amount,0)-amount)>.005)return '<div class="tip">請先讓每人負擔金額加總等於總金額，再確認代墊預覽。</div>';
+  return expenseAdvanceHtml(e);
+}
+function updateExpensePreview(){const el=document.getElementById('expense-advance-preview');if(el)el.innerHTML=expenseDraftPreview();}
+function selectExpensePeople(all){FM.splitWith=all?[...S.travelers]:[];_refreshHeroContent();}
 async function loadFx(){
   // 先套上次成功抓到的匯率（離線時比內建匯率新）
   try{const c=JSON.parse(localStorage.getItem('fx-cache')||'null');if(c&&c.rates){FX={rates:c.rates,date:c.date,status:'使用上次抓取的匯率'};}}catch(e){console.warn('[fx-cache]',e);}
@@ -1278,10 +1341,10 @@ function settle(exps,tvls){
     }
     if(!e.splitWith?.length)continue;const sh=expValue(e,cur)/e.splitWith.length;for(const p of e.splitWith){if(p===e.paidBy)continue;if(p in b)b[p]-=sh;if(e.paidBy in b)b[e.paidBy]+=sh;}
   }
-  let cr=Object.entries(b).filter(([,v])=>v>0.01).map(([n,v])=>({n,v})).sort((a,x)=>x.v-a.v);
-  let de=Object.entries(b).filter(([,v])=>v<-0.01).map(([n,v])=>({n,v:-v})).sort((a,x)=>x.v-a.v);
+  let cr=Object.entries(b).filter(([,v])=>v>0.005).map(([n,v])=>({n,v})).sort((a,x)=>x.v-a.v);
+  let de=Object.entries(b).filter(([,v])=>v<-0.005).map(([n,v])=>({n,v:-v})).sort((a,x)=>x.v-a.v);
   const tx=[];
-  while(cr.length&&de.length){const c=cr[0],d=de[0],am=Math.min(c.v,d.v);if(am>0.01)tx.push({from:d.n,to:c.n,amount:Math.round(am)});c.v-=am;d.v-=am;if(c.v<0.01)cr.shift();if(d.v<0.01)de.shift();}
+  while(cr.length&&de.length){const c=cr[0],d=de[0],am=Math.min(c.v,d.v);if(am>0.005)tx.push({from:d.n,to:c.n,amount:Math.round(am*100)/100});c.v-=am;d.v-=am;if(c.v<0.005)cr.shift();if(d.v<0.005)de.shift();}
   return{b,tx};
 }
 let S={tripName:'2026 旅遊計畫',cover:COVERS[0][1],coverPos:'30%',budget:0,settleCurrency:'TWD',days:[{id:'d1',title:'第一天',date:'',locations:[]}],travelers:['旅伴A','旅伴B'],travelerIcons:{旅伴A:'🙂',旅伴B:'😎'},expenses:[],memo:[],view:'itinerary',dayIdx:0,modal:null,editTN:false,tnDraft:'',wishlist:[],wlCats:[],wlFabOpen:false,travelerMeta:{},tvExpanded:'',sortMode:false,trash:{}};
@@ -1617,8 +1680,8 @@ function exps(te){
   const card=e=>{
     const personal=isPersonalExp(e);
     const dt=formatExpenseDate(e.date);
-    const meta=(dt?`${dt} · `:'')+(personal?'純記帳':`${esc(e.paidBy||'未選付款人')} · ${e.shares?'自訂分擔':`${e.splitWith?.length||0}人分`}`);
-    return`<div class="card"><div class="exp-row"><div class="cat-ic" style="background:${CB[e.category]||'var(--t-gray-bg)'};color:${CF[e.category]||'var(--t-gray-fg)'};">${TI(CTI[e.category]||'map-pin',17)}</div><div class="exp-inf"><div class="exp-nm">${esc(e.item)}</div><div class="exp-mt">${meta} · <span style="color:${CF[e.category]||'var(--t-gray-fg)'};">${e.category||'其他'}</span>${e.currency&&e.currency!=='TWD'?` · ${esc(e.currency)} ${Number(e.amount||0).toLocaleString()}`:''}</div></div><div class="exp-rt"><div class="exp-am">${fmt(expValue(e))}</div><div class="brow" style="margin-top:7px;justify-content:flex-end;"><button class="btn" style="min-height:30px;padding:4px 8px;" onclick="_heroOrigin=this.getBoundingClientRect();oExp('${e.id}')">編輯</button></div></div></div></div>`;
+    const meta=(dt?`${dt} · `:'')+(personal?'純記帳':`代墊／共同分帳 · ${esc(e.paidBy||'未選付款人')} 先付`);
+    return`<div class="card"><div class="exp-row"><div class="cat-ic" style="background:${CB[e.category]||'var(--t-gray-bg)'};color:${CF[e.category]||'var(--t-gray-fg)'};">${TI(CTI[e.category]||'map-pin',17)}</div><div class="exp-inf"><div class="exp-nm">${esc(e.item)}</div><div class="exp-mt">${meta} · <span style="color:${CF[e.category]||'var(--t-gray-fg)'};">${e.category||'其他'}</span>${e.currency&&e.currency!=='TWD'?` · ${esc(e.currency)} ${Number(e.amount||0).toLocaleString()}`:''}</div></div><div class="exp-rt"><div class="exp-am">${fmt(expValue(e))}</div><div class="brow" style="margin-top:7px;justify-content:flex-end;"><button class="btn" style="min-height:30px;padding:4px 8px;" onclick="_heroOrigin=this.getBoundingClientRect();oExp('${e.id}')">編輯</button></div></div></div>${expenseAdvanceHtml(e)}</div>`;
   };
   const group=(key,items)=>{
     const total=items.reduce((s,e)=>s+expValue(e),0);
@@ -1636,25 +1699,26 @@ function splt(b,tx,te){
   const personMini=t=>{const c=getTvColor(t),ic=S.travelerIcons?.[t]||'🙂';return`<div class="split-txn-person" style="--tv-bg:${c.bg};--tv-fg:${c.fg};--tv-ac:${c.accent};"><div class="split-avatar">${ic}</div><div class="split-txn-name">${esc(t)}</div></div>`;};
   const personShare=(e,t)=>{
     if(e.shares)return Number(e.shares[t]||0);
-    return (e.splitWith||[]).includes(t)?expValue(e)/Math.max(1,(e.splitWith||[]).length):0;
+    return (e.splitWith||[]).includes(t)?Number(e.amount||0)/Math.max(1,(e.splitWith||[]).length):0;
   };
   const br=S.travelers.map(t=>{
     const v=b[t]||0,paid=sharedExpenses.filter(e=>e.paidBy===t).reduce((s,e)=>s+expValue(e),0),count=sharedExpenses.filter(e=>e.paidBy===t).length,shared=sharedExpenses.filter(e=>(e.splitWith||[]).includes(t)||e.shares?.[t]).length,pos=v>=0;
     const ic=S.travelerIcons?.[t]||'🙂',c=getTvColor(t),meta=(S.travelerMeta||{})[t]||{};
     const open=S.splitExpanded===t;
+    const owed=sharedExpenses.reduce((sum,e)=>sum+convertAmount(personShare(e,t),e.currency||'TWD',S.settleCurrency||'TWD'),0);
     const related=sharedExpenses.filter(e=>e.paidBy===t||personShare(e,t)>0);
     const detail=related.length?`<div class="split-detail-title">相關分帳明細</div>${related.map(e=>{
       const share=personShare(e,t),isPayer=e.paidBy===t;
-      return`<div class="split-exp-mini"><div class="split-exp-line"><div class="split-exp-name">${TI(CTI[e.category]||'map-pin',13)} ${esc(e.item)}</div><div style="font-weight:900;">${fmt(expValue(e))}</div></div><div class="split-exp-meta">${isPayer?'我先付款':'我有分擔'}${share?` · 負擔 ${fmt(convertAmount(share,e.currency||'TWD',S.settleCurrency||'TWD'))}`:''}${e.paidBy?` · 付款人 ${esc(S.travelerIcons?.[e.paidBy]||'')} ${esc(e.paidBy)}`:''}</div></div>`;
+      return`<div class="split-exp-mini"><div class="split-exp-line"><div class="split-exp-name">${TI(CTI[e.category]||'map-pin',13)} ${esc(e.item)}</div><div style="font-weight:900;">${fmtSettlement(expValue(e))}</div></div><div class="split-exp-meta">${isPayer?'先付款（含替他人代墊）':'分攤這筆消費'}${share?` · 負擔 ${fmtSettlement(convertAmount(share,e.currency||'TWD',S.settleCurrency||'TWD'))}`:''}${e.paidBy?` · 先付款的人 ${esc(S.travelerIcons?.[e.paidBy]||'')} ${esc(e.paidBy)}`:''}</div></div>`;
     }).join('')}`:`<div class="split-detail-title">相關分帳明細</div><div class="mini">目前沒有共同分帳明細</div>`;
     return`<div class="split-person${open?' open':''}" style="--tv-bg:${c.bg};--tv-fg:${c.fg};--tv-ac:${c.accent};" onclick="toggleSplitPerson('${jsq(t)}')">
       <div class="split-person-head"><div class="split-avatar">${ic}</div><div style="min-width:0;flex:1;"><div class="split-name-row"><div class="split-name">${esc(t)}</div>${meta.role?`<div class="split-role">${esc(meta.role)}</div>`:''}</div>${meta.bio?`<div class="split-bio-inline">${TI('message-circle',12)} ${esc(meta.bio)}</div>`:''}</div><div class="split-toggle">⌄</div></div>
-      <div class="split-balance ${pos?'receive':'pay'}">${pos?`+ ${fmt(Math.abs(v))} 應收`:`${fmt(Math.abs(v))} 應付`}</div>
-      ${open?`<div class="split-detail"><div class="split-metrics"><div class="split-metric"><div class="split-metric-n">${fmt(paid)}</div><div class="split-metric-l">共同分帳已付</div></div><div class="split-metric"><div class="split-metric-n">${count} / ${shared}</div><div class="split-metric-l">付款 / 分擔筆數</div></div></div>${detail}</div>`:''}
+      <div class="split-balance ${pos?'receive':'pay'}">${Math.abs(v)<.005?'收支平衡':pos?`+ ${fmtSettlement(Math.abs(v))} 應收`:`${fmtSettlement(Math.abs(v))} 應付`}</div>
+      ${open?`<div class="split-detail"><div class="split-metrics"><div class="split-metric"><div class="split-metric-n">${fmtSettlement(paid)}</div><div class="split-metric-l">先付款總額（含本人消費）</div></div><div class="split-metric"><div class="split-metric-n">${fmtSettlement(owed)}</div><div class="split-metric-l">應負擔總額</div></div></div><div class="split-calculation">${fmtSettlement(paid)} 先付 − ${fmtSettlement(owed)} 負擔 = ${fmtSettlement(v)} 結餘</div>${detail}</div>`:''}
     </div>`;
   }).join('');
-  const tc=tx.length?tx.map(t=>`<div class="split-txn">${personMini(t.from)}<div><div style="font-size:12px;color:var(--t-amber-fg);font-weight:800;">轉帳給</div><div style="font-size:16px;font-weight:900;color:var(--t-amber-fg);">${fmt(t.amount)}</div></div>${personMini(t.to)}</div>`).join(''):`<div style="text-align:center;padding:16px;color:var(--muted);font-size:14px;background:var(--paper);border-radius:var(--r);border:1px solid var(--line);">${sharedExpenses.length?TI('circle-check',14)+' 共同分帳已平衡！':'尚無共同分帳記錄'}</div>`;
-  return`<div class="sh">旅伴結算</div><div class="split-people">${br}</div><div class="sh">付款方式</div>${tc}`;
+  const tc=tx.length?tx.map(t=>`<div class="split-txn">${personMini(t.from)}<div><div style="font-size:12px;color:var(--t-amber-fg);font-weight:800;">轉帳給</div><div style="font-size:16px;font-weight:900;color:var(--t-amber-fg);">${fmtSettlement(t.amount)}</div></div>${personMini(t.to)}</div>`).join(''):`<div style="text-align:center;padding:16px;color:var(--muted);font-size:14px;background:var(--paper);border-radius:var(--r);border:1px solid var(--line);">${sharedExpenses.length?TI('circle-check',14)+' 共同分帳已平衡！':'尚無共同分帳記錄'}</div>`;
+  return`${settlementSummary(b,sharedExpenses)}<div class="sh">旅伴結算</div><div class="split-people">${br}</div><div class="sh">合併後建議轉帳</div><div class="tip" style="margin-bottom:12px">各筆代墊互相抵銷後的結果，收款對象可能與單筆代墊人不同。此處尚未記錄實際還款。</div>${tc}`;
 }
 // buildModal defined below with note support
 function mTripGate(){
@@ -1705,20 +1769,21 @@ function mExp(){
   const tOpts=`<option value=""${!FM.paidBy?' selected':''}>無 / 請選擇</option>`+S.travelers.map(t=>`<option value="${esc(t)}"${FM.paidBy===t?' selected':''}>${esc(t)}</option>`).join('');
   const cOpts=CATS.map(c=>`<option value="${c}"${FM.category===c?' selected':''}>${CE[c]} ${c}</option>`).join('');
   const curOpts=Object.keys(CUR).map(c=>`<option value="${c}"${(FM.currency||'TWD')===c?' selected':''}>${c}</option>`).join('');
-  const scs=S.travelers.map(t=>`<span class="sc${(FM.splitWith||[]).includes(t)?' on':''}" data-name="${esc(t)}" onclick="tgSplit('${jsq(t)}')">${esc(t)}</span>`).join('');
+  const scs=S.travelers.map(t=>`<button type="button" aria-pressed="${(FM.splitWith||[]).includes(t)}" class="sc${(FM.splitWith||[]).includes(t)?' on':''}" data-name="${esc(t)}" onclick="tgSplit('${jsq(t)}')">${esc(t)}</button>`).join('');
   const personal=(FM.expenseMode||'personal')==='personal';
   const custom=FM.splitMode==='custom';
-  const shareRows=S.travelers.map(t=>`<div class="mobile-stack" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;align-items:center;margin-bottom:8px;"><div class="mini">${esc(t)}</div><input class="share-in" data-person="${esc(t)}" type="number" inputmode="decimal" value="${FM.shares?.[t]||''}" placeholder="0" oninput="FM.shares=FM.shares||{};FM.shares['${jsq(t)}']=this.value"></div>`).join('');
+  const shareRows=S.travelers.map(t=>`<div class="mobile-stack" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;align-items:center;margin-bottom:8px;"><div class="mini">${esc(t)}</div><input class="share-in" data-person="${esc(t)}" type="number" inputmode="decimal" value="${FM.shares?.[t]||''}" placeholder="0" oninput="FM.shares=FM.shares||{};FM.shares['${jsq(t)}']=this.value;updateExpensePreview()"></div>`).join('');
   const ah=FM.item?`<div class="ah">自動偵測：${CE[ac(FM.item)]} ${ac(FM.item)}</div>`:'';
   return`<div class="mhd"><div class="mt">${S.modal.ocr?'AI 收據記帳':(S.modal.expId?'編輯記帳':'新增記帳')}</div><div class="mcl" onclick="setU({modal:null})">✕</div></div>
 ${S.modal.ocr?`<div class="receipt-box"><label class="fl">AI 收據記帳</label><input type="file" accept="image/*" onchange="readReceipt(this.files?.[0])"><div id="ocr-status" class="mini">上傳收據照片後，會嘗試辨識品項、金額並自動分類。</div></div>`:''}
-<div class="fg"><label class="fl">記帳模式</label><div class="scs"><span class="sc${personal?' on':''}" onclick="FM.expenseMode='personal';FM.paidBy='';FM.splitWith=[];FM.shares={};_refreshHeroContent()">純記帳</span><span class="sc${!personal?' on':''}" onclick="FM.expenseMode='shared';FM.splitWith=FM.splitWith?.length?FM.splitWith:[...S.travelers];_refreshHeroContent()">共同分帳</span></div><div class="tip">${personal?'只記錄花費，不會進入分帳計算。':'用於多人旅行，需選擇誰付款與分攤方式。'}</div></div>
+<div class="fg"><label class="fl">記帳模式</label><div class="scs"><span class="sc${personal?' on':''}" onclick="FM.expenseMode='personal';FM.paidBy='';FM.splitWith=[];FM.shares={};_refreshHeroContent()">純記帳</span><span class="sc${!personal?' on':''}" onclick="FM.expenseMode='shared';FM.splitWith=FM.splitWith?.length?FM.splitWith:[...S.travelers];_refreshHeroContent()">代墊／共同分帳</span></div><div class="tip">${personal?'只記錄花費，不會進入分帳計算。':'替旅伴先付錢也選這項。付款人是先付錢的人，分攤對象是實際負擔費用的人。'}</div></div>
 <div class="fg exp-date-field"><label class="fl">日期</label><input type="date" value="${esc(FM.date||localDate())}" oninput="FM.date=this.value"></div>
 <div class="fg"><label class="fl">品項 *</label><input id="exp-item" type="text" value="${esc(FM.item||'')}" placeholder="例：車票、晚餐、飯店..." oninput="FM.item=this.value;updAH()">${ah}</div>
-<div class="mobile-stack" style="display:grid;grid-template-columns:2fr 1fr;gap:8px;margin-bottom:12px;"><div><label class="fl">金額 *</label><input type="number" inputmode="decimal" value="${FM.amount||''}" placeholder="0" oninput="FM.amount=this.value"></div><div><label class="fl">幣別</label><select onchange="FM.currency=this.value">${curOpts}</select></div></div>
-<div class="mobile-stack" style="display:grid;grid-template-columns:${personal?'1fr':'1fr 1fr'};gap:8px;margin-bottom:12px;"><div><label class="fl">分類</label><select id="exp-cat" onchange="FM.category=this.value"><option value="">自動偵測</option>${cOpts}</select></div>${personal?'':`<div><label class="fl">誰付款 *</label><select onchange="FM.paidBy=this.value">${tOpts}</select></div>`}</div>
+<div class="mobile-stack" style="display:grid;grid-template-columns:2fr 1fr;gap:8px;margin-bottom:12px;"><div><label class="fl">金額 *</label><input type="number" inputmode="decimal" value="${FM.amount||''}" placeholder="0" oninput="FM.amount=this.value;updateExpensePreview()"></div><div><label class="fl">幣別</label><select onchange="FM.currency=this.value;updateExpensePreview()">${curOpts}</select></div></div>
+<div class="mobile-stack" style="display:grid;grid-template-columns:${personal?'1fr':'1fr 1fr'};gap:8px;margin-bottom:12px;"><div><label class="fl">分類</label><select id="exp-cat" onchange="FM.category=this.value"><option value="">自動偵測</option>${cOpts}</select></div>${personal?'':`<div><label class="fl" for="expense-payer">付款人（誰先付錢）*</label><select id="expense-payer" onchange="FM.paidBy=this.value;updateExpensePreview()">${tOpts}</select></div>`}</div>
 ${personal?'':`<div class="fg"><label class="fl">分帳方式</label><div class="scs"><span class="sc${!custom?' on':''}" onclick="FM.splitMode='equal';_refreshHeroContent()">平均分</span><span class="sc${custom?' on':''}" onclick="FM.splitMode='custom';FM.shares=FM.shares||{};_refreshHeroContent()">自訂金額</span></div></div>
-${custom?`<div class="fg"><label class="fl">每個人負擔金額（${FM.currency||'TWD'}，加總需等於總金額）</label>${shareRows}</div>`:`<div class="fg"><label class="fl">分帳對象（點選切換）</label><div class="scs">${scs}</div></div>`}`}
+${custom?`<div class="fg"><label class="fl">每個人負擔金額（${FM.currency||'TWD'}，加總需等於總金額）</label>${shareRows}</div>`:`<div class="fg"><label class="fl">分攤對象（這筆消費由誰負擔）</label><div class="tip">只替一位旅伴付錢：只選對方。自己也有消費：再勾選自己。</div><div class="expense-people-actions"><button type="button" class="btn" onclick="selectExpensePeople(true)">全選旅伴</button><button type="button" class="btn" onclick="selectExpensePeople(false)">清除選擇</button></div><div class="scs">${scs}</div></div>`}`}
+${personal?'':`<div id="expense-advance-preview" aria-live="polite">${expenseDraftPreview()}</div>`}
 <div class="ar"><button class="btn bp" style="flex:1;padding:10px;" onclick="sExp()">${S.modal.expId?'儲存修改':'儲存'}</button>${S.modal.expId?`<button class="btn br" style="flex:1;padding:10px;" onclick="deleteEditingExpense()">刪除</button>`:''}<button class="btn" style="flex:1;padding:10px;" onclick="setU({modal:null})">取消</button></div>`;
 }
 function getTvStats(name){
@@ -1928,7 +1993,8 @@ function updAH(){
 function tgSplit(name){
   FM.splitWith=FM.splitWith||[];
   FM.splitWith=FM.splitWith.includes(name)?FM.splitWith.filter(x=>x!==name):[...FM.splitWith,name];
-  document.querySelectorAll('[data-name]').forEach(el=>el.classList.toggle('on',FM.splitWith.includes(el.dataset.name)));
+  document.querySelectorAll('[data-name]').forEach(el=>{const selected=FM.splitWith.includes(el.dataset.name);el.classList.toggle('on',selected);el.setAttribute('aria-pressed',String(selected));});
+  updateExpensePreview();
 }
 function oLoc(locId,tmplIdx){
   const si=Math.min(S.dayIdx,S.days.length-1),day=S.days[si];
@@ -2035,13 +2101,17 @@ function sExp(){
   const exps=JSON.parse(JSON.stringify(S.expenses));
   const cur=FM.currency||'TWD', amount=parseFloat(FM.amount)||0;
   const personal=(FM.expenseMode||'personal')==='personal';
-  let shares=null,splitWith=personal?[]:(FM.splitWith?.length?FM.splitWith:[...S.travelers]);
-  if(!personal&&!FM.paidBy){alert('共同分帳請選擇誰付款');return;}
+  let shares=null,splitWith=personal?[]:[...(FM.splitWith||[])];
+  if(!Number.isFinite(amount)||amount<=0){alert('請輸入大於 0 的有效金額');return;}
+  if(!personal&&FM.splitMode!=='custom'&&!splitWith.length){alert('請選擇至少一位分攤對象；只幫別人付，請只選對方。');return;}
+  if(!personal&&!FM.paidBy){alert('請選擇付款人（實際先付錢的人）');return;}
   if(!personal&&FM.splitMode==='custom'){
     shares={};
-    document.querySelectorAll('.share-in').forEach(el=>{const v=parseFloat(el.value)||0;if(v>0)shares[el.dataset.person]=v;});
+    let invalidShare=false;
+    document.querySelectorAll('.share-in').forEach(el=>{const v=Number(el.value);if(!Number.isFinite(v)||v<0)invalidShare=true;else if(v>0)shares[el.dataset.person]=v;});
+    if(invalidShare){alert('每人負擔金額需為 0 或正數');return;}
     const sum=Object.values(shares).reduce((s,v)=>s+Number(v),0);
-    if(Math.abs(sum-amount)>0.5){alert(`自訂分擔加總 ${sum.toLocaleString()}，需等於總金額 ${amount.toLocaleString()}`);return;}
+    if(!Object.keys(shares).length||Math.abs(sum-amount)>0.005){alert(`自訂分擔加總 ${sum.toLocaleString()}，需等於總金額 ${amount.toLocaleString()}`);return;}
     splitWith=Object.keys(shares);
   }
   const exp={id:S.modal.expId||uid(),item:FM.item,amount,currency:cur,amountBase:Math.round(convertAmount(amount,cur,'TWD')),category:FM.category||ac(FM.item),paidBy:personal?'':FM.paidBy,expenseMode:personal?'personal':'shared',splitWith,shares:personal?null:shares,date:normalizeExpenseDate(FM.date)||localDate()};
@@ -3125,7 +3195,7 @@ ${sec(TI('star',19),'旅遊清單',[
 ])}
 ${sec(TI('coin',19),'記帳',[
   ['＋','點「新增記帳」手動輸入品項與金額，預設為純記帳，不會進入分帳計算。'],
-  [TI('user',15),'切換到「共同分帳」後，才需要選擇付款人與分帳對象，支援平均分與自訂金額。'],
+  [TI('user',15),'替旅伴先付錢請選「代墊／共同分帳」：付款人選先付錢的人，分攤對象只勾實際負擔費用的人。支援平均分與自訂金額。'],
   [TI('arrows-exchange',15),'支援多幣別，自動換算為結算幣別（可在旅程工具設定）。'],
   [TI('chart-bar',15),'上方顯示總花費、人均費用及各分類消費比例長條圖。'],
   [TI('receipt',15),'點「AI 收據記帳」上傳收據照片，自動帶入品項、金額與分類。'],
