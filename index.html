@@ -140,34 +140,6 @@ a{text-decoration:none}
 .section-meta-date{font-size:12px;font-weight:700;color:var(--muted);display:inline-flex;align-items:center;gap:3px;}
 .day-summary{display:flex;gap:6px;flex-wrap:wrap;margin:0 0 11px}
 .day-summary-chip{display:inline-flex;align-items:center;gap:4px;padding:5px 9px;border-radius:999px;background:var(--soft);border:1px solid var(--line);font-size:11px;font-weight:800;color:var(--muted)}
-.travel-toolkit{background:var(--paper);border:1px solid var(--line);border-radius:16px;padding:14px;margin-bottom:14px;font-size:14px;line-height:1.6}
-.travel-toolkit summary{cursor:pointer;font-weight:800;padding:8px 0}
-.travel-toolkit .sync-row{display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap}
-.travel-important{margin:14px -2px 4px}
-.travel-important>summary{list-style:none;display:flex;align-items:center;gap:10px;padding:14px 2px!important;font-size:17px;letter-spacing:.02em}
-.travel-important>summary::-webkit-details-marker{display:none}
-.important-heading-icon{display:grid;place-items:center;width:36px;height:36px;border-radius:12px;background:var(--teal-fill);color:white}
-.important-count{font-size:12px;font-weight:700;color:var(--muted);margin-left:auto}
-.important-chevron{transition:transform .2s}.travel-important[open] .important-chevron{transform:rotate(180deg)}
-.important-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;padding:2px 0 12px}
-.travel-key{--key-color:var(--t-blue-fg);--key-tint:var(--t-blue-bg);border:1px solid var(--line);border-top:3px solid var(--key-color);border-radius:16px;background:var(--paper);box-shadow:0 5px 18px rgba(0,0,0,.04);overflow:hidden;min-width:0;display:flex;flex-direction:column;overflow-wrap:anywhere}
-.travel-key[data-kind="stay"]{--key-color:var(--t-green-fg);--key-tint:var(--t-green-bg)}
-.travel-key[data-kind="ride"]{--key-color:var(--t-amber-fg);--key-tint:var(--t-amber-bg)}
-.travel-key[data-kind="booking"]{--key-color:var(--t-purple-fg);--key-tint:var(--t-purple-bg)}
-.key-ticket-top{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:14px 16px;background:var(--key-tint)}
-.key-kind{display:flex;align-items:center;gap:7px;color:var(--key-color);font-size:14px;font-weight:800}
-.key-time{font-size:25px;line-height:1;font-weight:900;letter-spacing:-.5px;font-variant-numeric:tabular-nums;color:var(--key-color);white-space:nowrap}
-.key-content{padding:16px;flex:1}.key-content h3{font-size:16px;line-height:1.5;margin:0 0 8px;color:var(--ink)}
-.key-status{display:inline-flex;align-items:center;gap:5px;border-radius:7px;padding:4px 8px;font-size:12px;font-weight:800;background:var(--t-amber-bg);color:var(--t-amber-fg);margin-bottom:9px}
-.key-status.booked{background:var(--t-green-bg);color:var(--t-green-fg)}
-.key-address{font-size:13px;line-height:1.6;color:var(--muted);margin:0 0 10px}
-.key-note{font-size:14px;line-height:1.8;color:var(--ink);white-space:pre-wrap;margin:0}
-.key-more summary{font-size:13px!important;color:var(--key-color);font-weight:700;padding:6px 0!important}
-.key-actions{display:flex;flex-wrap:wrap;gap:8px;padding:10px 16px;border-top:1px dashed var(--line);background:var(--soft)}
-.key-actions a,.key-actions button{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:40px;padding:6px 12px;border-radius:9px;background:var(--paper);border:1px solid var(--line);font-size:13px;font-weight:800;color:var(--key-color);cursor:pointer}
-.key-actions a:focus-visible,.travel-important summary:focus-visible{outline:2px solid var(--key-color,var(--teal-fill));outline-offset:3px}
-@media(max-width:640px){.important-grid{grid-template-columns:1fr}.key-time{font-size:28px}.key-content{padding:14px 16px}.travel-toolkit{padding:12px}.key-actions a{min-height:44px;flex:1}}
-.travel-segment{display:block;padding:10px 0;border-top:1px solid var(--line);color:var(--t-blue-fg);overflow-wrap:anywhere}
 .section-actions{display:flex;align-items:center;justify-content:flex-end;gap:6px;flex-wrap:nowrap;position:relative;flex-shrink:0}
 .action-group{display:flex;align-items:center;gap:7px;position:relative;flex-wrap:nowrap}
 .quick-holder{position:relative}
@@ -748,10 +720,6 @@ body{background:radial-gradient(ellipse at 5% 5%,var(--journal-gold-wash),transp
 .loc-note-text{color:var(--ink)}.note-link{color:var(--t-blue-fg)}
 .loc-card-wrap.loc-now>.card{background:linear-gradient(150deg,var(--t-green-bg),var(--paper) 65%)!important}
 .tl-rail::before{background:var(--line-2)}.tl-time{color:var(--accent)}
-.travel-toolkit{background:linear-gradient(140deg,var(--paper),var(--journal-gold-wash));padding:18px}
-.important-heading-icon{background:var(--journal-gold);border-radius:11px;box-shadow:0 4px 12px rgba(99,72,26,.14)}
-.travel-key{box-shadow:var(--journal-shadow);border-radius:16px}.key-ticket-top{padding:16px;border-bottom:1px dashed var(--line-2)}
-.key-time{letter-spacing:-.04em}.key-actions{background:var(--key-tint)}
 .buy-hero{position:relative;isolation:isolate;overflow:hidden;padding:26px 24px;background:linear-gradient(125deg,#593d30,#8d452f 65%,#a9613e);border:1px solid rgba(255,255,255,.12);box-shadow:0 10px 26px rgba(109,62,37,.15)}
 .buy-hero::after{content:'';position:absolute;z-index:-1;pointer-events:none;right:-70px;top:-95px;width:260px;height:260px;border:1px solid rgba(245,212,165,.26);border-radius:50%;box-shadow:0 0 0 24px rgba(245,212,165,.07),0 0 0 48px rgba(245,212,165,.045)}
 .buy-hero h2{letter-spacing:.045em;line-height:1.35}.buy-hero progress{accent-color:#edc587!important}
@@ -925,7 +893,7 @@ button,input,select,textarea{font-family:var(--font-sans)}
 .wx-badge:hover{background:var(--mizu-wash)}
 
 /* ── 卡片：墨線粗框、平塗 ── */
-.card,.wl-card,.buy-card,.exp-card,.tv-card,.budget-card,.stat,.travel-toolkit,.settlement-summary,.buy-store,.memo-completed,.split-person,.travel-key,.buy-hero{border:var(--lw) solid var(--ink)!important;border-radius:20px;box-shadow:none}
+.card,.wl-card,.buy-card,.exp-card,.tv-card,.budget-card,.stat,.settlement-summary,.buy-store,.memo-completed,.split-person,.buy-hero{border:var(--lw) solid var(--ink)!important;border-radius:20px;box-shadow:none}
 .memo-item{border:var(--lw2) solid var(--ink);border-radius:16px;background:var(--washi)}
 .card{border-radius:20px}
 /* 時間軸：虛線像旅行路線，圓點填分類色 */
@@ -941,13 +909,6 @@ button,input,select,textarea{font-family:var(--font-sans)}
 .loc-card-wrap.drag-over .card{border-color:var(--ink)!important;box-shadow:0 0 0 3px var(--yellow)!important}
 .loc-sort-ctrl{background:var(--washi);border:var(--lw2) solid var(--ink);box-shadow:none}
 .sort-btn{color:var(--ink)}
-/* 旅途重點：像車票，虛線撕線 */
-.travel-toolkit{background:var(--yellow-wash)!important}
-.important-heading-icon{background:var(--yellow);color:var(--ink);border:var(--lw2) solid var(--ink);box-shadow:none}
-.key-ticket-top{border-bottom:2px dashed var(--ink)!important}
-.key-actions{border-top:0;background:var(--key-tint)}
-.key-actions a,.key-actions button{border:var(--lw2) solid var(--ink);background:var(--washi);color:var(--ink);font-weight:400}
-.key-status{border:1.5px solid var(--ink)}
 
 /* ── 按鈕 ── */
 .btn{background:var(--washi);color:var(--ink);border:var(--lw2) solid var(--ink);border-radius:14px;box-shadow:0 2px 0 var(--ink)!important;font-weight:400}
@@ -999,6 +960,13 @@ input:focus,select:focus,textarea:focus{border-color:var(--ink);box-shadow:0 0 0
 .cover-choice.on{border-color:var(--ink);box-shadow:0 0 0 3px var(--yellow)}
 .cover-choice span{background:var(--washi);color:var(--ink);border:1.5px solid var(--ink);border-radius:999px;padding:2px 9px;text-shadow:none}
 .wx-sheet-item{background:var(--washi);border:var(--lw2) solid var(--ink)}
+/* 加入主畫面說明：圖示預覽＋編號步驟 */
+.a2hs-preview{display:flex;align-items:center;gap:14px;padding:14px;margin-bottom:16px;border:var(--lw2) solid var(--ink);border-radius:18px;background:var(--mizu-wash)}
+.a2hs-preview img{width:64px;height:64px;border-radius:16px;border:var(--lw2) solid var(--ink);flex-shrink:0}
+.a2hs-name{font-size:17px}
+.a2hs-steps{list-style:none;margin:0 0 14px;padding:0;counter-reset:step;display:flex;flex-direction:column;gap:12px}
+.a2hs-steps li{counter-increment:step;display:flex;gap:10px;align-items:flex-start;font-size:15px;line-height:1.6}
+.a2hs-steps li::before{content:counter(step);flex-shrink:0;width:26px;height:26px;margin-top:-1px;border-radius:50%;border:var(--lw2) solid var(--ink);background:var(--yellow);display:flex;align-items:center;justify-content:center;font-size:13px}
 
 /* ── 浮動按鈕、提示 ── */
 .app-fab-main,.wl-fab-main{background:var(--yellow)!important;color:var(--ink);border:var(--lw) solid var(--ink);box-shadow:var(--hard)!important}
@@ -1546,6 +1514,32 @@ const ART_STAMP=`<svg class="cover-stamp" viewBox="0 0 62 74" aria-hidden="true"
 const ART_POSTMARK=`<svg class="cover-postmark" viewBox="0 0 88 48" aria-hidden="true"><g fill="none" stroke="#3E3A39" stroke-width="1.8" stroke-linecap="round"><circle cx="24" cy="24" r="19"/><circle cx="24" cy="24" r="13.5"/><path d="M46 14q5-4 10 0t10 0t10 0M46 24q5-4 10 0t10 0t10 0M46 34q5-4 10 0t10 0t10 0"/></g><text x="24" y="29" font-size="13" text-anchor="middle" fill="#3E3A39">旅</text></svg>`;
 // 頁尾：在行李箱上睡午覺的三花貓、底片相機、盆栽、飛過的紙飛機
 const ART_SCENE=`<div class="trip-scene" aria-hidden="true"><svg viewBox="0 0 360 132"><g stroke="#3E3A39" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"><path class="trail" d="M150 40C176 22 200 34 222 20" fill="none" stroke-width="2" stroke-dasharray="3 6"/><g class="plane" stroke-width="2.4"><path d="M222 20 254 6 241 32 234 25Z" fill="#FFFCF6"/><path d="M254 6 234 25 233 34 241 32" fill="#F6D27A"/></g><path d="M66 66v-7a5 5 0 0 1 5-5h18a5 5 0 0 1 5 5v7" fill="none"/><rect x="36" y="66" width="140" height="48" rx="10" fill="#F6D27A"/><path d="M58 66v48M154 66v48" fill="none" stroke-width="2.4"/><circle cx="80" cy="92" r="9" fill="#A8D3E6" stroke-width="2.2"/><path d="M118 99c-4-2.6-6-4.6-6-6.8a3 3 0 0 1 6-1 3 3 0 0 1 6 1c0 2.2-2 4.2-6 6.8Z" fill="#F2A497" stroke-width="2"/><circle cx="54" cy="117.5" r="4.5" fill="#FFFCF6" stroke-width="2.4"/><circle cx="158" cy="117.5" r="4.5" fill="#FFFCF6" stroke-width="2.4"/><g class="tail"><path d="M110 63C98 63 93 55 97 47" fill="none" stroke-width="9"/><path d="M110 63C98 63 93 55 97 47" fill="none" stroke="#FFFCF6" stroke-width="3.6"/></g><g class="breath"><path d="M106 66.5C104 53 116 45 132 45s27 8 25 21.5Z" fill="#FFFCF6"/><ellipse cx="123" cy="57" rx="7" ry="4.5" fill="#F2A497" stroke="none"/><ellipse cx="139" cy="53" rx="5" ry="3.5" fill="#F6D27A" stroke="none"/></g><path d="M150.5 47 152.5 35.5 159.5 44Z" fill="#FFFCF6"/><path d="M161.5 44 168.5 35.5 170.5 47Z" fill="#F2A497"/><circle cx="160.5" cy="55" r="12" fill="#FFFCF6"/><path d="M153.5 55.5q2.5 2.2 5 0M162.5 55.5q2.5 2.2 5 0" fill="none" stroke-width="2.2"/><circle cx="152.5" cy="60.5" r="2.2" fill="#F2A497" stroke="none"/><circle cx="168.5" cy="60.5" r="2.2" fill="#F2A497" stroke="none"/><path d="M159.3 59.5h2.4l-1.2 1.4Z" fill="#3E3A39" stroke-width="1"/><rect x="212" y="74" width="24" height="12" rx="4" fill="#FFFCF6"/><rect x="256" y="77" width="10" height="8" rx="2.5" fill="#F2A497" stroke-width="2.6"/><rect x="202" y="82" width="72" height="32" rx="8" fill="#B9DAA5"/><rect x="208" y="88" width="13" height="8" rx="2.5" fill="#F6D27A" stroke-width="2.4"/><circle cx="239" cy="98" r="12.5" fill="#FFFCF6"/><circle cx="239" cy="98" r="6" fill="#A8D3E6" stroke-width="2.6"/><circle cx="236.6" cy="95.6" r="1.8" fill="#FFFCF6" stroke="none"/><path class="spark" d="M282 62q1.5 6.5 8 8-6.5 1.5-8 8-1.5-6.5-8-8 6.5-1.5 8-8Z" fill="#F6D27A" stroke-width="2"/><g class="plant"><path d="M314 84V50" fill="none"/><path d="M314 70c-13 0-21-8-21-20 12 0 21 8 21 20Z" fill="#B9DAA5" stroke-width="2.6"/><path d="M314 62c13 0 22-8 22-20-12 0-22 8-22 20Z" fill="#B9DAA5" stroke-width="2.6"/><path d="M314 52c-6-7-6-17 0-24 6 7 6 17 0 24Z" fill="#B9DAA5" stroke-width="2.6"/></g><path d="M295 92h38l-5 22h-28Z" fill="#A8D3E6"/><rect x="290" y="82" width="48" height="10" rx="4" fill="#A8D3E6"/><path d="M14 121.5H346" fill="none"/></g><text class="zz" x="174" y="34" font-size="13" fill="#3E3A39">z</text><text class="zz z2" x="181" y="26" font-size="10" fill="#3E3A39">z</text></svg></div>`;
+/* ── 加入主畫面：Android／電腦用瀏覽器自己的安裝視窗；iPhone 沒有這種 API，改顯示步驟說明 ── */
+let _installPrompt=null;
+window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();_installPrompt=e;});
+window.addEventListener('appinstalled',()=>{_installPrompt=null;a2hsToast('已加入主畫面');});
+function isStandalone(){return (window.matchMedia&&matchMedia('(display-mode: standalone)').matches)||navigator.standalone===true;}
+function isIOS(){return /iPad|iPhone|iPod/.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);}
+function a2hsToast(msg){const t=document.createElement('div');t.className='wl-toast';t.innerHTML=TI('circle-check',13)+' '+esc(msg);document.body.appendChild(t);setTimeout(()=>t.remove(),2100);}
+function addToHomeScreen(el){
+  if(_installPrompt){
+    const p=_installPrompt;_installPrompt=null;setU({menuOpen:false});
+    // prompt() 要在點擊當下呼叫，瀏覽器才肯跳出安裝視窗
+    p.prompt();p.userChoice.catch(e=>console.warn('[a2hs]',e));
+    return;
+  }
+  openModal(el,{t:'a2hs'});
+}
+function mA2hs(){
+  const ua=navigator.userAgent,inApp=/Line\/|FBAN|FBAV|Instagram|MicroMessenger/i.test(ua);
+  const hasTrip=!!new URLSearchParams(location.search).get('trip');
+  const shareIc=`<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-label="分享" style="vertical-align:-3px"><path d="M8 9H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8a2 2 0 0 0-2-2h-2"/><path d="M12 3v12M8 7l4-4 4 4"/></svg>`;
+  const steps=inApp?['這是 App 裡面的瀏覽器（例如 LINE），沒辦法加入主畫面','點右上或右下角的「⋯」，選「用瀏覽器開啟」（iPhone 請選 Safari）','在瀏覽器打開後，再按一次選單裡的「加入主畫面」']
+    :isIOS()?[`點畫面下方（iPad 在右上角）的「分享」按鈕 ${shareIc}`,'往下滑，點「加入主畫面」','右上角點「新增」，主畫面就會出現旅遊行程的圖示']
+    :/Android/i.test(ua)?['點瀏覽器右上角的「⋮」選單','選「安裝應用程式」或「加到主畫面」','按「安裝」或「新增」確認']
+    :['點網址列右側的「安裝」圖示，或打開瀏覽器選單','選「安裝這個網站」或「加到主畫面」','按「安裝」確認'];
+  return `<div class="mhd"><div class="mt">${TI('home',18)} 加入主畫面</div><div class="mcl" onclick="setU({modal:null})">✕</div></div><div class="a2hs-preview"><img src="./icon-192.png" alt="" width="64" height="64"><div><div class="a2hs-name">旅遊行程</div><div class="tip" style="margin-top:2px">加入後像 App 一樣從主畫面打開，沒網路也能看行程</div></div></div><ol class="a2hs-steps">${steps.map(s=>`<li>${s}</li>`).join('')}</ol><div class="tip">${hasTrip?'主畫面的捷徑會記住目前的同步代碼，打開就是這趟旅程。':'目前沒有同步代碼，主畫面的捷徑會開啟單機版；要和旅伴同步，請先輸入同步代碼再加入。'}</div><div class="ar" style="margin-top:16px"><button class="btn bp" onclick="setU({modal:null})">知道了</button></div>`;
+}
 function hdr(te){
   const dated=(S.days||[]).filter(d=>/^\d{4}-\d{2}-\d{2}$/.test(d.date||'')).sort((a,b)=>a.date.localeCompare(b.date));
   const first=dated[0]?.date,last=dated[dated.length-1]?.date;
@@ -1560,7 +1554,7 @@ function hdr(te){
   const coverStyle=`--cover:url('${esc(S.cover)}');--cover-pos:${S.coverPos||'30%'}`;
   const postcard=`<div class="cover-postcard"><div class="cover-photo" role="img" aria-label="旅程封面"></div>${ART_POSTMARK}${ART_STAMP}</div>`;
   if(S.editTN)return`<header class="cover" style="${coverStyle}"><div class="topbar">${ART_PLANE}</div>${postcard}<div class="cover-bottom"><div class="title-edit"><input class="tni" id="tn-in" value="${esc(S.tnDraft)}" placeholder="行程名稱" oninput="S.tnDraft=this.value" onkeydown="if(event.key==='Enter')saveTN()" autofocus><button class="btn glass" onclick="saveTN()">完成</button></div></div></header>${statsStrip}`;
-  const menu=S.menuOpen?`<div class="cover-menu-backdrop" onclick="setU({menuOpen:false})"></div><div class="cover-menu" onclick="event.stopPropagation()"><button onclick="copyShareLink();setU({menuOpen:false})"><span class="mi">${TI('link',16)}</span>分享連結</button><button onclick="S.menuOpen=false;openModal(this,{t:'tools'})"><span class="mi">${TI('tool',16)}</span>旅程工具</button><button onclick="S.menuOpen=false;openModal(this,{t:'cover'})"><span class="mi">${TI('photo',16)}</span>更換封面</button><button onclick="S.menuOpen=false;openModal(this,{t:'tv'})"><span class="mi">${TI('users',16)}</span>旅伴管理</button><button onclick="S.menuOpen=false;openModal(this,{t:'help'})"><span class="mi">${TI('book',16)}</span>使用說明</button></div>`:'';
+  const menu=S.menuOpen?`<div class="cover-menu-backdrop" onclick="setU({menuOpen:false})"></div><div class="cover-menu" onclick="event.stopPropagation()"><button onclick="copyShareLink();setU({menuOpen:false})"><span class="mi">${TI('link',16)}</span>分享連結</button>${isStandalone()?'':`<button onclick="S.menuOpen=false;addToHomeScreen(this)"><span class="mi">${TI('home',16)}</span>加入主畫面</button>`}<button onclick="S.menuOpen=false;openModal(this,{t:'tools'})"><span class="mi">${TI('tool',16)}</span>旅程工具</button><button onclick="S.menuOpen=false;openModal(this,{t:'cover'})"><span class="mi">${TI('photo',16)}</span>更換封面</button><button onclick="S.menuOpen=false;openModal(this,{t:'tv'})"><span class="mi">${TI('users',16)}</span>旅伴管理</button><button onclick="S.menuOpen=false;openModal(this,{t:'help'})"><span class="mi">${TI('book',16)}</span>使用說明</button></div>`:'';
   const syncChip=cloud.tripId?`<span class="hdr-sub-chip">${TI('link',12)} ${esc(cloud.tripId)}</span><button class="hdr-sync-switch" title="切換同步代碼" aria-label="切換同步代碼" onclick="event.stopPropagation();openModal(this,{t:'tools'})">⇄</button>`:'';
   const brief=(first&&last)?`<div class="trip-brief"><span class="trip-brief-chip">${TI('calendar',12)} ${fmtMd(first)}-${fmtMd(last)}</span>${countdown?`<span class="trip-brief-chip">${TI('clock',12)} ${countdown}</span>`:''}</div>`:'';
   return`<header class="cover" style="${coverStyle}"><div class="topbar">${ART_PLANE}<div class="cover-menu-wrap"><button class="hamb" aria-label="開啟選單" onclick="event.stopPropagation();setU({menuOpen:!S.menuOpen})"><span></span><span></span><span></span></button>${menu}</div></div>${postcard}<div class="cover-bottom"><div class="hdr-title" onclick="setU({editTN:true,tnDraft:'${jsq(S.tripName)}'})"><span>${esc(S.tripName)}</span><span class="hdr-title-edit-icon">${TI('pencil',16)}</span></div>${brief}<div class="hdr-sub"><span>${esc(cloud.status||'本機儲存')}</span>${syncChip}</div>${!cloud.ready?`<div class="sync-quick"><span style="color:var(--muted);">${TI('link',15)}</span><input id="hdr-sync-inp" type="text" placeholder="輸入同步代碼，Enter 跳轉" autocomplete="off" autocapitalize="none" spellcheck="false" onkeydown="if(event.key==='Enter'){var v=this.value.trim();if(v){var el=document.getElementById('trip-code');if(el)el.value=v;else{S._quickCode=v;}switchTrip(false);}}"><button class="sync-quick-btn" onclick="var v=document.getElementById('hdr-sync-inp').value.trim();if(v){var el=document.getElementById('trip-code');if(el)el.value=v;switchTrip(false);}">跳轉</button></div>`:''}</div></header>${statsStrip}`;
@@ -1618,7 +1612,7 @@ function itin(day,si){
   // Store detail for sheet
   if(weatherDetail)window['_wx_'+day.id]=weatherDetail;
   const catCounts=(day.locations||[]).reduce((a,l)=>{const c=l.category||'其他';a[c]=(a[c]||0)+1;return a;},{});
-  const summary=travelToolkit(day)+`<div class="day-summary"><span class="day-summary-chip">${TI('map-pin',12)} ${day.locations.length} 個地點</span>${Object.entries(catCounts).slice(0,4).map(([c,n])=>`<span class="day-summary-chip">${esc(c)} ${n}</span>`).join('')}</div>`;
+  const summary=`<div class="day-summary"><span class="day-summary-chip">${TI('map-pin',12)} ${day.locations.length} 個地點</span>${Object.entries(catCounts).slice(0,4).map(([c,n])=>`<span class="day-summary-chip">${esc(c)} ${n}</span>`).join('')}</div>`;
   return`<div class="day-tabs">${tabs}<button class="dtab dtab-add" onclick="FM={title:'第${nd}天',date:'',city:''};openModal(this,{t:'nd'})">${TI('plus',13)} 新增</button></div><div class="section-head"><div class="section-title-wrap"><div class="section-title" title="點擊編輯這一天" onclick="openDayEdit(this)">${esc(day.title)}<span class="hdr-title-edit-icon" style="color:var(--muted);">${TI('pencil',14)}</span></div>${(day.date||weatherBadge)?`<div class="section-meta">${day.date?`<span class="section-meta-date">${TI('calendar',13)} ${day.date}</span>`:''}${weatherBadge}</div>`:''}</div><div class="section-actions"><div class="action-group primary"><button class="btn" title="跳到現在的行程" onclick="jumpToNow()">${TI('clock-play',14)} 現在</button><button class="btn" title="排序行程" style="${S.sortMode?'background:var(--yellow);':''}" onclick="setU({sortMode:!S.sortMode})">${S.sortMode?TI('check',14)+' 完成排序':TI('arrows-sort',14)+' 排序'}</button></div></div></div>${summary}${day.locations.length?`<div class="tl-list">${locs}</div>`:locs}`;
 }
 function exps(te){
@@ -1706,7 +1700,7 @@ function mLoc(){
 <div class="mobile-stack" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;"><div><label class="fl">分類</label><select onchange="FM.category=this.value">${locCatOpts}</select></div><div><label class="fl">時間</label><input type="time" value="${esc(FM.time||'')}" oninput="FM.time=this.value" style="min-height:44px;"></div></div>
 <div class="mobile-stack" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;"><div><label class="fl">訂位狀態</label><select onchange="FM.reservation=this.value">${resOpts}</select></div><div><label class="fl">訂位確認碼</label><input type="text" value="${esc(FM.resCode||'')}" placeholder="選填" oninput="FM.resCode=this.value"></div></div>
 <div class="fg"><label class="fl">備註</label><textarea placeholder="例：需預訂、注意公休日、停車資訊..." oninput="FM.notes=this.value" style="min-height:100px;resize:vertical;">${esc(FM.notes||'')}</textarea></div>
-<div class="fg"><label class="fl" for="important-setting">重要資訊區塊</label><select id="important-setting" onchange="FM.important=this.value==='auto'?null:this.value==='show'"><option value="auto" ${FM.important==null?'selected':''}>自動判斷（住宿、航班、租車、預約等）</option><option value="show" ${FM.important===true?'selected':''}>置頂顯示</option><option value="hide" ${FM.important===false?'selected':''}>不顯示（保留每日行程）</option></select></div>
+
 <div class="ar"><button class="btn bp" style="flex:1;padding:10px;" onclick="sLoc()">儲存</button><button class="btn" style="flex:1;padding:10px;" onclick="setU({modal:null})">取消</button></div>`;
 }
 function mDay(){
@@ -2655,7 +2649,7 @@ function showNote(locId){
 }
 function buildModal(){if(S.modal?.t==='wl_add')return buildWlAddModal();if(S.modal?.t==='wl_cat')return buildWlCatModal();if(S.modal?.t==='wl_import')return buildWlImportModal();if(S.modal?.t==='wl_edit')return buildWlEditModal();if(S.modal?.t==='wl_day')return mWlDay();if(S.modal?.t==='memo_add')return mMemoAdd();if(S.modal?.t==='memo_import')return buildMemoImportModal();
   const m=S.modal;let c='';
-  if(m.t==='tripGate')c=mTripGate();else if(m.t==='loc')c=mLoc();else if(m.t==='nd'||m.t==='ed')c=mDay();else if(m.t==='exp')c=mExp();else if(m.t==='tv')c=mTv();else if(m.t==='tvEdit')c=buildTvEditModal();else if(m.t==='cover')c=mCover();else if(m.t==='tools')c=mTools();else if(m.t==='import')c=mImport();else if(m.t==='note')c=mNote();else if(m.t==='help')c=mHelp();
+  if(m.t==='tripGate')c=mTripGate();else if(m.t==='loc')c=mLoc();else if(m.t==='nd'||m.t==='ed')c=mDay();else if(m.t==='exp')c=mExp();else if(m.t==='tv')c=mTv();else if(m.t==='tvEdit')c=buildTvEditModal();else if(m.t==='cover')c=mCover();else if(m.t==='tools')c=mTools();else if(m.t==='import')c=mImport();else if(m.t==='note')c=mNote();else if(m.t==='help')c=mHelp();else if(m.t==='a2hs')c=mA2hs();
   const lock=m.t==='tripGate';
   return`<div class="mol" onclick="${lock?'':'if(event.target===this)setU({modal:null})'}"><div class="msh">${c}</div></div>`;
 }
@@ -3763,7 +3757,7 @@ function wlConfirmImport(){
 
 // ════ HERO & SHEET modal engine ════════════════════════
 // Hero modal types (large forms) — open from trigger element
-const HERO_TYPES=new Set(['loc','exp','nd','ed','wl_add','wl_import','wl_edit','wl_day','wl_cat','import','tv','tvEdit','cover','tools','help','note','memo_add','memo_import','buy_edit','buy_import','cloud_images','tripGate']);
+const HERO_TYPES=new Set(['loc','exp','nd','ed','wl_add','wl_import','wl_edit','wl_day','wl_cat','import','tv','tvEdit','cover','tools','help','a2hs','note','memo_add','memo_import','buy_edit','buy_import','cloud_images','tripGate']);
 // Sheet modal types (compact) — slide up from bottom
 const SHEET_TYPES=new Set([]);
 
@@ -3817,6 +3811,7 @@ function _getModalContent(m){
   else if(m.t==='import')c=mImport();
   else if(m.t==='note')c=mNote();
   else if(m.t==='help')c=mHelp();
+  else if(m.t==='a2hs')c=mA2hs();
   else if(m.t==='memo_add')c=mMemoAdd();
   else if(m.t==='memo_import')c=buildMemoImportModal();
   else if(m.t==='tvEdit')c=buildTvEditModal();
@@ -4332,29 +4327,6 @@ function memoConfirmImport(){
 }
 
 // Trip-scoped durable journal: never mix data from two sync codes.
-function addImportantInfo(el){
-  _heroOrigin=el.getBoundingClientRect();oLoc('');FM.important=true;_refreshHeroContent();
-}
-function travelToolkit(day){
-  const cached=readTripCache();
-  const keyItems=day.locations.filter(l=>l.important!==false&&(l.important===true||l.phone||l.reservation==='pending'||l.category==='住宿'||/航班|航空|取車|還車|集合/.test(l.name)));
-  const points=day.locations.filter(l=>!(/航空|航班|JR|N.EX|大江戶線|山手線|中央線|地下鐵/.test(l.name)));
-  const mode=['driving','walking','transit'].includes(S.routeMode)?S.routeMode:'driving';
-  const importantCards=keyItems.map(l=>{
-    const [kind,label,icon]=/航空|航班/.test(l.name)?['flight','航班資訊','ticket']:l.category==='住宿'?['stay','住宿資訊','bed']:/取車|還車/.test(l.name)?['ride','租車安排','car']:['booking','預約與聯絡','calendar'];
-    const notes=l.notes||'';
-    const firstLine=notes.split('\n')[0];
-    const long=notes.length>95||notes.includes('\n');
-    const preview=firstLine.length>95?firstLine.slice(0,95)+'…':firstLine;
-    return `<article class="travel-key" data-kind="${kind}"><div class="key-ticket-top"><span class="key-kind">${TI(icon,19)} ${label}</span>${l.time?`<time class="key-time">${esc(l.time)}</time>`:''}</div><div class="key-content"><h3>${esc(l.name)}</h3>${l.reservation==='pending'?`<span class="key-status">${TI('clock',13)} 待確認預約</span>`:l.reservation==='booked'?`<span class="key-status booked">${TI('circle-check',13)} 已訂位</span>`:''}${l.address?`<p class="key-address">${esc(l.address)}</p>`:''}${long?`<p class="key-note">${esc(preview)}</p><details class="key-more"><summary>查看完整提醒</summary><p class="key-note">${linkify(notes)}</p></details>`:`<p class="key-note">${linkify(notes)}</p>`}</div><div class="key-actions"><a href="${mu(l.address||l.name)}" target="_blank" rel="noopener">${TI('map-pin',15)} 查看地圖</a>${l.phone?`<a href="tel:${esc(l.phone)}">${TI('phone',15)} 撥打電話</a>`:''}<button type="button" onclick="_heroOrigin=this.getBoundingClientRect();oLoc(\'${jsq(l.id)}\')">${TI('pencil',15)} 編輯</button></div></article>`;
-  }).join('');
-  const segments=points.slice(1).map((to,i)=>{
-    const from=points[i];
-    const url='https://www.google.com/maps/dir/?api=1&origin='+encodeURIComponent(from.address||from.name)+'&destination='+encodeURIComponent(to.address||to.name)+'&travelmode='+mode;
-    return `<a class="travel-segment" href="${esc(url)}" target="_blank" rel="noopener">${i+1}. ${esc(from.name)} → ${esc(to.name)}</a>`;
-  }).join('');
-  return `<section class="travel-toolkit" aria-label="旅途中快速查詢"><div class="sync-row"><strong role="status">${esc(cloud.status)}</strong><button class="btn" onclick="retryTripSync()">重試同步</button></div><div class="tip">${esc(tripClock().label)} · ${cached?'此裝置已有行程副本':'此裝置尚無離線副本'}。地圖導航仍需網路；目前天氣不是旅行日預報。</div><details class="travel-important" ${keyItems.length?'open':''}><summary><span class="important-heading-icon">${TI('ticket',19)}</span>重要資訊<span class="important-count">${keyItems.length} 項安排</span><span class="important-chevron">${TI('chevron-down',16)}</span></summary><button class="btn" type="button" style="margin:0 0 12px" onclick="addImportantInfo(this)">${TI('plus',15)} 新增重要資訊</button><div class="important-grid">${importantCards||'<p class="key-address">這一天沒有住宿、航班或租車資訊。</p>'}</div></details><details><summary>分段導航</summary><label>交通方式 <select aria-label="分段導航交通方式" onchange="setU({routeMode:this.value})">${[['driving','開車／騎乘參考'],['walking','步行'],['transit','大眾運輸']].map(([v,t])=>`<option value="${v}" ${v===mode?'selected':''}>${t}</option>`).join('')}</select></label><div class="tip">已排除航班與鐵路活動。騎乘請在 Google Maps 手動開啟「避開高速公路、避開收費道路」，核對實際路線後再出發；地址不完整的補給點請先確認。</div>${segments||'至少需要兩個地點才能產生分段導航。'}</details></section>`;
-}
 function tripCacheKey(){return 'travel-offline-v1:'+ (new URLSearchParams(location.search).get('trip')||'local');}
 function readTripCache(){try{return JSON.parse(localStorage.getItem(tripCacheKey())||'null');}catch{return null;}}
 function pendingTrip(){return readTripCache()?.pending===true;}
