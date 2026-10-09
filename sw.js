@@ -1,39 +1,31 @@
 /* 旅遊行程規劃器 Service Worker
  * 策略：
  * - 頁面本身（index.html）：network-first —— 有網路時永遠拿最新版，離線時用快取
- * - CDN 靜態資源（Leaflet、Firebase SDK、Tesseract）：cache-first —— 版本固定，快取後離線可用
- * - OpenStreetMap 圖磚：cache-first + 上限 300 張，避免佔爆儲存空間
- * - Firestore / 匯率 / Nominatim API：不攔截，維持即時性
+ * - CDN 靜態資源（Firebase SDK、Tesseract、Google Fonts 的 Huninn 字型）：cache-first —— 版本固定，快取後離線可用
+ * - Firestore / 匯率 API：不攔截，維持即時性
  */
-const VERSION = 'v6';
+const VERSION = 'v7';
 const SHELL_CACHE = 'shell-' + VERSION;
 const CDN_CACHE = 'cdn-' + VERSION;
-const TILE_CACHE = 'tiles-' + VERSION;
-const TILE_LIMIT = 300;
 
 // 僅預快取專案中確實存在的檔案，避免 addAll 因 404 讓整個 SW 安裝失敗。
 const SHELL = ['./', './index.html', './firebase-config.js'];
 
-const CDN_HOSTS = ['unpkg.com', 'cdn.jsdelivr.net', 'www.gstatic.com'];
-const SKIP_HOSTS = ['firestore.googleapis.com', 'open.er-api.com', 'nominatim.openstreetmap.org'];
+const CDN_HOSTS = ['cdn.jsdelivr.net', 'www.gstatic.com', 'fonts.googleapis.com', 'fonts.gstatic.com'];
+const SKIP_HOSTS = ['firestore.googleapis.com', 'open.er-api.com'];
 
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(SHELL_CACHE).then(c => c.addAll(SHELL)).then(() => self.skipWaiting()));
 });
 
+// 舊版本的快取（包含已移除的每日地圖圖磚）在這裡一起清掉
 self.addEventListener('activate', e => {
   e.waitUntil(
     caches.keys().then(keys => Promise.all(
-      keys.filter(k => ![SHELL_CACHE, CDN_CACHE, TILE_CACHE].includes(k)).map(k => caches.delete(k))
+      keys.filter(k => ![SHELL_CACHE, CDN_CACHE].includes(k)).map(k => caches.delete(k))
     )).then(() => self.clients.claim())
   );
 });
-
-async function trimCache(name, limit) {
-  const cache = await caches.open(name);
-  const keys = await cache.keys();
-  if (keys.length > limit) await Promise.all(keys.slice(0, keys.length - limit).map(k => cache.delete(k)));
-}
 
 self.addEventListener('fetch', e => {
   const req = e.request;
@@ -63,20 +55,6 @@ self.addEventListener('fetch', e => {
         caches.open(SHELL_CACHE).then(c => c.put(req, copy));
         return res;
       }).catch(() => caches.match(req))
-    );
-    return;
-  }
-
-  // 地圖圖磚：cache-first + 上限
-  if (url.hostname.endsWith('tile.openstreetmap.org')) {
-    e.respondWith(
-      caches.match(req).then(hit => hit || fetch(req).then(res => {
-        if (res.ok) {
-          const copy = res.clone();
-          caches.open(TILE_CACHE).then(c => c.put(req, copy)).then(() => trimCache(TILE_CACHE, TILE_LIMIT));
-        }
-        return res;
-      }))
     );
     return;
   }

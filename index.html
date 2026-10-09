@@ -3,13 +3,15 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#0f5e5e">
-<script>(function(){try{var t=localStorage.getItem('trip-theme')||'auto';var d=t==='dark'||(t==='auto'&&window.matchMedia&&matchMedia('(prefers-color-scheme: dark)').matches);document.documentElement.dataset.theme=d?'dark':'light';}catch(e){}})();</script>
+<meta name="theme-color" content="#FFFCF6">
 <title>互動旅遊行程規劃器</title>
 <link rel="manifest" href="./manifest.json">
 <link rel="apple-touch-icon" href="./icon-192.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Huninn&display=swap" rel="stylesheet" crossorigin>
 <style>
 :root{
   --font-sans:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans TC","PingFang TC",Arial,sans-serif;
@@ -44,40 +46,6 @@
   --tv8-bg:#ffe5cc;--tv8-fg:#7a3f00;--tv8-ac:#ea7c1f;
   --shadow:0 14px 38px rgba(20,45,40,.12);--r:14px;
 }
-/* ── 夜航深色主題：深墨綠海面，品牌 teal 轉為亮薄荷 ── */
-:root[data-theme="dark"]{
-  color-scheme:dark;
-  --bg:#0c1514;--bg-2:#101b18;--paper:#17231f;--soft:#1c2a26;
-  --app-veil:rgba(19,29,26,.62);--app-ring:rgba(255,255,255,.05);
-  --nav-bg:rgba(16,26,23,.9);--menu-bg:rgba(24,36,32,.96);--menu-ring:rgba(255,255,255,.08);
-  --scrim:rgba(0,0,0,.62);
-  --ink:#e6efec;--muted:#8fa39d;--line:#28372f;--line-2:#3a4c46;--line-a:rgba(46,62,56,.85);
-  --ink-fill:#2b3c37;
-  --teal:#4cc4b2;--teal-fill:#136a62;--teal-fill-2:#188276;--teal-soft:#54c9a4;--teal-edge:#2f6f58;
-  --mint:#143430;--sun:#f2b558;--rose:#ef7f9a;--blue:#6aa5e8;--danger:#ff7a90;
-  --ai:#7a5df0;--ai-2:#9d87f7;
-  --t-green-bg:#14312a;--t-green-fg:#8fdcb8;
-  --t-blue-bg:#14293c;--t-blue-fg:#96c8f0;--t-blue-line:#26496b;
-  --t-amber-bg:#332811;--t-amber-fg:#ecd08e;
-  --t-purple-bg:#262041;--t-purple-fg:#c2b3f2;--t-purple-line:#4b3d85;
-  --t-rose-bg:#391f2a;--t-rose-fg:#f2a4bb;
-  --t-gray-bg:#28302c;--t-gray-fg:#b9c2ba;
-  --tv1-bg:#3a2126;--tv1-fg:#f3a8b4;--tv1-ac:#e5738d;
-  --tv2-bg:#16283a;--tv2-fg:#93c9f2;--tv2-ac:#5c9be0;
-  --tv3-bg:#33290f;--tv3-fg:#ecd28a;--tv3-ac:#e6ac30;
-  --tv4-bg:#14301f;--tv4-fg:#8fdcb2;--tv4-ac:#2fbe8b;
-  --tv5-bg:#261e3d;--tv5-fg:#c4b1f5;--tv5-ac:#9a70f5;
-  --tv6-bg:#3a1a22;--tv6-fg:#f59db1;--tv6-ac:#ef5f7d;
-  --tv7-bg:#10303a;--tv7-fg:#8adbe8;--tv7-ac:#35b3cc;
-  --tv8-bg:#33220f;--tv8-fg:#f0bd8a;--tv8-ac:#ef9440;
-  --shadow:0 16px 40px rgba(0,0,0,.5);
-}
-/* 深色下：地圖圖磚壓暗、彈窗跟隨主題、捲軸配色 */
-:root[data-theme="dark"] .leaflet-tile{filter:brightness(.72) contrast(1.06) saturate(.85)}
-:root[data-theme="dark"] .leaflet-popup-content-wrapper,:root[data-theme="dark"] .leaflet-popup-tip{background:var(--paper);color:var(--ink)}
-:root[data-theme="dark"] .leaflet-bar a{background:var(--paper);color:var(--ink);border-color:var(--line)}
-:root[data-theme="dark"]{scrollbar-color:var(--line-2) transparent}
-:root[data-theme="dark"] img.cover-img{filter:brightness(.9)}
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 html{background:var(--bg);color:var(--ink);font-family:var(--font-sans);-webkit-text-size-adjust:100%;overflow-x:hidden}
 body{min-height:100vh;font-size:15px;line-height:1.45;background:linear-gradient(180deg,var(--bg) 0,var(--bg-2) 100%);color:var(--ink);overflow-x:hidden}
@@ -203,24 +171,6 @@ a{text-decoration:none}
 .section-actions{display:flex;align-items:center;justify-content:flex-end;gap:6px;flex-wrap:nowrap;position:relative;flex-shrink:0}
 .action-group{display:flex;align-items:center;gap:7px;position:relative;flex-wrap:nowrap}
 .quick-holder{position:relative}
-.itin-map-card{background:linear-gradient(180deg,#f7fbff 0%,#fff 100%);border:1px solid var(--t-blue-line);border-radius:var(--r);margin:0 0 12px;overflow:hidden;box-shadow:0 8px 24px rgba(31,59,53,.06)}
-.itin-map-head{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px 14px;border-bottom:1px solid var(--t-blue-line)}
-.itin-map-title{display:flex;align-items:center;gap:8px;font-weight:900;color:var(--t-blue-fg);min-width:0}
-.itin-map-title span:last-child{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.itin-map-actions{display:flex;align-items:center;gap:6px;flex-shrink:0}
-.itin-map-toggle{width:32px;height:32px;border-radius:999px;border:1px solid var(--t-blue-line);background:var(--paper);color:var(--t-blue-fg);font-weight:900;cursor:pointer}
-.itin-map-body{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(240px,.9fr);gap:0}
-.itin-map-canvas{width:100%;min-height:270px;background:var(--bg);display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:13px;font-weight:800;position:relative;z-index:1}
-.itin-map-canvas .leaflet-container{font-family:var(--font-sans)}
-.itin-map-loading{padding:14px;text-align:center;color:var(--muted)}
-.itin-map-marker{width:28px;height:28px;border-radius:999px;background:var(--teal-fill);color:#fff;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:900;border:2px solid #fff;box-shadow:0 4px 12px rgba(31,59,53,.25)}
-.itin-map-marker.combo{width:auto;min-width:34px;padding:0 8px;border-radius:999px;font-size:11px;letter-spacing:0}
-.itin-map-list{padding:12px;display:flex;flex-direction:column;gap:8px;border-left:1px solid var(--t-blue-line);max-height:310px;overflow-y:auto}
-.itin-map-point{display:grid;grid-template-columns:28px minmax(0,1fr);gap:8px;align-items:flex-start;padding:8px;border:1px solid rgba(217,226,223,.85);border-radius:12px;background:var(--paper)}
-.itin-map-pin{width:28px;height:28px;border-radius:999px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:12px;font-weight:900;box-shadow:0 5px 14px rgba(31,59,53,.12)}
-.itin-map-name{font-size:13px;font-weight:900;color:var(--ink);line-height:1.35;word-break:break-word}
-.itin-map-meta{font-size:11px;color:var(--muted);margin-top:2px;line-height:1.45;word-break:break-word}
-.itin-map-empty{padding:14px;color:var(--muted);font-size:13px;text-align:center}
 .card{background:var(--paper);border-radius:var(--r);border:1px solid rgba(217,226,223,.9);margin-bottom:10px;overflow:hidden;box-shadow:0 2px 12px rgba(31,59,53,.05)}
 .loc-wrap{display:block;padding:12px 14px}
 .loc-time{font-size:12px;font-weight:800;color:var(--t-green-fg);padding-top:2px;width:56px;min-width:56px;white-space:nowrap;font-variant-numeric:tabular-nums}
@@ -460,11 +410,6 @@ input:focus,select:focus,textarea:focus{border-color:var(--teal-soft);box-shadow
   .action-group.manage{justify-content:flex-end}
   .section-actions .btn{min-height:42px;padding:8px 12px}
   .quick-menu{width:min(92vw,280px)}
-  .itin-map-head{padding:10px 12px}
-  .itin-map-title{font-size:13px}
-  .itin-map-body{grid-template-columns:1fr}
-  .itin-map-canvas{min-height:220px}
-  .itin-map-list{border-left:0;border-top:1px solid var(--t-blue-line);max-height:190px}
   .loc-wrap{padding:12px 13px}
   .loc-body{min-width:0}
   .tl-item{grid-template-columns:44px 20px minmax(0,1fr)}
@@ -749,14 +694,10 @@ input:focus,select:focus,textarea:focus{border-color:var(--teal-soft);box-shadow
 /* ── 基礎可用性打磨 ── */
 :focus-visible{outline:2px solid var(--teal);outline-offset:2px;border-radius:6px}
 button:focus:not(:focus-visible),input:focus:not(:focus-visible){outline:none}
-@media (prefers-reduced-motion:reduce){
-  *,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important;scroll-behavior:auto!important}
-}
 svg{flex-shrink:0}
 
 /* ── 細節升級（雙主題共用） ── */
 :root{--teal-grad-2:#1a8a6e}
-:root[data-theme="dark"]{--teal-grad-2:#2aa88c}
 html{transition:background-color .25s ease}
 body{transition:background .25s ease,color .25s ease}
 button{transition:transform .12s ease,filter .15s ease}
@@ -764,7 +705,6 @@ button:active{transform:translateY(1px)}
 input,select,textarea{background:var(--paper);color:var(--ink);border-color:var(--line)}
 input::placeholder,textarea::placeholder{color:var(--muted);opacity:.75}
 ::selection{background:var(--mint);color:var(--ink)}
-:root[data-theme="dark"] ::selection{background:var(--teal-fill);color:#fff}
 /* ── Travel journal palette: warm paper, lake blue and terracotta ── */
 :root{
   --bg:#eee9df;--bg-2:#e8eeeb;--paper:#fffdf8;--soft:#f4f0e7;--card:var(--paper);
@@ -780,18 +720,6 @@ input::placeholder,textarea::placeholder{color:var(--muted);opacity:.75}
   --journal-aqua:#286969;--journal-aqua-ink:#286969;--journal-aqua-wash:#e3efec;
   --accent:var(--journal-green-ink);--accent-fill:var(--journal-green);--accent-wash:var(--journal-green-wash);
   --shadow:0 16px 44px rgba(63,56,37,.11);--journal-shadow:0 5px 20px rgba(63,56,37,.055);
-}
-:root[data-theme="dark"]{
-  --bg:#151c1c;--bg-2:#212323;--paper:#222d2c;--soft:#293532;--app-veil:#1b2523;--app-ring:#35413b;
-  --nav-bg:rgba(30,40,37,.96);--ink:#eeeae0;--muted:#b0b9ae;--line:#3b4640;--line-2:#586358;--line-a:#3b4640;
-  --teal:#a1d0ba;--teal-fill:#245e52;--teal-fill-2:#214e45;--teal-grad-2:#397d6d;--teal-edge:#527866;--mint:#304b3d;
-  --journal-blue-ink:#a4cede;--journal-blue-wash:#263c46;
-  --journal-clay-ink:#f0b396;--journal-clay-wash:#45312a;
-  --journal-gold-ink:#e6c88b;--journal-gold-wash:#3e3827;
-  --journal-violet-ink:#c9b9e0;--journal-violet-wash:#363145;
-  --journal-green-ink:#a1d0ba;--journal-green-wash:#2c4034;
-  --journal-aqua-ink:#a0d4cd;--journal-aqua-wash:#293f3d;
-  --journal-shadow:0 5px 20px rgba(0,0,0,.16);
 }
 .app[data-view="itinerary"],.nav-btn[data-view="itinerary"]{--accent:var(--journal-blue-ink);--accent-fill:var(--journal-blue);--accent-wash:var(--journal-blue-wash)}
 .app[data-view="wishlist"],.nav-btn[data-view="wishlist"]{--accent:var(--journal-violet-ink);--accent-fill:var(--journal-violet);--accent-wash:var(--journal-violet-wash)}
@@ -845,7 +773,6 @@ body{background:radial-gradient(ellipse at 5% 5%,var(--journal-gold-wash),transp
 .app-fab-main{background:linear-gradient(145deg,#a54a32,#874027);box-shadow:0 8px 24px rgba(111,54,30,.3),0 0 0 4px var(--paper)}
 .btn,.btn-ic{box-shadow:0 2px 5px rgba(38,49,36,.025)}
 .cover-menu button:hover,.cover-menu button:active{background:var(--soft)}.cover-menu .mi{background:var(--mint)}
-:root[data-theme="dark"] .tv-stat-cell{background:var(--soft)}
 @media(min-width:700px){.body{padding:24px 26px 90px}.nav{padding-left:24px;padding-right:24px}.nav-btn{font-size:14px}.stat-cell{padding:20px 26px}}
 @media(max-width:480px){.nav{gap:5px;padding:9px 10px}.nav-btn{min-width:60px;padding:8px 6px;font-size:13px}.stat-cell{padding:15px 13px}.stat-cell .stat-n{font-size:24px}.buy-hero{padding:22px 18px}.buy-hero h2{font-size:22px}.travel-toolkit{padding:13px}.buy-card{padding:15px 12px}.hdr-title{font-size:25px}}
 
@@ -878,6 +805,303 @@ body{background:radial-gradient(ellipse at 5% 5%,var(--journal-gold-wash),transp
 .balance-amount{position:relative;font-size:14px;font-weight:800;padding:5px;overflow-wrap:anywhere;font-variant-numeric:tabular-nums}.debt .balance-amount{color:var(--t-red-fg,#b94747)}.credit .balance-amount{color:var(--teal)}
 .settlement-summary>.mini{margin-top:14px;line-height:1.6}.split-calculation{padding:10px 0;font-size:12px;font-weight:700;line-height:1.7;color:var(--muted)}
 @media(max-width:480px){.settlement-summary{padding:12px}.balance-chart-row{grid-template-columns:minmax(0,1fr) 76px minmax(0,1fr)}.balance-amount{font-size:12px;padding:4px}}
+/* ════════ 日系繪本風：和紙白底、墨灰粗線框、大圓角、平塗（不用漸層），只用淺色底 ════════ */
+:root{
+  color-scheme:light;
+  --font-sans:'Huninn',-apple-system,BlinkMacSystemFont,"PingFang TC","Noto Sans TC",sans-serif;
+  --washi:#FFFCF6;--washi-2:#F5EEE2;--sumi:#3E3A39;
+  --coral:#F2A497;--yellow:#F6D27A;--mizu:#A8D3E6;--wakatake:#B9DAA5;
+  --coral-ink:#B04E3C;--yellow-ink:#86610E;--mizu-ink:#2C6A86;--green-ink:#4E7A3B;
+  --coral-wash:#FCE6E1;--yellow-wash:#FDF2D2;--mizu-wash:#E4F2F8;--green-wash:#E7F2DF;
+  --lw:3px;--lw2:2px;--hard:0 3px 0 var(--sumi);--pop:cubic-bezier(.34,1.56,.64,1);
+  /* 沿用原本的變數名稱，舊樣式和 JS 裡的 inline style 會一起換成新配色 */
+  --bg:var(--washi);--bg-2:var(--washi);--paper:var(--washi);--soft:var(--washi-2);--card:var(--washi);--cream:var(--washi-2);
+  --app-veil:var(--washi);--app-ring:transparent;--nav-bg:var(--washi);--menu-bg:var(--washi);--menu-ring:var(--sumi);
+  --scrim:rgba(255,252,246,.8);
+  --ink:var(--sumi);--muted:#6E6866;--line:rgba(62,58,57,.22);--line-2:rgba(62,58,57,.42);--line-a:rgba(62,58,57,.22);
+  --ink-fill:var(--washi);
+  --teal:var(--mizu-ink);--teal-fill:var(--mizu);--teal-fill-2:var(--mizu);--teal-soft:var(--mizu-ink);--teal-edge:var(--mizu);--teal-grad-2:var(--mizu);
+  --mint:var(--green-wash);--sun:var(--yellow);--rose:var(--coral);--blue:var(--mizu-ink);--danger:var(--coral-ink);
+  --ai:var(--coral);--ai-2:var(--coral-ink);
+  --t-green-bg:var(--green-wash);--t-green-fg:var(--green-ink);
+  --t-blue-bg:var(--mizu-wash);--t-blue-fg:var(--mizu-ink);--t-blue-line:var(--mizu);
+  --t-amber-bg:var(--yellow-wash);--t-amber-fg:var(--yellow-ink);
+  --t-purple-bg:var(--coral-wash);--t-purple-fg:var(--coral-ink);--t-purple-line:var(--coral);
+  --t-rose-bg:#FDE7D6;--t-rose-fg:#A2531F;
+  --t-gray-bg:#F1ECE3;--t-gray-fg:#6E6866;
+  --t-red-fg:var(--coral-ink);
+  --tv1-bg:var(--coral-wash);--tv1-fg:var(--coral-ink);--tv1-ac:var(--coral);
+  --tv2-bg:var(--mizu-wash);--tv2-fg:var(--mizu-ink);--tv2-ac:var(--mizu);
+  --tv3-bg:var(--yellow-wash);--tv3-fg:var(--yellow-ink);--tv3-ac:var(--yellow);
+  --tv4-bg:var(--green-wash);--tv4-fg:var(--green-ink);--tv4-ac:var(--wakatake);
+  --tv5-bg:#EFE7F2;--tv5-fg:#6B5480;--tv5-ac:#D3C0DD;
+  --tv6-bg:#FDE7D6;--tv6-fg:#A2531F;--tv6-ac:#F7BC8C;
+  --tv7-bg:#E0F3F0;--tv7-fg:#2F6E66;--tv7-ac:#9FD6CF;
+  --tv8-bg:#F5EDD8;--tv8-fg:#76602E;--tv8-ac:#E3CF9E;
+  --journal-blue:var(--mizu);--journal-blue-ink:var(--mizu-ink);--journal-blue-wash:var(--mizu-wash);
+  --journal-clay:var(--coral);--journal-clay-ink:var(--coral-ink);--journal-clay-wash:var(--coral-wash);
+  --journal-gold:var(--yellow);--journal-gold-ink:var(--yellow-ink);--journal-gold-wash:var(--yellow-wash);
+  --journal-violet:var(--coral);--journal-violet-ink:var(--coral-ink);--journal-violet-wash:var(--coral-wash);
+  --journal-green:var(--wakatake);--journal-green-ink:var(--green-ink);--journal-green-wash:var(--green-wash);
+  --journal-aqua:var(--mizu);--journal-aqua-ink:var(--mizu-ink);--journal-aqua-wash:var(--mizu-wash);
+  --accent:var(--mizu-ink);--accent-fill:var(--mizu);--accent-wash:var(--mizu-wash);
+  --shadow:none;--journal-shadow:none;--r:18px;
+}
+/* 每個分頁一個主色（四色輪流） */
+.app[data-view="memo"],.nav-btn[data-view="memo"]{--accent:var(--yellow-ink);--accent-fill:var(--yellow);--accent-wash:var(--yellow-wash)}
+.app[data-view="itinerary"],.nav-btn[data-view="itinerary"]{--accent:var(--mizu-ink);--accent-fill:var(--mizu);--accent-wash:var(--mizu-wash)}
+.app[data-view="wishlist"],.nav-btn[data-view="wishlist"]{--accent:var(--coral-ink);--accent-fill:var(--coral);--accent-wash:var(--coral-wash)}
+.app[data-view="buy"],.nav-btn[data-view="buy"]{--accent:var(--green-ink);--accent-fill:var(--wakatake);--accent-wash:var(--green-wash)}
+.app[data-view="expenses"],.nav-btn[data-view="expenses"]{--accent:var(--yellow-ink);--accent-fill:var(--yellow);--accent-wash:var(--yellow-wash)}
+.app[data-view="split"],.nav-btn[data-view="split"]{--accent:var(--mizu-ink);--accent-fill:var(--mizu);--accent-wash:var(--mizu-wash)}
+
+/* Huninn 只有一種粗細：關掉假粗體，層次改用字級 */
+html{background:var(--washi);font-synthesis:none}
+body{background:var(--washi)!important;color:var(--ink);font-weight:400}
+button,input,select,textarea{font-family:var(--font-sans)}
+::selection{background:var(--yellow-wash);color:var(--ink)}
+:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
+.app{background:var(--washi);box-shadow:none}
+@media (min-width:720px){.app{border:var(--lw) solid var(--ink);border-radius:28px}}
+
+/* ── 封面：明信片（照片放進粗框卡片，標題寫在下面的紙上，不再疊深色遮罩） ── */
+.cover{color:var(--ink);background:var(--washi)!important;aspect-ratio:auto!important;min-height:0!important;max-height:none!important;display:block;padding:0 0 6px;border-bottom:0}
+.topbar{padding:12px 16px 0;align-items:center}
+.cover-plane{display:block;width:150px;height:44px;overflow:visible}
+.cover-plane .trail{animation:trail 1.6s linear infinite}
+.cover-plane .plane{transform-box:fill-box;transform-origin:50% 50%;animation:planeBob 2.4s ease-in-out infinite alternate}
+@keyframes trail{to{stroke-dashoffset:-18}}
+@keyframes planeBob{from{transform:translateY(2px) rotate(-4deg)}to{transform:translateY(-3px) rotate(3deg)}}
+.hamb{width:44px;height:44px;border-radius:15px;border:var(--lw) solid var(--ink);background:var(--washi);-webkit-backdrop-filter:none;backdrop-filter:none;box-shadow:var(--hard)}
+.hamb span{background:var(--ink);box-shadow:none;width:18px;height:2.5px}
+.hamb:active{transform:translateY(3px);box-shadow:none}
+.cover-menu{background:var(--washi);-webkit-backdrop-filter:none;backdrop-filter:none;border:var(--lw) solid var(--ink);box-shadow:var(--hard);border-radius:20px;animation:popIn .35s var(--pop);transform-origin:top right}
+.cover-menu button{font-weight:400}
+.cover-menu button:hover,.cover-menu button:active{background:var(--washi-2)}
+.cover-menu .mi{background:var(--mizu-wash);color:var(--ink);border:1.5px solid var(--ink);border-radius:9px}
+.cover-postcard{position:relative;margin:14px 18px 0;padding:8px;background:var(--washi);border:var(--lw) solid var(--ink);border-radius:20px;box-shadow:var(--hard);transform:rotate(-1deg)}
+.cover-postcard::before{content:'';position:absolute;z-index:2;top:-11px;left:26px;width:74px;height:20px;background:var(--yellow);transform:rotate(-5deg);clip-path:polygon(0 0,100% 0,96% 25%,100% 50%,96% 75%,100% 100%,0 100%,4% 75%,0 50%,4% 25%)}
+.cover-photo{width:100%;aspect-ratio:16/9;max-height:300px;border-radius:12px;border:var(--lw2) solid var(--ink);background:var(--washi-2) var(--cover) center var(--cover-pos,30%)/cover no-repeat}
+.cover-stamp{position:absolute;z-index:2;right:-8px;top:-14px;width:58px;height:70px;transform:rotate(7deg);animation:stampSway 3.6s ease-in-out infinite alternate}
+@keyframes stampSway{from{transform:rotate(5deg)}to{transform:rotate(10deg) translateY(-2px)}}
+.cover-postmark{position:absolute;z-index:1;right:40px;top:-6px;width:88px;height:48px;opacity:.85;pointer-events:none}
+.cover-bottom{position:relative;padding:18px 18px 4px;gap:8px;color:var(--ink)}
+.hdr-title{font-size:26px;color:var(--ink);text-shadow:none;letter-spacing:.02em;font-weight:400}
+.hdr-title>span:first-child{box-shadow:inset 0 -.42em 0 var(--yellow);padding:0 2px}
+.hdr-title-edit-icon{opacity:.45}
+.hdr-sub{color:var(--muted);text-shadow:none}
+.trip-brief-chip,.hdr-sub-chip{background:var(--washi);border:var(--lw2) solid var(--ink);color:var(--ink);-webkit-backdrop-filter:none;backdrop-filter:none;text-shadow:none;font-weight:400;font-size:12px}
+.trip-brief-chip:first-child{background:var(--mizu-wash)}.trip-brief-chip+.trip-brief-chip{background:var(--yellow-wash)}
+.hdr-sync-switch{background:var(--washi);border:var(--lw2) solid var(--ink);color:var(--ink);-webkit-backdrop-filter:none;backdrop-filter:none;box-shadow:none}
+.sync-quick{background:var(--washi);border:var(--lw2) solid var(--ink);-webkit-backdrop-filter:none;backdrop-filter:none;border-radius:14px}
+.sync-quick input{color:var(--ink)}.sync-quick input::placeholder{color:var(--muted)}
+.sync-quick-btn{background:var(--yellow);color:var(--ink);border:var(--lw2) solid var(--ink);border-radius:10px}
+.sync-quick-btn:hover{background:var(--yellow)}
+.tni{background:var(--washi);border:var(--lw2) solid var(--ink);color:var(--ink)}.tni::placeholder{color:var(--muted)}
+.glass{background:var(--yellow);color:var(--ink);border:var(--lw2) solid var(--ink);-webkit-backdrop-filter:none;backdrop-filter:none}
+/* 封面下的三格統計：三張小票根 */
+.stats-strip{background:transparent!important;border:0;box-shadow:none;gap:8px;padding:10px 18px 4px}
+.stat-cell{background:var(--washi);border:var(--lw) solid var(--ink);border-radius:18px;padding:10px 8px!important;align-items:center;text-align:center}
+.stat-cell+.stat-cell::before{display:none!important}
+.stat-cell:nth-child(1){background:var(--mizu-wash)}.stat-cell:nth-child(2){background:var(--yellow-wash)}.stat-cell:nth-child(3){background:var(--green-wash)}
+.stat-cell .stat-n{font-size:22px;color:var(--ink)}.stat-n{color:var(--ink)}
+.stat-cell .stat-l{color:var(--muted)}
+
+/* ── 分頁列、日期列 ── */
+.nav{background:var(--washi);-webkit-backdrop-filter:none;backdrop-filter:none;border-bottom:var(--lw) solid var(--ink);box-shadow:none;padding:8px 10px 10px;gap:6px}
+.nav-btn{background:var(--washi);color:var(--ink);border:var(--lw2) solid var(--ink);border-radius:14px;min-height:42px;font-weight:400}
+.nav-btn.on{background:var(--accent-fill);color:var(--ink);border-color:var(--ink);box-shadow:var(--hard)}
+.nav{scrollbar-width:none}.nav::-webkit-scrollbar{display:none}
+@media (max-width:480px){.nav{gap:5px;padding:8px 8px 10px}.nav-btn{flex:1 1 0;min-width:0;padding:8px 2px;gap:3px;font-size:13px}}
+.body{background:var(--washi)!important}
+.day-tabs{padding:4px 2px 12px}
+.dtab,.exp-day-tab{background:var(--washi);color:var(--ink);border:var(--lw2) solid var(--ink);border-radius:14px;box-shadow:none;font-weight:400}
+.dtab.on,.exp-day-tab.on{background:var(--accent-fill);color:var(--ink);border-color:var(--ink);box-shadow:var(--hard)}
+.dtab-add{background:var(--yellow-wash);color:var(--ink);border-style:dashed}
+@media (max-width:640px){.day-tabs{top:61px;background:var(--washi);-webkit-backdrop-filter:none;backdrop-filter:none;border-bottom:var(--lw2) solid var(--ink)}}
+.section-title{font-weight:400}
+.day-summary-chip{background:var(--washi);border:1.5px solid var(--ink);color:var(--ink);font-weight:400}
+.wx-badge{background:var(--mizu-wash);border:1.5px solid var(--ink);color:var(--ink);font-weight:400}
+.wx-badge:hover{background:var(--mizu-wash)}
+
+/* ── 卡片：墨線粗框、平塗 ── */
+.card,.wl-card,.buy-card,.exp-card,.tv-card,.budget-card,.stat,.travel-toolkit,.settlement-summary,.buy-store,.memo-completed,.split-person,.travel-key,.buy-hero{border:var(--lw) solid var(--ink)!important;border-radius:20px;box-shadow:none}
+.memo-item{border:var(--lw2) solid var(--ink);border-radius:16px;background:var(--washi)}
+.card{border-radius:20px}
+/* 時間軸：虛線像旅行路線，圓點填分類色 */
+.tl-rail::before{background:none!important;border-left:2.5px dashed var(--line-2);width:0}
+.tl-dot{border:2.5px solid var(--ink)!important;width:14px;height:14px}
+.tl-item.loc-now .tl-dot{box-shadow:0 0 0 4px var(--yellow-wash)}
+.loc-card-wrap.loc-now>.card{background:var(--now-bg,var(--yellow-wash))!important;border-color:var(--ink)!important;box-shadow:var(--hard)}
+.loc-now-badge,.loc-cat-badge{border:1.5px solid var(--ink);font-weight:400}
+.loc-note{background:var(--accent-wash);border-left:0;border-radius:12px}
+.loc-note-toggle{color:var(--accent);font-weight:400}
+.loc-phone a{color:var(--mizu-ink)}
+.note-link{color:var(--mizu-ink)}
+.loc-card-wrap.drag-over .card{border-color:var(--ink)!important;box-shadow:0 0 0 3px var(--yellow)!important}
+.loc-sort-ctrl{background:var(--washi);border:var(--lw2) solid var(--ink);box-shadow:none}
+.sort-btn{color:var(--ink)}
+/* 旅途重點：像車票，虛線撕線 */
+.travel-toolkit{background:var(--yellow-wash)!important}
+.important-heading-icon{background:var(--yellow);color:var(--ink);border:var(--lw2) solid var(--ink);box-shadow:none}
+.key-ticket-top{border-bottom:2px dashed var(--ink)!important}
+.key-actions{border-top:0;background:var(--key-tint)}
+.key-actions a,.key-actions button{border:var(--lw2) solid var(--ink);background:var(--washi);color:var(--ink);font-weight:400}
+.key-status{border:1.5px solid var(--ink)}
+
+/* ── 按鈕 ── */
+.btn{background:var(--washi);color:var(--ink);border:var(--lw2) solid var(--ink);border-radius:14px;box-shadow:0 2px 0 var(--ink)!important;font-weight:400}
+.btn:active{transform:translateY(2px);box-shadow:none!important}
+.bp,.app .btn.bp,.buy-tools .bp{background:var(--yellow);color:var(--ink);border-color:var(--ink)}
+.ba{background:var(--wakatake);color:var(--ink);border-color:var(--ink)}
+.br{background:var(--coral-wash);color:var(--coral-ink);border-color:var(--ink)}
+.btn-ic{background:var(--washi);border:var(--lw2) solid var(--ink);color:var(--ink);box-shadow:0 2px 0 var(--ink)!important}
+.btn-ic:active{transform:translateY(2px);box-shadow:none!important}
+.btn-ic.bp{background:var(--yellow);color:var(--ink);border-color:var(--ink)}
+.btn-ic.ba{background:var(--wakatake);color:var(--ink);border-color:var(--ink)}
+.btn-ic.br{background:var(--coral-wash);color:var(--coral-ink);border-color:var(--ink)}
+.add-btn{border:var(--lw2) dashed var(--ink);background:var(--washi);color:var(--ink);border-radius:18px;font-weight:400}
+.sc,.exp-cat-btn,.wl-filter-btn,.buy-quick-btn{border:var(--lw2) solid var(--ink);background:var(--washi);color:var(--ink);font-weight:400}
+.sc.on{background:var(--yellow);color:var(--ink);border-color:var(--ink)}
+.exp-cat-btn.on,.wl-filter-btn.on,.buy-quick-btn[aria-pressed="true"],.buy-store-shortcuts .buy-quick-btn[aria-pressed="true"],.buy-quick-btn:active{background:var(--accent-fill);color:var(--ink);border-color:var(--ink)}
+.chip{border:var(--lw2) solid var(--ink);font-weight:400}
+.tmpl-btn{border:var(--lw2) solid var(--ink)}
+
+/* ── 輸入欄位 ── */
+input:not([type=checkbox]):not([type=radio]):not([type=range]):not([type=file]):not([type=color]),select,textarea{border:var(--lw2) solid var(--ink);border-radius:14px;background:var(--washi);color:var(--ink)}
+input:focus,select:focus,textarea:focus{border-color:var(--ink);box-shadow:0 0 0 3px var(--mizu-wash)}
+.fl{color:var(--muted);font-weight:400}
+.import-area{background:var(--washi);border:var(--lw2) solid var(--ink)}
+.import-preview,.ai-step-box{background:var(--green-wash);border:var(--lw2) solid var(--ink)}
+.import-err{background:var(--coral-wash);border:var(--lw2) solid var(--ink);color:var(--coral-ink)}
+.receipt-box{border:var(--lw2) dashed var(--ink);background:var(--washi-2)}
+.memo-cat-sel{border:var(--lw2) solid var(--ink)}
+
+/* ── 彈出視窗：淺色遮罩、粗框紙卡 ── */
+.mol{background:var(--scrim)}
+.msh{background:var(--washi);border:var(--lw) solid var(--ink);border-bottom:0;box-shadow:none;border-radius:26px 26px 0 0}
+.hero-body .msh{border:0}
+.hero-backdrop.open,.sheet-backdrop.open,.note-hero-backdrop.open{background:rgba(255,252,246,.8)!important;-webkit-backdrop-filter:none!important;backdrop-filter:none!important}
+.hero-card,.note-hero-card{background:var(--washi);border:var(--lw) solid var(--ink);box-shadow:0 4px 0 var(--ink)!important}
+.sheet-wrap{background:var(--washi);border:var(--lw) solid var(--ink);border-bottom:0;box-shadow:none;border-radius:26px 26px 0 0;transition-timing-function:cubic-bezier(.34,1.25,.64,1)}
+.sheet-handle{background:var(--ink);opacity:.22;width:42px;height:5px}
+.note-hero-close{background:var(--washi);border:var(--lw2) solid var(--ink);color:var(--ink)}
+.note-hero-close:hover{background:var(--washi-2)}
+.note-hero-body{color:var(--ink)}
+.note-hero-actions{border-top:1.5px dashed var(--line-2)}
+.note-modal-body{background:var(--washi-2);border-left:0}
+.quick-menu{background:var(--washi);border:var(--lw) solid var(--ink);box-shadow:var(--hard);border-radius:18px}
+.quick-item{font-weight:400}.quick-item:hover,.quick-item:active{background:var(--washi-2)}
+.loc-action-title{border-bottom:1.5px dashed var(--line-2)}
+.loc-action-item{font-weight:400}.loc-action-item:hover,.loc-action-item:active{background:var(--washi-2)}
+.loc-action-item.danger:hover{background:var(--coral-wash)}
+.cover-choice{border:var(--lw2) solid var(--ink)}
+.cover-choice.on{border-color:var(--ink);box-shadow:0 0 0 3px var(--yellow)}
+.cover-choice span{background:var(--washi);color:var(--ink);border:1.5px solid var(--ink);border-radius:999px;padding:2px 9px;text-shadow:none}
+.wx-sheet-item{background:var(--washi);border:var(--lw2) solid var(--ink)}
+
+/* ── 浮動按鈕、提示 ── */
+.app-fab-main,.wl-fab-main{background:var(--yellow)!important;color:var(--ink);border:var(--lw) solid var(--ink);box-shadow:var(--hard)!important}
+.app-fab-backdrop,.wl-fab-wrap.open .wl-fab-backdrop{background:rgba(255,252,246,.8);-webkit-backdrop-filter:none;backdrop-filter:none}
+.app-fab-action,.wl-fab-action{background:var(--washi);border:var(--lw) solid var(--ink);box-shadow:var(--hard);-webkit-backdrop-filter:none;backdrop-filter:none;font-weight:400}
+.app-fab-action-ic,.wl-fab-manual .wl-fab-action-ic{background:var(--green-wash);color:var(--ink);border:var(--lw2) solid var(--ink)}
+.app-fab-action.ai .app-fab-action-ic{background:var(--coral-wash);color:var(--ink)}
+.app-fab-sheet{animation-timing-function:var(--pop)}
+.app-fab-tmpl{border:var(--lw2) solid var(--ink);box-shadow:0 2px 0 var(--ink)}
+.wl-fab-ai{background:var(--coral);color:var(--ink);border-color:var(--ink)}
+.wl-fab-ai .wl-fab-action-ic{background:var(--washi);color:var(--ink)}
+.wl-toast,.exp-add-toast,.undo-toast{background:var(--washi);color:var(--ink);border:var(--lw) solid var(--ink);box-shadow:var(--hard);border-radius:999px;font-weight:400;animation-duration:.45s;animation-timing-function:var(--pop)}
+.undo-btn{background:var(--yellow);color:var(--ink);border:var(--lw2) solid var(--ink)}
+
+/* ── 待買 ── */
+.buy-hero{background:var(--green-wash)!important;color:var(--ink)}
+.buy-hero::after{display:none}
+.buy-hero h2{color:var(--ink)}
+.buy-hero progress{accent-color:var(--wakatake)!important}
+.buy-store label,.buy-recipient{color:var(--accent);font-weight:400}
+.buy-card{box-shadow:inset 7px 0 0 var(--accent-fill)!important}
+.buy-card.done{box-shadow:inset 7px 0 0 var(--washi-2)!important}
+.buy-area-title{border:var(--lw2) solid var(--ink);border-radius:14px;background:var(--accent-wash);color:var(--ink)}
+.buy-category{border:1.5px solid var(--ink)}
+.buy-photo{border:var(--lw2) solid var(--ink)}
+.buy-photo summary{font-weight:400}
+
+/* ── 清單 ── */
+.wl-add-btn{background:var(--yellow);color:var(--ink);border:var(--lw2) solid var(--ink);box-shadow:0 2px 0 var(--ink);font-weight:400}
+.wl-ai-btn{background:var(--coral);color:var(--ink);border:var(--lw2) solid var(--ink);box-shadow:0 2px 0 var(--ink);font-weight:400}
+.wl-card{box-shadow:inset 0 7px 0 var(--accent-fill)!important;padding-top:20px}
+.wl-day-btn{border:1.5px solid var(--ink);background:var(--accent-wash);color:var(--ink);font-weight:400}
+.wl-done-btn,.wl-edit-btn{border:1.5px solid var(--ink)}
+.wl-badge{border:1.5px solid var(--ink)}
+.wl-group-label{color:var(--accent)}
+
+/* ── 備忘 ── */
+.memo-ai-btn{background:var(--coral)!important;color:var(--ink);border:var(--lw) solid var(--ink);box-shadow:var(--hard)!important;font-weight:400}
+.memo-ai-btn:hover{transform:none}
+.memo-cb{border:var(--lw2) solid var(--ink);border-radius:8px}
+.memo-cb.on{background:var(--wakatake);color:var(--ink);border-color:var(--ink)}
+
+/* ── 記帳、分帳 ── */
+.exp-day-total{color:var(--accent)}
+.cat-ic{border:var(--lw2) solid var(--ink)}
+.budget-line,.bar-tr{background:var(--washi-2);border:1.5px solid var(--ink);height:12px}
+.budget-fill{background:var(--wakatake)}.budget-fill.warn{background:var(--yellow)}.budget-fill.over{background:var(--coral)}
+.stat{background:var(--green-wash)}.stat:nth-child(2){background:var(--yellow-wash)}
+.txn,.split-txn{background:var(--yellow-wash);border:var(--lw2) solid var(--ink)}
+.expense-advance{border:var(--lw2) solid var(--ink);background:var(--yellow-wash)}
+.split-person{background:var(--tv-bg,var(--washi))!important}
+.split-avatar{border:var(--lw2) solid var(--ink);box-shadow:none;background:var(--washi)}
+.split-role{background:var(--washi);border:1.5px solid var(--ink)}
+.split-metric,.split-exp-mini{background:var(--washi);border:1.5px solid var(--line-2)}
+.split-balance.pay{background:var(--coral-wash);color:var(--coral-ink)}
+.balance-chart-row:hover,.balance-chart-row[aria-expanded="true"]{background:var(--washi-2)}
+/* 長條用淺一點的平塗，金額文字疊在上面也看得清楚 */
+.debt .balance-bar{background:#F9CDC4;opacity:1}.credit .balance-bar{background:#D3E8C7;opacity:1}
+.debt .balance-amount{color:var(--coral-ink)}.credit .balance-amount{color:var(--green-ink)}
+.tv-card{box-shadow:inset 7px 0 0 var(--tv-ac,var(--mizu))!important}
+.tv-avatar{border:var(--lw2) solid var(--ink);box-shadow:none}
+.tv-detail{background:var(--tv-bg,var(--washi))!important;border-top:1.5px dashed var(--line-2)}
+.tv-stat-cell{background:var(--washi);border:1.5px solid var(--line-2)}
+.tv-preview{border:var(--lw2) solid var(--ink)}
+.avatar-pick-grid{border:var(--lw2) solid var(--ink);background:var(--washi-2)}
+.avatar-btn{border:var(--lw2) solid var(--line-2)}
+.avatar-btn.on{border-color:var(--ink);background:var(--yellow-wash);box-shadow:none}
+
+/* ── 空白頁：一個會輕輕跳的行李箱 ── */
+.empty::before,.wl-empty::before,.exp-empty::before{content:'';display:block;width:92px;height:76px;margin:0 auto 12px;background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 92 76'%3E%3Cg stroke='%233E3A39' stroke-width='3' stroke-linejoin='round' stroke-linecap='round'%3E%3Cpath d='M34 18v-7a5 5 0 0 1 5-5h14a5 5 0 0 1 5 5v7' fill='none'/%3E%3Crect x='8' y='18' width='76' height='46' rx='10' fill='%23F2A497'/%3E%3Cpath d='M26 18v46M66 18v46' fill='none' stroke-width='2.4'/%3E%3Ccircle cx='46' cy='38' r='8' fill='%23A8D3E6' stroke-width='2.2'/%3E%3Cpath d='M41 52h10' fill='none' stroke-width='2.2'/%3E%3Ccircle cx='20' cy='68' r='4' fill='%23FFFCF6' stroke-width='2.4'/%3E%3Ccircle cx='72' cy='68' r='4' fill='%23FFFCF6' stroke-width='2.4'/%3E%3C/g%3E%3C/svg%3E") center/contain no-repeat;animation:bob 2.6s ease-in-out infinite alternate}
+@keyframes bob{from{transform:translateY(0) rotate(-2deg)}to{transform:translateY(-4px) rotate(2deg)}}
+
+/* ── 頁尾插圖：在行李箱上睡午覺的三花貓、底片相機、盆栽、飛過的紙飛機 ── */
+.trip-scene{max-width:400px;margin:8px auto 0;padding:0 18px 10px}
+.trip-scene svg{display:block;width:100%;height:auto;overflow:visible}
+.trip-scene .tail{transform-box:fill-box;transform-origin:100% 100%;animation:tail 2.2s ease-in-out infinite alternate}
+@keyframes tail{from{transform:rotate(-8deg)}to{transform:rotate(10deg)}}
+.trip-scene .breath{transform-box:fill-box;transform-origin:50% 100%;animation:breath 3.2s ease-in-out infinite}
+@keyframes breath{0%,100%{transform:scaleY(1)}50%{transform:scaleY(1.06)}}
+.trip-scene .zz{transform-box:fill-box;transform-origin:50% 50%;opacity:0;animation:zz 3s ease-in-out infinite}
+.trip-scene .zz.z2{animation-delay:-1.5s}
+@keyframes zz{0%{opacity:0;transform:translate(0,4px) scale(.7)}30%{opacity:1}100%{opacity:0;transform:translate(7px,-12px) scale(1.1)}}
+.trip-scene .plant{transform-box:fill-box;transform-origin:50% 100%;animation:plant 3.8s ease-in-out infinite alternate}
+@keyframes plant{from{transform:rotate(-4deg)}to{transform:rotate(4deg)}}
+.trip-scene .spark{transform-box:fill-box;transform-origin:50% 50%;animation:spark 4s ease-in-out infinite}
+@keyframes spark{0%,72%,100%{opacity:0;transform:scale(.3)}82%{opacity:1;transform:scale(1.1)}90%{opacity:1;transform:scale(1)}}
+.trip-scene .trail{animation:trail 1.6s linear infinite}
+.trip-scene .plane{transform-box:fill-box;transform-origin:50% 50%;animation:planeBob 2.4s ease-in-out infinite alternate}
+
+/* ── 切換日期：卡片依序彈進來，選到的日期鈕彈一下 ── */
+.day-in{animation:dayInNext .5s var(--pop) backwards;animation-delay:calc(var(--i,0) * 45ms)}
+.body.day-prev .day-in{animation-name:dayInPrev}
+@keyframes dayInNext{from{opacity:0;transform:translateX(26px) scale(.94)}to{opacity:1;transform:none}}
+@keyframes dayInPrev{from{opacity:0;transform:translateX(-26px) scale(.94)}to{opacity:1;transform:none}}
+.dtab.on.pop,.exp-day-tab.on.pop{animation:tabPop .45s var(--pop)}
+@keyframes tabPop{0%{transform:scale(.85)}60%{transform:scale(1.08)}100%{transform:none}}
+@keyframes popIn{from{opacity:0;transform:scale(.85)}to{opacity:1;transform:none}}
+
+/* 系統開了「減少動態效果」：插圖停住，彈跳、滑動都關掉，直接停在最後的樣子 */
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation:none!important;transition-duration:.01ms!important;scroll-behavior:auto!important}
+  .trip-scene .zz{opacity:1}
+}
 </style>
 </head>
 <body>
@@ -946,311 +1170,13 @@ function toggleNote(id,btn){
 }
 const CB={交通:'var(--t-blue-bg)',餐飲:'var(--t-amber-bg)',住宿:'var(--t-purple-bg)',景點:'var(--t-green-bg)',購物:'var(--t-rose-bg)',其他:'var(--t-gray-bg)'};
 const CF={交通:'var(--t-blue-fg)',餐飲:'var(--t-amber-fg)',住宿:'var(--t-purple-fg)',景點:'var(--t-green-fg)',購物:'var(--t-rose-fg)',其他:'var(--t-gray-fg)'};
-const CBr={交通:'#378ADD',餐飲:'#EF9F27',住宿:'#534AB7',景點:'#1D9E75',購物:'#D4537E',其他:'#888780'};
+const CBr={交通:'#A8D3E6',餐飲:'#F6D27A',住宿:'#F2A497',景點:'#B9DAA5',購物:'#F7BC8C',其他:'#CFC6B8'};
 function ac(s){for(const[r,c]of CR)if(r.test(s))return c;return'其他';}
-// ── 主題（外觀）：auto 跟隨系統，或手動固定淺/深色 ──
-const THEME_LABEL={auto:'自動',light:'淺色',dark:'深色'};
-const THEME_ICON={auto:'sun-moon',light:'sun',dark:'moon'};
-function themePref(){try{return localStorage.getItem('trip-theme')||'auto';}catch(e){return 'auto';}}
-function themeEffective(p){p=p||themePref();return p==='dark'||(p==='auto'&&window.matchMedia&&matchMedia('(prefers-color-scheme: dark)').matches)?'dark':'light';}
-function applyTheme(){
-  const eff=themeEffective();
-  document.documentElement.dataset.theme=eff;
-  const m=document.querySelector('meta[name="theme-color"]');
-  if(m)m.content=eff==='dark'?'#0c1514':'#0f5e5e';
-}
-function cycleTheme(){
-  const order=['auto','light','dark'];
-  const next=order[(order.indexOf(themePref())+1)%order.length];
-  try{localStorage.setItem('trip-theme',next);}catch(e){}
-  applyTheme();render();
-}
-if(window.matchMedia){try{matchMedia('(prefers-color-scheme: dark)').addEventListener('change',()=>{if(themePref()==='auto')applyTheme();});}catch(e){}}
-applyTheme();
 function randCode(){const a='abcdefghjkmnpqrstuvwxyz23456789';let s='';const r=new Uint8Array(14);(window.crypto||{}).getRandomValues?crypto.getRandomValues(r):r.forEach((_,i)=>r[i]=Math.random()*256);for(const b of r)s+=a[b%a.length];return s.slice(0,6)+'-'+s.slice(6,10)+'-'+s.slice(10,14);}
 function genTripCode(){const el=document.getElementById('trip-code');if(el){el.value=randCode();el.focus();}}
 function uid(){return (window.crypto&&crypto.randomUUID)?crypto.randomUUID().replace(/-/g,'').slice(0,12):(Math.random().toString(36).slice(2,9)+Date.now().toString(36).slice(-4));}
 function mu(a){return'https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(a);}
 function nu(a){return'https://www.google.com/maps/dir/?api=1&destination='+encodeURIComponent(a);}
-function mqLoc(l){return [l?.name,l?.address].filter(Boolean).join(' ').trim();}
-function dayMapLocs(day){return (day?.locations||[]).filter(l=>mqLoc(l));}
-function dayRouteUrl(locs){
-  const qs=locs.map(mqLoc).filter(Boolean);
-  if(!qs.length)return'';
-  if(qs.length===1)return mu(qs[0]);
-  const origin=qs[0],destination=qs[qs.length-1],waypoints=qs.slice(1,-1).join('|');
-  return 'https://www.google.com/maps/dir/?api=1&origin='+encodeURIComponent(origin)+'&destination='+encodeURIComponent(destination)+(waypoints?'&waypoints='+encodeURIComponent(waypoints):'');
-}
-function dayEmbedUrl(locs){
-  const qs=locs.map(mqLoc).filter(Boolean);
-  if(!qs.length)return'';
-  if(qs.length===1)return 'https://www.google.com/maps?q='+encodeURIComponent(qs[0])+'&output=embed';
-  return 'https://www.google.com/maps/dir/'+qs.map(encodeURIComponent).join('/')+'?output=embed';
-}
-let _leafletReady=null;
-function ensureLeaflet(){
-  if(window.L)return Promise.resolve(true);
-  if(_leafletReady)return _leafletReady;
-  _leafletReady=Promise.all([
-    loadCss('https://unpkg.com/leaflet@1.9.4/dist/leaflet.css'),
-    loadScript('https://unpkg.com/leaflet@1.9.4/dist/leaflet.js')
-  ]).then(()=>!!window.L).catch(()=>false);
-  return _leafletReady;
-}
-const MAP_FALLBACKS=[
-  {re:/桃園國際機場|桃園機場|TPE|航站南路/i,lat:25.0777,lng:121.2328},
-  {re:/成田國際機場|成田機場|NRT|成田市古込|成田市古込1-1/i,lat:35.7720,lng:140.3929},
-  {re:/羽田機場|羽田空港|HND/i,lat:35.5494,lng:139.7798},
-  {re:/稻荷鬼王神社|稲荷鬼王神社|鬼王神社/i,lat:35.6952,lng:139.7042},
-  {re:/明治神宮|代々木神園町/i,lat:35.6764,lng:139.6993},
-  {re:/牛かつ.*もと村|もと村.*新宿|新宿 3-32-2|新宿3-32-2/i,lat:35.6903,lng:139.7031},
-  {re:/原宿.*Cat Street|Cat Street|キャットストリート|神宮前 5|神宮前5/i,lat:35.6689,lng:139.7052},
-  {re:/松本清.*新宿東口|マツモトキヨシ.*新宿東口|新宿 3-22-6|新宿3-22-6/i,lat:35.6920,lng:139.7015},
-  {re:/新宿.*根岸|ねぎし|歌舞伎町 1-14-7|歌舞伎町1-14-7/i,lat:35.6938,lng:139.7024},
-  {re:/新宿站|新宿駅/i,lat:35.6896,lng:139.7006},
-  {re:/一蘭.*新宿|新宿.*一蘭/i,lat:35.6939,lng:139.7021},
-  {re:/大久保公園|大久保公園附近飯店|歌舞伎町 2 丁目|歌舞伎町2丁目/i,lat:35.6964,lng:139.7033},
-  {re:/京成電鐵|Skyliner|成田機場車站|成田空港駅/i,lat:35.7728,lng:140.3870},
-  {re:/Rental819.*落合南長崎|落合南長崎|西落合3-1-1|西落合 3-1-1/i,lat:35.7239,lng:139.6839},
-  {re:/談合坂|談合坂SA|上野原市大野/i,lat:35.6405,lng:139.0216},
-  {re:/餺飥不動|ほうとう不動|河口湖.*不動|富士河口湖町船津/i,lat:35.5025,lng:138.7688},
-  {re:/富士吉田本町通|本町通|富士吉田.*下吉田|下吉田/i,lat:35.4874,lng:138.8076},
-  {re:/The Gran Resort Princess|グランリゾートプリンセス|富士河口湖町船津1436/i,lat:35.4898,lng:138.7692},
-  {re:/山麓園|富士河口湖町船津3370-1|船津3370-1/i,lat:35.4994,lng:138.7706},
-  {re:/登坂飯店|Noborisaka|富士河口湖町船津/i,lat:35.4929,lng:138.7685},
-  {re:/山中湖平野|平野沙洲|山中湖村平野/i,lat:35.4202,lng:138.9059},
-  {re:/金太郎富士見線|縣道 366|県道 366|県道366/i,lat:35.3505,lng:138.9433}
-];
-const GEO_CACHE_VERSION='v9';
-const GEO_FAIL_TTL=6*60*60*1000;   // 「查無結果」快取 6 小時
-const GEO_TIMEOUT_MS=9000;          // OSM 回應常見 3~6 秒，逾時放寬到 9 秒
-// ── 定位請求排隊器:OpenStreetMap 規定每秒最多 1 次查詢,超過會被擋 ──
-function _geoDist(a,b){const R=6371,dLa=(b.lat-a.lat)*Math.PI/180,dLn=(b.lng-a.lng)*Math.PI/180;const x=Math.sin(dLa/2)**2+Math.cos(a.lat*Math.PI/180)*Math.cos(b.lat*Math.PI/180)*Math.sin(dLn/2)**2;return 2*R*Math.asin(Math.sqrt(x));}
-let _geoChain=Promise.resolve(),_geoLast=0;
-function geoFetch(url){
-  const run=_geoChain.then(async()=>{
-    const wait=Math.max(0,_geoLast+1100-Date.now());
-    if(wait>0)await new Promise(r=>setTimeout(r,wait));
-    _geoLast=Date.now();
-    const ctl=new AbortController();
-    const timer=setTimeout(()=>ctl.abort(),GEO_TIMEOUT_MS);
-    try{
-      const res=await fetch(url,{signal:ctl.signal});
-      if(!res.ok)throw new Error('http '+res.status);
-      return await res.json();
-    }finally{clearTimeout(timer);}
-  });
-  _geoChain=run.catch(()=>{});
-  return run;
-}
-function looksJapan(q){return /[ぁ-んァ-ヶ]|東京都|大阪府|京都府|北海道|[一-龯]{1,3}県|[一-龯]{1,3}区(?![一-龯])|丁目/.test(q);}
-function looksTaiwan(q){return /台灣|臺灣|[一-龯]{1,3}縣|台北市|臺北市|新北市|桃園市|台中市|臺中市|台南市|臺南市|高雄市|基隆市|新竹市|新竹縣|嘉義市|[一-龯]{1,3}[鄉鎮][一-龯]|[一-龯]+[路街巷][0-9０-９]+(之[0-9０-９]+)?號/.test(q);}
-// ── 城市定位上下文：用當天的「城市」欄位解析出國家與座標 ──
-// 在日本旅遊就限定日本、在台灣就限定台灣，其他國家比照辦理；並偏好城市周邊的搜尋結果
-const _cityCtx={};
-async function cityContext(city){
-  city=String(city||'').trim();
-  if(!city)return null;
-  if(_cityCtx[city]!==undefined)return _cityCtx[city];
-  const key='geocity:'+GEO_CACHE_VERSION+':'+city;
-  try{
-    const cached=localStorage.getItem(key);
-    if(cached){
-      const o=JSON.parse(cached);
-      if(o?.missUntil&&o.missUntil>Date.now()){_cityCtx[city]=null;return null;}
-      if(o?.cc){_cityCtx[city]=o;return o;}
-    }
-  }catch(e){console.warn('[trip]',e);}
-  try{
-    const url='https://nominatim.openstreetmap.org/search?format=json&limit=1&addressdetails=1&accept-language=zh-TW&q='+encodeURIComponent(city);
-    const data=await geoFetch(url);
-    if(data?.length&&data[0].address?.country_code){
-      const o={lat:Number(data[0].lat),lng:Number(data[0].lon),cc:String(data[0].address.country_code).toLowerCase()};
-      _cityCtx[city]=o;
-      try{localStorage.setItem(key,JSON.stringify(o));}catch(e){console.warn('[trip]',e);}
-      return o;
-    }
-    // 真的查無此城市 → 短期記錄,避免重複查
-    try{localStorage.setItem(key,JSON.stringify({missUntil:Date.now()+GEO_FAIL_TTL}));}catch(e){console.warn('[trip]',e);}
-  }catch{/* 網路錯誤/被限流:不寫快取,下次再試 */}
-  _cityCtx[city]=null;
-  return null;
-}
-function fallbackCoord(l){
-  const q=[l?.name,l?.address,l?.notes].filter(Boolean).join(' ');
-  const m=MAP_FALLBACKS.find(x=>x.re.test(q));
-  return m?{lat:m.lat,lng:m.lng}:null;
-}
-async function fetchJsonTimeout(url,ms=GEO_TIMEOUT_MS){
-  const ctl=new AbortController();
-  const timer=setTimeout(()=>ctl.abort(),ms);
-  try{
-    const res=await fetch(url,{signal:ctl.signal});
-    return await res.json();
-  }finally{
-    clearTimeout(timer);
-  }
-}
-async function geocodeLoc(l,city){
-  const fb=fallbackCoord(l);
-  if(fb)return fb;
-  const ctx=await cityContext(city);
-  const addr=String(l?.address||'').trim();
-  const name=String(l?.name||'').trim();
-  // 台灣地址常因門牌格式查不到，準備「去掉門牌號」的降級查詢（例：中正路247號 → 中正路）
-  const noNum=addr.replace(/[0-9０-９]+(之[0-9０-９]+)?號.*$/,'').trim();
-  // 從地址擷取台灣的縣市與鄉鎮區（例：桃園市 / 復興區），用來驗證查詢結果是否在正確縣市
-  const _norm=t=>String(t||'').replace(/臺/g,'台');
-  const twCity=(addr.match(/([一-龯]{1,3}[縣市])/)||[])[1]||'';
-  let twDist='';
-  if(twCity){
-    const after=addr.slice(addr.indexOf(twCity)+twCity.length);
-    twDist=(after.match(/^([一-龯]{1,3}[區鄉鎮市])/)||[])[1]||'';
-  }
-  // street:true = 純地址查詢（路名極易撞名，需用「離當天城市的距離」把關）
-  const qs=[{q:mqLoc(l)},{q:addr,street:true},{q:name}];
-  if(noNum&&noNum!==addr){
-    qs.push({q:[name,noNum].filter(Boolean).join(' ')},{q:noNum,street:true});
-  }
-  if(city&&name)qs.push({q:name+' '+city}); // 再用「名稱＋城市」搜一次
-  // 最後降級：用「縣市＋鄉鎮區」行政區中心點，至少標在正確區域
-  if(twCity&&twDist)qs.push({q:twCity+twDist,admin:true});
-  const seen=new Set();
-  for(const v of qs){
-    const q=String(v.q||'').trim();
-    if(!q||seen.has(q))continue;
-    seen.add(q);
-    // 國家判斷：地址文字本身的特徵優先（同一天可能混到別國地點，如出發機場），
-    // 否則採用當天城市所在的國家；都沒有就不限定
-    let cc='';
-    if(looksJapan(q))cc='jp';
-    else if(looksTaiwan(q))cc='tw';
-    else if(ctx?.cc)cc=ctx.cc;
-    const ccParam=cc?'&countrycodes='+cc:'';
-    // 城市上下文可用＝有解析到城市，且沒有跟文字判斷的國家衝突
-    const ctxUsable=!!(ctx&&(!cc||cc===ctx.cc));
-    // 城市周邊優先（不強制邊界）：避免同名路名/店名跑到別的城市
-    const bias=ctxUsable?`&viewbox=${(ctx.lng-0.6).toFixed(3)},${(ctx.lat+0.6).toFixed(3)},${(ctx.lng+0.6).toFixed(3)},${(ctx.lat-0.6).toFixed(3)}&bounded=0`:'';
-    const key='geo:'+GEO_CACHE_VERSION+':'+cc+':'+q;
-    try{
-      const cached=localStorage.getItem(key);
-      if(cached){
-        const obj=JSON.parse(cached);
-        if(obj?.missUntil&&obj.missUntil>Date.now())continue;
-        if(Number.isFinite(obj?.lat)&&Number.isFinite(obj?.lng))return obj;
-      }
-    }catch(e){console.warn('[trip]',e);}
-    try{
-      const url='https://nominatim.openstreetmap.org/search?format=json&limit=5&accept-language=zh-TW'+ccParam+bias+'&q='+encodeURIComponent(q);
-      const data=await geoFetch(url);
-      if(!data?.length){
-        // 真的查無結果 → 快取,避免重複查
-        try{localStorage.setItem(key,JSON.stringify({missUntil:Date.now()+GEO_FAIL_TTL}));}catch(e){console.warn('[trip]',e);}
-        continue;
-      }
-      // 多筆候選的三道篩選:
-      // 1) 縣市驗證:地址寫了「桃園市」,結果的所在縣市就必須含「桃園」,否則就是撞名抓錯
-      // 2) 道路類結果離當天城市超過 90 公里 → 剔除(路名撞名的典型錯誤)
-      // 3) 通過篩選者中,挑離當天城市最近的一筆;地標類不設距離限制,跨城市行程仍可定位
-      let best=null;
-      for(const d of data){
-        const c={lat:Number(d.lat),lng:Number(d.lon)};
-        if(!Number.isFinite(c.lat)||!Number.isFinite(c.lng))continue;
-        if(twCity&&cc==='tw'&&!v.admin){
-          const dn=_norm(d.display_name||'');
-          if(dn&&!dn.includes(_norm(twCity)))continue;
-        }
-        c._d=ctxUsable?_geoDist(c,ctx):0;
-        const roadish=d.class==='highway'||v.street;
-        if(ctxUsable&&roadish&&c._d>90)continue;
-        if(!best||c._d<best._d)best=c;
-      }
-      if(!best)continue;
-      const p={lat:best.lat,lng:best.lng};
-      try{localStorage.setItem(key,JSON.stringify(p));}catch(e){console.warn('[trip]',e);}
-      return p;
-    }catch{/* 逾時/限流/網路錯誤:不汙染快取,直接試下一組關鍵字 */}
-  }
-  return null;
-}
-// 將座標相近(50 公尺內)的地點合併為同一個地圖標記,例如同住址的步道與山莊
-function groupMapPoints(pts){
-  const groups=[];
-  for(const p of pts){
-    const g=groups.find(g=>_geoDist(g,p)<0.05);
-    if(g)g.items.push(p);
-    else groups.push({lat:p.lat,lng:p.lng,items:[p]});
-  }
-  return groups;
-}
-let _itinMapCache={sig:null,holder:null,map:null};
-function retryGeo(){
-  // 清除所有「查無結果」的失敗快取(保留成功座標)
-  for(let i=localStorage.length-1;i>=0;i--){
-    const k=localStorage.key(i);
-    if(k&&(k.startsWith('geo:')||k.startsWith('geocity:'))){
-      try{const o=JSON.parse(localStorage.getItem(k));if(o&&o.missUntil)localStorage.removeItem(k);}catch(e){console.warn('[trip]',e);}
-    }
-  }
-  _itinMapCache={sig:null,holder:null,map:null};
-  render();
-}
-async function mountItinMap(day){
-  if(!day||S.view!=='itinerary'||S.mapOpen!==true)return;
-  const el=document.getElementById(`itin-map-${day.id}`);
-  if(!el)return;
-  const locs=dayMapLocs(day);
-  if(!locs.length)return;
-  // 同一天、地點沒變 → 直接掛回快取的地圖實例，不重建（避免每次重繪都重載圖磚）
-  const sig=day.id+'|'+JSON.stringify(locs.map(l=>[l.name,l.address,l.time,l.category||'']));
-  if(_itinMapCache.sig===sig&&_itinMapCache.holder&&_itinMapCache.map){
-    el.innerHTML='';
-    el.appendChild(_itinMapCache.holder);
-    setTimeout(()=>{try{_itinMapCache.map.invalidateSize();}catch(e){console.warn('[trip]',e);}},80);
-    return;
-  }
-  el.innerHTML='<div class="itin-map-loading">'+TI('map-2',14)+' 正在整理地圖位置...<br><span style="font-size:11px;color:var(--muted);">第一次會稍慢，之後會使用快取加速</span></div>';
-  const ok=await ensureLeaflet();
-  if(!ok){el.innerHTML='<div class="itin-map-loading">地圖載入失敗，請先使用右上方「開啟路線」。</div>';return;}
-  const pts=[];
-  for(let i=0;i<locs.length;i++){
-    const ld=el.querySelector('.itin-map-loading');
-    if(ld)ld.innerHTML=TI('map-2',14)+` 定位中 ${i+1}/${locs.length}：${esc(locs[i].name)}...<br><span style="font-size:11px;color:var(--muted);">第一次每個地點約需 1~3 秒，之後會使用快取加速</span>`;
-    const p=await geocodeLoc(locs[i],day.city);
-    if(p)pts.push({loc:locs[i],idx:i,lat:p.lat,lng:p.lng});
-    if(!document.body.contains(el))return;
-  }
-  if(!pts.length){
-    el.innerHTML=`<div class="itin-map-loading">目前無法自動定位這些地址。<br><button class="btn" style="margin-top:10px;min-height:34px;padding:6px 14px;" onclick="retryGeo()">${TI('refresh',14)} 重試定位</button><span style="display:block;margin-top:8px;font-size:11px;color:var(--muted);">也可以用右上「開啟路線」直接查看 Google Maps</span></div>`;
-    return;
-  }
-  el.innerHTML='';
-  const holder=document.createElement('div');
-  holder.style.cssText='position:absolute;inset:0;';
-  el.appendChild(holder);
-  const map=L.map(holder,{scrollWheelZoom:false,zoomControl:true});
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'&copy; OpenStreetMap'}).addTo(map);
-  const latlngs=[];
-  const groups=groupMapPoints(pts);
-  groups.forEach(g=>{
-    const first=g.items[0];
-    const cat=first.loc.category||ac(`${first.loc.name} ${first.loc.notes||''} ${first.loc.address||''}`);
-    const color=CBr[cat]||'#0f5e5e';
-    const label=g.items.map(x=>x.idx+1).join('/');
-    const combo=g.items.length>1?' combo':'';
-    const icon=L.divIcon({className:'',html:`<div class="itin-map-marker${combo}" style="background:${color};">${label}</div>`,iconSize:g.items.length>1?[48,28]:[28,28],iconAnchor:g.items.length>1?[24,14]:[14,14]});
-    const ll=[g.lat,g.lng];
-    latlngs.push(ll);
-    const popup=g.items.map(p=>`<div style="margin-bottom:6px;"><b>${p.idx+1}. ${esc(p.loc.time||'')} ${esc(p.loc.name)}</b><br>${esc(p.loc.address||'')}</div>`).join('');
-    L.marker(ll,{icon}).addTo(map).bindPopup(popup);
-  });
-  const routeLatLngs=pts.map(p=>[p.lat,p.lng]);
-  if(routeLatLngs.length>1)L.polyline(routeLatLngs,{color:'#0f5e5e',weight:4,opacity:.75}).addTo(map);
-  map.fitBounds(L.latLngBounds(latlngs),{padding:[28,28],maxZoom:15});
-  setTimeout(()=>map.invalidateSize(),120);
-  if(_itinMapCache.map&&_itinMapCache.map!==map){try{_itinMapCache.map.remove();}catch(e){console.warn('[trip]',e);}}
-  _itinMapCache={sig,holder,map};
-}
 function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
 // 放在 on* 屬性中 JS 單引號字串裡的值：先做 JS 跳脫再做 HTML 跳脫，避免名稱含引號時破壞或注入程式
 function jsq(s){return esc(String(s||'').replace(/\\/g,'\\\\').replace(/'/g,"\\'").replace(/\r?\n/g,'\\n'));}
@@ -1360,12 +1286,6 @@ function loadScript(src){
   return new Promise(resolve=>{
     if(document.querySelector(`script[src="${src}"]`)){resolve(true);return;}
     const s=document.createElement('script');s.src=src;s.onload=()=>resolve(true);s.onerror=()=>resolve(false);document.head.appendChild(s);
-  });
-}
-function loadCss(src){
-  return new Promise(resolve=>{
-    if(document.querySelector(`link[href="${src}"]`)){resolve(true);return;}
-    const l=document.createElement('link');l.rel='stylesheet';l.href=src;l.onload=()=>resolve(true);l.onerror=()=>resolve(false);document.head.appendChild(l);
   });
 }
 async function initCloud(){
@@ -1526,6 +1446,7 @@ function setD(u){
 }
 function setU(u){S={...S,...u};render();}
 let _preserveScroll=false;
+let _dayAnim=''; // 'next'／'prev'：下一次 render 要播切換日期的彈跳
 function render(){
   const savedScroll=window.scrollY;
   _preserveScroll=false;
@@ -1534,7 +1455,18 @@ function render(){
   const ad=S.days[si];
   const te=S.expenses.reduce((s,e)=>s+expValue(e),0);
   const {b,tx}=settle(S.expenses,S.travelers);
-  root.innerHTML=`<div class="app" data-view="${esc(S.view)}">${hdr(te)}${gnav()}<main class="body">${S.view==='memo'?memoView():''}${S.view==='buy'?buyView():''}${S.view==='itinerary'?itin(ad,si):''}${S.view==='wishlist'?wishlistView():''}${S.view==='expenses'?exps(te):''}${S.view==='split'?splt(b,tx,te):''}</main></div>${globalFab()}`;
+  root.innerHTML=`<div class="app" data-view="${esc(S.view)}">${hdr(te)}${gnav()}<main class="body">${S.view==='memo'?memoView():''}${S.view==='buy'?buyView():''}${S.view==='itinerary'?itin(ad,si):''}${S.view==='wishlist'?wishlistView():''}${S.view==='expenses'?exps(te):''}${S.view==='split'?splt(b,tx,te):''}${ART_SCENE}</main></div>${globalFab()}`;
+  // 切換日期：這一天的卡片依序彈進來，選到的日期鈕彈一下（只在切換那次，之後重畫不會再彈）
+  if(_dayAnim){
+    const main=root.querySelector('main.body');
+    if(main){
+      main.classList.toggle('day-prev',_dayAnim==='prev');
+      const sel=S.view==='itinerary'?'.section-head,.day-summary,.tl-item,.body>.empty':'.exp-day-head,.exp-day-head~.card';
+      main.querySelectorAll(sel).forEach((el,i)=>{el.style.setProperty('--i',Math.min(i,10));el.classList.add('day-in');});
+      const tab=main.querySelector('.dtab.on,.exp-day-tab.on');if(tab)tab.classList.add('pop');
+    }
+    _dayAnim='';
+  }
 
   setTimeout(()=>{
     const t=document.querySelector('.day-tabs .dtab.on');
@@ -1546,7 +1478,6 @@ function render(){
     }
     window.scrollTo({top:savedScroll,behavior:'instant'});
   },0);
-  if(S.view==='itinerary'&&S.mapOpen===true)setTimeout(()=>mountItinMap(ad),0);
   // 保險：若狀態有 modal 但畫面上沒有掛載任何視窗，重新掛回（避免狀態不同步導致 FAB 消失）
   if(S.modal && !document.getElementById('_heroCard') && !document.getElementById('_sheetWrap'))_mountModalOverlay();
 }
@@ -1587,6 +1518,15 @@ function fabAi(el){
   else if(S.view==='memo')openModal(el,{t:'memo_import'});
   else if(S.view==='buy')openBuyImport(el);
 }
+/* ── 插圖（自己畫的 SVG：平塗＋墨線，題材是旅行手帳） ── */
+// 封面左上：拖著虛線飛過來的紙飛機
+const ART_PLANE=`<svg class="cover-plane" viewBox="0 0 150 44" aria-hidden="true"><path class="trail" d="M4 34C30 40 52 20 78 26S104 30 112 22" fill="none" stroke="#3E3A39" stroke-width="2" stroke-linecap="round" stroke-dasharray="3 6"/><g class="plane" stroke="#3E3A39" stroke-width="2.4" stroke-linejoin="round"><path d="M112 22 146 6 132 34 125 27Z" fill="#FFFCF6"/><path d="M146 6 125 27 124 37 132 34" fill="#A8D3E6"/></g></svg>`;
+// 明信片右上：郵票（富士山＋太陽）
+const ART_STAMP=`<svg class="cover-stamp" viewBox="0 0 62 74" aria-hidden="true"><rect x="3" y="3" width="56" height="68" rx="2" fill="#FFFCF6" stroke="#3E3A39" stroke-width="2.5"/><rect x="3" y="3" width="56" height="68" rx="2" fill="none" stroke="#FFFCF6" stroke-width="4.5" stroke-dasharray="0 7" stroke-linecap="round"/><rect x="9" y="9" width="44" height="44" rx="3" fill="#A8D3E6" stroke="#3E3A39" stroke-width="2"/><circle cx="41" cy="21" r="6" fill="#F2A497" stroke="#3E3A39" stroke-width="1.8"/><path d="M9 53 24 30 31 40 36 34 53 53Z" fill="#B9DAA5" stroke="#3E3A39" stroke-width="2" stroke-linejoin="round"/><path d="M20.6 35.2 24 30 27.4 35.2C25.2 36.6 22.8 36.6 20.6 35.2Z" fill="#FFFCF6" stroke="#3E3A39" stroke-width="1.4" stroke-linejoin="round"/><text x="31" y="65.5" font-size="7.5" text-anchor="middle" fill="#3E3A39">旅行郵便</text></svg>`;
+// 郵票旁的郵戳
+const ART_POSTMARK=`<svg class="cover-postmark" viewBox="0 0 88 48" aria-hidden="true"><g fill="none" stroke="#3E3A39" stroke-width="1.8" stroke-linecap="round"><circle cx="24" cy="24" r="19"/><circle cx="24" cy="24" r="13.5"/><path d="M46 14q5-4 10 0t10 0t10 0M46 24q5-4 10 0t10 0t10 0M46 34q5-4 10 0t10 0t10 0"/></g><text x="24" y="29" font-size="13" text-anchor="middle" fill="#3E3A39">旅</text></svg>`;
+// 頁尾：在行李箱上睡午覺的三花貓、底片相機、盆栽、飛過的紙飛機
+const ART_SCENE=`<div class="trip-scene" aria-hidden="true"><svg viewBox="0 0 360 132"><g stroke="#3E3A39" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"><path class="trail" d="M150 40C176 22 200 34 222 20" fill="none" stroke-width="2" stroke-dasharray="3 6"/><g class="plane" stroke-width="2.4"><path d="M222 20 254 6 241 32 234 25Z" fill="#FFFCF6"/><path d="M254 6 234 25 233 34 241 32" fill="#F6D27A"/></g><path d="M66 66v-7a5 5 0 0 1 5-5h18a5 5 0 0 1 5 5v7" fill="none"/><rect x="36" y="66" width="140" height="48" rx="10" fill="#F6D27A"/><path d="M58 66v48M154 66v48" fill="none" stroke-width="2.4"/><circle cx="80" cy="92" r="9" fill="#A8D3E6" stroke-width="2.2"/><path d="M118 99c-4-2.6-6-4.6-6-6.8a3 3 0 0 1 6-1 3 3 0 0 1 6 1c0 2.2-2 4.2-6 6.8Z" fill="#F2A497" stroke-width="2"/><circle cx="54" cy="117.5" r="4.5" fill="#FFFCF6" stroke-width="2.4"/><circle cx="158" cy="117.5" r="4.5" fill="#FFFCF6" stroke-width="2.4"/><g class="tail"><path d="M110 63C98 63 93 55 97 47" fill="none" stroke-width="9"/><path d="M110 63C98 63 93 55 97 47" fill="none" stroke="#FFFCF6" stroke-width="3.6"/></g><g class="breath"><path d="M106 66.5C104 53 116 45 132 45s27 8 25 21.5Z" fill="#FFFCF6"/><ellipse cx="123" cy="57" rx="7" ry="4.5" fill="#F2A497" stroke="none"/><ellipse cx="139" cy="53" rx="5" ry="3.5" fill="#F6D27A" stroke="none"/></g><path d="M150.5 47 152.5 35.5 159.5 44Z" fill="#FFFCF6"/><path d="M161.5 44 168.5 35.5 170.5 47Z" fill="#F2A497"/><circle cx="160.5" cy="55" r="12" fill="#FFFCF6"/><path d="M153.5 55.5q2.5 2.2 5 0M162.5 55.5q2.5 2.2 5 0" fill="none" stroke-width="2.2"/><circle cx="152.5" cy="60.5" r="2.2" fill="#F2A497" stroke="none"/><circle cx="168.5" cy="60.5" r="2.2" fill="#F2A497" stroke="none"/><path d="M159.3 59.5h2.4l-1.2 1.4Z" fill="#3E3A39" stroke-width="1"/><rect x="212" y="74" width="24" height="12" rx="4" fill="#FFFCF6"/><rect x="256" y="77" width="10" height="8" rx="2.5" fill="#F2A497" stroke-width="2.6"/><rect x="202" y="82" width="72" height="32" rx="8" fill="#B9DAA5"/><rect x="208" y="88" width="13" height="8" rx="2.5" fill="#F6D27A" stroke-width="2.4"/><circle cx="239" cy="98" r="12.5" fill="#FFFCF6"/><circle cx="239" cy="98" r="6" fill="#A8D3E6" stroke-width="2.6"/><circle cx="236.6" cy="95.6" r="1.8" fill="#FFFCF6" stroke="none"/><path class="spark" d="M282 62q1.5 6.5 8 8-6.5 1.5-8 8-1.5-6.5-8-8 6.5-1.5 8-8Z" fill="#F6D27A" stroke-width="2"/><g class="plant"><path d="M314 84V50" fill="none"/><path d="M314 70c-13 0-21-8-21-20 12 0 21 8 21 20Z" fill="#B9DAA5" stroke-width="2.6"/><path d="M314 62c13 0 22-8 22-20-12 0-22 8-22 20Z" fill="#B9DAA5" stroke-width="2.6"/><path d="M314 52c-6-7-6-17 0-24 6 7 6 17 0 24Z" fill="#B9DAA5" stroke-width="2.6"/></g><path d="M295 92h38l-5 22h-28Z" fill="#A8D3E6"/><rect x="290" y="82" width="48" height="10" rx="4" fill="#A8D3E6"/><path d="M14 121.5H346" fill="none"/></g><text class="zz" x="174" y="34" font-size="13" fill="#3E3A39">z</text><text class="zz z2" x="181" y="26" font-size="10" fill="#3E3A39">z</text></svg></div>`;
 function hdr(te){
   const dated=(S.days||[]).filter(d=>/^\d{4}-\d{2}-\d{2}$/.test(d.date||'')).sort((a,b)=>a.date.localeCompare(b.date));
   const first=dated[0]?.date,last=dated[dated.length-1]?.date;
@@ -1599,30 +1539,17 @@ function hdr(te){
   const done=(S.memo||[]).filter(m=>m.kind!=='purchase'&&m.done).length,memoTotal=(S.memo||[]).filter(m=>m.kind!=='purchase').length;
   const statsStrip=`<div class="stats-strip"><div class="stat-cell"><div class="stat-n">${S.days?.length||0}</div><div class="stat-l">行程天數</div></div><div class="stat-cell"><div class="stat-n">${locCount}</div><div class="stat-l">行程地點</div></div><div class="stat-cell"><div class="stat-n">${done}/${memoTotal}</div><div class="stat-l">行前完成</div></div></div>`;
   const coverStyle=`--cover:url('${esc(S.cover)}');--cover-pos:${S.coverPos||'30%'}`;
-  if(S.editTN)return`<header class="cover" style="${coverStyle}"><div class="topbar"></div><div class="cover-bottom"><div class="title-edit"><input class="tni" id="tn-in" value="${esc(S.tnDraft)}" placeholder="行程名稱" oninput="S.tnDraft=this.value" onkeydown="if(event.key==='Enter')saveTN()" autofocus><button class="btn glass" onclick="saveTN()">完成</button></div></div></header>${statsStrip}`;
-  const menu=S.menuOpen?`<div class="cover-menu-backdrop" onclick="setU({menuOpen:false})"></div><div class="cover-menu" onclick="event.stopPropagation()"><button onclick="copyShareLink();setU({menuOpen:false})"><span class="mi">${TI('link',16)}</span>分享連結</button><button onclick="S.menuOpen=false;openModal(this,{t:'tools'})"><span class="mi">${TI('tool',16)}</span>旅程工具</button><button onclick="S.menuOpen=false;openModal(this,{t:'cover'})"><span class="mi">${TI('photo',16)}</span>更換封面</button><button onclick="S.menuOpen=false;openModal(this,{t:'tv'})"><span class="mi">${TI('users',16)}</span>旅伴管理</button><button onclick="S.menuOpen=false;openModal(this,{t:'help'})"><span class="mi">${TI('book',16)}</span>使用說明</button><button onclick="event.stopPropagation();cycleTheme()"><span class="mi">${TI(THEME_ICON[themePref()],16)}</span>外觀：${THEME_LABEL[themePref()]}${themePref()==='auto'?`（${themeEffective()==='dark'?'深':'淺'}）`:''}</button></div>`:'';
+  const postcard=`<div class="cover-postcard"><div class="cover-photo" role="img" aria-label="旅程封面"></div>${ART_POSTMARK}${ART_STAMP}</div>`;
+  if(S.editTN)return`<header class="cover" style="${coverStyle}"><div class="topbar">${ART_PLANE}</div>${postcard}<div class="cover-bottom"><div class="title-edit"><input class="tni" id="tn-in" value="${esc(S.tnDraft)}" placeholder="行程名稱" oninput="S.tnDraft=this.value" onkeydown="if(event.key==='Enter')saveTN()" autofocus><button class="btn glass" onclick="saveTN()">完成</button></div></div></header>${statsStrip}`;
+  const menu=S.menuOpen?`<div class="cover-menu-backdrop" onclick="setU({menuOpen:false})"></div><div class="cover-menu" onclick="event.stopPropagation()"><button onclick="copyShareLink();setU({menuOpen:false})"><span class="mi">${TI('link',16)}</span>分享連結</button><button onclick="S.menuOpen=false;openModal(this,{t:'tools'})"><span class="mi">${TI('tool',16)}</span>旅程工具</button><button onclick="S.menuOpen=false;openModal(this,{t:'cover'})"><span class="mi">${TI('photo',16)}</span>更換封面</button><button onclick="S.menuOpen=false;openModal(this,{t:'tv'})"><span class="mi">${TI('users',16)}</span>旅伴管理</button><button onclick="S.menuOpen=false;openModal(this,{t:'help'})"><span class="mi">${TI('book',16)}</span>使用說明</button></div>`:'';
   const syncChip=cloud.tripId?`<span class="hdr-sub-chip">${TI('link',12)} ${esc(cloud.tripId)}</span><button class="hdr-sync-switch" title="切換同步代碼" aria-label="切換同步代碼" onclick="event.stopPropagation();openModal(this,{t:'tools'})">⇄</button>`:'';
   const brief=(first&&last)?`<div class="trip-brief"><span class="trip-brief-chip">${TI('calendar',12)} ${fmtMd(first)}-${fmtMd(last)}</span>${countdown?`<span class="trip-brief-chip">${TI('clock',12)} ${countdown}</span>`:''}</div>`:'';
-  return`<header class="cover" style="${coverStyle}"><div class="topbar"><div></div><div class="cover-menu-wrap"><button class="hamb" aria-label="開啟選單" onclick="event.stopPropagation();setU({menuOpen:!S.menuOpen})"><span></span><span></span><span></span></button>${menu}</div></div><div class="cover-bottom"><div class="hdr-title" onclick="setU({editTN:true,tnDraft:'${jsq(S.tripName)}'})"><span>${esc(S.tripName)}</span><span class="hdr-title-edit-icon">${TI('pencil',16)}</span></div>${brief}<div class="hdr-sub"><span>${esc(cloud.status||'本機儲存')}</span>${syncChip}</div>${!cloud.ready?`<div class="sync-quick"><span style="color:rgba(255,255,255,.85);">${TI('link',15)}</span><input id="hdr-sync-inp" type="text" placeholder="輸入同步代碼，Enter 跳轉" autocomplete="off" autocapitalize="none" spellcheck="false" onkeydown="if(event.key==='Enter'){var v=this.value.trim();if(v){var el=document.getElementById('trip-code');if(el)el.value=v;else{S._quickCode=v;}switchTrip(false);}}"><button class="sync-quick-btn" onclick="var v=document.getElementById('hdr-sync-inp').value.trim();if(v){var el=document.getElementById('trip-code');if(el)el.value=v;switchTrip(false);}">跳轉</button></div>`:''}</div></header>${statsStrip}`;
+  return`<header class="cover" style="${coverStyle}"><div class="topbar">${ART_PLANE}<div class="cover-menu-wrap"><button class="hamb" aria-label="開啟選單" onclick="event.stopPropagation();setU({menuOpen:!S.menuOpen})"><span></span><span></span><span></span></button>${menu}</div></div>${postcard}<div class="cover-bottom"><div class="hdr-title" onclick="setU({editTN:true,tnDraft:'${jsq(S.tripName)}'})"><span>${esc(S.tripName)}</span><span class="hdr-title-edit-icon">${TI('pencil',16)}</span></div>${brief}<div class="hdr-sub"><span>${esc(cloud.status||'本機儲存')}</span>${syncChip}</div>${!cloud.ready?`<div class="sync-quick"><span style="color:var(--muted);">${TI('link',15)}</span><input id="hdr-sync-inp" type="text" placeholder="輸入同步代碼，Enter 跳轉" autocomplete="off" autocapitalize="none" spellcheck="false" onkeydown="if(event.key==='Enter'){var v=this.value.trim();if(v){var el=document.getElementById('trip-code');if(el)el.value=v;else{S._quickCode=v;}switchTrip(false);}}"><button class="sync-quick-btn" onclick="var v=document.getElementById('hdr-sync-inp').value.trim();if(v){var el=document.getElementById('trip-code');if(el)el.value=v;switchTrip(false);}">跳轉</button></div>`:''}</div></header>${statsStrip}`;
 }
 function saveTN(){const v=document.getElementById('tn-in')?.value?.trim()||S.tnDraft.trim()||'未命名旅程';setD({tripName:v,editTN:false});}
 function gnav(){
   const ts=[['memo','checklist','備忘'],['itinerary','route','行程'],['wishlist','star','清單'],['buy','shopping-bag','待買'],['expenses','coin','記帳'],['split','scale','分帳']];
   return`<nav class="nav">${ts.map(([k,ic,l])=>`<button class="nav-btn${S.view===k?' on':''}" data-view="${k}" aria-current="${S.view===k?'page':'false'}" onclick="switchTab('${k}')">${TI(ic,15)} ${l}</button>`).join('')}</nav>`;
-}
-function itineraryMap(day){
-  const locs=dayMapLocs(day);
-  if(!locs.length)return`<div class="itin-map-card"><div class="itin-map-empty">${TI('map-2',15)} 這一天還沒有可定位的地址，填入地點名稱或地址後就會出現地圖。</div></div>`;
-  const open=S.mapOpen===true;
-  const routeUrl=''; // Mixed flights, trains and rides must not become one driving route.
-  const points=locs.map((l,i)=>{
-    const cat=l.category||ac(`${l.name} ${l.notes||''} ${l.address||''}`);
-    const color=CBr[cat]||'#0f5e5e';
-    const q=mqLoc(l);
-    return`<a class="itin-map-point" href="${mu(q)}" target="_blank" rel="noopener"><span class="itin-map-pin" style="background:${color};">${i+1}</span><span><span class="itin-map-name">${l.time?`${esc(l.time)} · `:''}${esc(l.name)}</span><span class="itin-map-meta">${esc(l.address||'以地點名稱搜尋')}</span></span></a>`;
-  }).join('');
-  const routeBtn=routeUrl?`<a href="${routeUrl}" target="_blank" rel="noopener"><button class="btn bp" style="min-height:32px;padding:6px 10px;">開啟路線</button></a>`:'';
-  return`<section class="itin-map-card"><div class="itin-map-head"><div class="itin-map-title"><span>${TI('map-2',16)}</span><span>今日地圖 · ${locs.length} 個地點</span></div><div class="itin-map-actions">${routeBtn}<button class="itin-map-toggle" title="${open?'收合地圖':'展開地圖'}" onclick="setU({mapOpen:${open?'false':'true'}})">${open?TI('chevron-up',16):TI('chevron-down',16)}</button></div></div>${open?`<div class="itin-map-body"><div class="itin-map-canvas" id="itin-map-${esc(day.id)}"><div class="itin-map-loading">🗺️ 正在整理地圖位置...</div></div><div class="itin-map-list">${points}</div></div>`:''}</section>`;
 }
 function itin(day,si){
   if(!day)return'';
@@ -1633,7 +1560,7 @@ function itin(day,si){
   }).join('');
   const nd=S.days.length+1;
   const nowLocId=getNowLocId(day.locations,day);
-  const locs=!day.locations.length?`<div class="empty"><div style="margin-bottom:8px;color:var(--muted);">${TI('map-pin',34)}</div><div style="font-weight:800;margin-bottom:14px;">這一天還沒有行程</div><div class="empty-cta"><button class="btn bp" onclick="_heroOrigin=this.getBoundingClientRect();oLoc('')">${TI('plus',15)} 新增地點</button><button class="btn" style="background:var(--ai);border-color:var(--ai);color:#fff;" onclick="openModal(this,{t:'import'})">${TI('sparkles',15)} AI 匯入行程</button></div></div>`:day.locations.map((l,i)=>{
+  const locs=!day.locations.length?`<div class="empty"><div style="margin-bottom:14px;">這一天還沒有行程</div><div class="empty-cta"><button class="btn bp" onclick="_heroOrigin=this.getBoundingClientRect();oLoc('')">${TI('plus',15)} 新增地點</button><button class="btn" style="background:var(--ai);" onclick="openModal(this,{t:'import'})">${TI('sparkles',15)} AI 匯入行程</button></div></div>`:day.locations.map((l,i)=>{
     const cat=l.category||ac(`${l.name} ${l.notes||''} ${l.address||''}`);
     const badge=`<span class="loc-cat-badge" style="background:${CB[cat]||CB['其他']};color:${CF[cat]||CF['其他']};">${TI(CTI[cat]||'map-pin',12)} ${cat}</span>`;
     const RES_LABEL={booked:'已訂位',pending:'待確認',no_need:'不需訂位'};
@@ -1644,7 +1571,7 @@ function itin(day,si){
     const isNow=l.id===nowLocId;
     const catBg=CBr[cat]||'#1D9E75';
     const catLight=CB[cat]||'var(--t-green-bg)';
-    const nowBadge=isNow?`<span class="loc-now-badge" style="background:${catBg};color:#fff;">● 進行中</span>`:'';
+    const nowBadge=isNow?`<span class="loc-now-badge" style="background:${catBg};color:var(--ink);">● 進行中</span>`:'';
     // Notes: always show as pill → modal on click
     const noteLong=l.notes&&(l.notes.split('\n').length>3||l.notes.length>90);
     const notesEl=l.notes?`<div class="loc-note"><div class="loc-note-text${noteLong?' clamp':''}" id="note-text-${l.id}">${linkify(l.notes)}</div>${noteLong?`<button class="loc-note-toggle" onclick="event.stopPropagation();toggleNote('${l.id}',this)">展開全文 ${TI('chevron-down',12)}</button>`:''}</div>`:'';
@@ -1654,7 +1581,7 @@ function itin(day,si){
     const mapQuery=l.address?`${l.name} ${l.address}`:l.name;
     const mapBtns=l.address||l.name?`<a href="${mu(mapQuery)}" target="_blank" rel="noopener"><button class="btn bp" style="font-size:12px;min-height:30px;padding:5px 11px;">${TI('map-pin',13)} 地圖</button></a><a href="${nu(l.address||l.name)}" target="_blank" rel="noopener"><button class="btn ba" style="font-size:12px;min-height:30px;padding:5px 11px;">${TI('navigation',13)} 導航</button></a>`:'';
     const sortBtns=S.sortMode?`<div class="loc-sort-ctrl"><button class="sort-btn sort-grip" title="拖曳排序" aria-label="拖曳排序" onpointerdown="event.stopPropagation();startTouchDrag(event,'${day.id}','${l.id}')">${TI('grip-vertical',15)}</button><button class="sort-btn" title="上移" aria-label="上移" onclick="event.stopPropagation();mvLoc('${day.id}','${l.id}',-1)" ${i===0?'disabled':''}>${TI('arrow-up',14)}</button><button class="sort-btn" title="下移" aria-label="下移" onclick="event.stopPropagation();mvLoc('${day.id}','${l.id}',1)" ${i===day.locations.length-1?'disabled':''}>${TI('arrow-down',14)}</button></div>`:'';
-    return`<div class="tl-item loc-card-wrap${isNow?' loc-now':''}" data-locid="${l.id}" data-dayid="${day.id}" ondragover="dragOver(event)" ondragleave="dragLeave(event)" ondrop="dragDrop(event,'${day.id}','${l.id}')" ondragend="dragEnd()" oncontextmenu="locActionSheet(event,'${day.id}','${l.id}');return false;" data-lpress-t="" ontouchstart="_lpStart(event,'${day.id}','${l.id}')" ontouchend="_lpCancel()" ontouchmove="_lpCancel()"><div class="tl-time${l.time?'':' tl-time-empty'}">${esc(l.time||'--:--')}</div><div class="tl-rail"><span class="tl-dot" style="border-color:${catBg};${isNow?`background:${catBg};`:''}"></span></div><div class="card tl-card" style="${isNow?`--now-bg:${catLight};border-color:${catBg};`:''}">${sortBtns}<div class="loc-wrap"><div class="loc-body"><div class="loc-name">${esc(l.name)} ${badge}${resBadge}${nowBadge}</div>${l.address?`<div class="loc-addr">${esc(l.address)}</div>`:''}${phoneEl}${notesEl}<div class="act-row">${mapBtns}<button class="btn-ic" title="編輯" aria-label="編輯" onclick="_heroOrigin=this.getBoundingClientRect();oLoc('${l.id}')">${TI('pencil',15)}</button><button class="btn-ic" title="更多選項" aria-label="更多選項" onclick="locActionSheet(event,'${day.id}','${l.id}')">${TI('dots',16)}</button></div></div></div></div></div>`;
+    return`<div class="tl-item loc-card-wrap${isNow?' loc-now':''}" data-locid="${l.id}" data-dayid="${day.id}" ondragover="dragOver(event)" ondragleave="dragLeave(event)" ondrop="dragDrop(event,'${day.id}','${l.id}')" ondragend="dragEnd()" oncontextmenu="locActionSheet(event,'${day.id}','${l.id}');return false;" data-lpress-t="" ontouchstart="_lpStart(event,'${day.id}','${l.id}')" ontouchend="_lpCancel()" ontouchmove="_lpCancel()"><div class="tl-time${l.time?'':' tl-time-empty'}">${esc(l.time||'--:--')}</div><div class="tl-rail"><span class="tl-dot" style="background:${catBg};"></span></div><div class="card tl-card" style="${isNow?`--now-bg:${catLight};border-color:${catBg};`:''}">${sortBtns}<div class="loc-wrap"><div class="loc-body"><div class="loc-name">${esc(l.name)} ${badge}${resBadge}${nowBadge}</div>${l.address?`<div class="loc-addr">${esc(l.address)}</div>`:''}${phoneEl}${notesEl}<div class="act-row">${mapBtns}<button class="btn-ic" title="編輯" aria-label="編輯" onclick="_heroOrigin=this.getBoundingClientRect();oLoc('${l.id}')">${TI('pencil',15)}</button><button class="btn-ic" title="更多選項" aria-label="更多選項" onclick="locActionSheet(event,'${day.id}','${l.id}')">${TI('dots',16)}</button></div></div></div></div></div>`;
   }).join('');
   const wx=getWx(day.city);
   let weatherBadge='';
@@ -1673,7 +1600,7 @@ function itin(day,si){
   if(weatherDetail)window['_wx_'+day.id]=weatherDetail;
   const catCounts=(day.locations||[]).reduce((a,l)=>{const c=l.category||'其他';a[c]=(a[c]||0)+1;return a;},{});
   const summary=travelToolkit(day)+`<div class="day-summary"><span class="day-summary-chip">${TI('map-pin',12)} ${day.locations.length} 個地點</span>${Object.entries(catCounts).slice(0,4).map(([c,n])=>`<span class="day-summary-chip">${esc(c)} ${n}</span>`).join('')}</div>`;
-  return`<div class="day-tabs">${tabs}<button class="dtab dtab-add" onclick="FM={title:'第${nd}天',date:'',city:''};openModal(this,{t:'nd'})">${TI('plus',13)} 新增</button></div><div class="section-head"><div class="section-title-wrap"><div class="section-title" title="點擊編輯這一天" onclick="openDayEdit(this)">${esc(day.title)}<span class="hdr-title-edit-icon" style="color:var(--muted);">${TI('pencil',14)}</span></div>${(day.date||weatherBadge)?`<div class="section-meta">${day.date?`<span class="section-meta-date">${TI('calendar',13)} ${day.date}</span>`:''}${weatherBadge}</div>`:''}</div><div class="section-actions"><div class="action-group primary"><button class="btn" title="跳到現在的行程" onclick="jumpToNow()">${TI('clock-play',14)} 現在</button><button class="btn" title="排序行程" style="${S.sortMode?'background:var(--teal-fill-2);border-color:var(--teal-fill-2);color:#fff;':''}" onclick="setU({sortMode:!S.sortMode})">${S.sortMode?TI('check',14)+' 完成排序':TI('arrows-sort',14)+' 排序'}</button></div></div></div>${summary}${itineraryMap(day)}${day.locations.length?`<div class="tl-list">${locs}</div>`:locs}`;
+  return`<div class="day-tabs">${tabs}<button class="dtab dtab-add" onclick="FM={title:'第${nd}天',date:'',city:''};openModal(this,{t:'nd'})">${TI('plus',13)} 新增</button></div><div class="section-head"><div class="section-title-wrap"><div class="section-title" title="點擊編輯這一天" onclick="openDayEdit(this)">${esc(day.title)}<span class="hdr-title-edit-icon" style="color:var(--muted);">${TI('pencil',14)}</span></div>${(day.date||weatherBadge)?`<div class="section-meta">${day.date?`<span class="section-meta-date">${TI('calendar',13)} ${day.date}</span>`:''}${weatherBadge}</div>`:''}</div><div class="section-actions"><div class="action-group primary"><button class="btn" title="跳到現在的行程" onclick="jumpToNow()">${TI('clock-play',14)} 現在</button><button class="btn" title="排序行程" style="${S.sortMode?'background:var(--yellow);':''}" onclick="setU({sortMode:!S.sortMode})">${S.sortMode?TI('check',14)+' 完成排序':TI('arrows-sort',14)+' 排序'}</button></div></div></div>${summary}${day.locations.length?`<div class="tl-list">${locs}</div>`:locs}`;
 }
 function exps(te){
   const cs=CATS.map(c=>({c,t:S.expenses.filter(e=>e.category===c).reduce((s,e)=>s+expValue(e),0)})).filter(x=>x.t>0);
@@ -1682,7 +1609,10 @@ function exps(te){
   const bars=cs.length?`<div class="card" style="padding:14px;margin-bottom:10px;"><div style="font-size:13px;color:var(--muted);margin-bottom:10px;font-weight:900;">消費分類</div>${cs.map(({c,t})=>`<div class="bar-lb"><span>${CE[c]} ${c}</span><span style="font-weight:800;">${fmt(t)}</span></div><div class="bar-tr"><div style="height:100%;border-radius:999px;background:${CBr[c]};width:${te?Math.round(t/te*100):0}%;"></div></div>`).join('')}</div>`:'';
   const keys=expenseDayKeys();
   const active=keys.includes(S.expenseDay)?S.expenseDay:'all';
-  const dayTabs=`<div class="exp-day-tabs"><button class="exp-day-tab${active==='all'?' on':''}" onclick="setU({expenseDay:'all'})">總覽</button>${keys.filter(k=>k!=='all').map(k=>`<button class="exp-day-tab${active===k?' on':''}" onclick="setU({expenseDay:'${jsq(k)}'})">${esc(expenseDayShort(k))}</button>`).join('')}</div>`;
+  // 切換日期時記下方向（比目前右邊的＝next），讓帳目卡片彈進來
+  const dayKeys=keys.filter(k=>k!=='all'),activePos=active==='all'?-1:dayKeys.indexOf(active);
+  const dayTab=(k,label,pos)=>`<button class="exp-day-tab${active===k?' on':''}" onclick="${active===k?'':`_dayAnim='${pos>activePos?'next':'prev'}';`}setU({expenseDay:'${jsq(k)}'})">${label}</button>`;
+  const dayTabs=`<div class="exp-day-tabs">${dayTab('all','總覽',-1)}${dayKeys.map((k,i)=>dayTab(k,esc(expenseDayShort(k)),i)).join('')}</div>`;
   const card=e=>{
     const personal=isPersonalExp(e);
     const dt=formatExpenseDate(e.date);
@@ -1959,7 +1889,7 @@ function saveTvProfile(){
 }
 
 function mCover(){
-  const choices=COVERS.map(([name,url])=>`<button class="cover-choice${S.cover===url?' on':''}" style="background-image:linear-gradient(180deg,rgba(0,0,0,.05),rgba(0,0,0,.45)),url('${url}')" onclick="setD({cover:'${url}',modal:null})"><span>${name}</span></button>`).join('');
+  const choices=COVERS.map(([name,url])=>`<button class="cover-choice${S.cover===url?' on':''}" style="background-image:url('${url}')" onclick="setD({cover:'${url}',modal:null})"><span>${name}</span></button>`).join('');
   const pos=S.coverPos||'30%';
   const posOpts=[['10%','偏上（主體在照片上半）'],['30%','居中偏上（預設）'],['50%','正中央'],['70%','居中偏下'],['90%','偏下（主體在照片下半）']];
   const posRadios=posOpts.map(([v,l])=>`<label style="display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:10px;cursor:pointer;background:${pos===v?'var(--t-green-bg)':'transparent'};border:1px solid ${pos===v?'var(--teal)':'transparent'};"><input type="radio" name="coverPos" value="${v}" ${pos===v?'checked':''} onchange="S.coverPos=this.value;_refreshHeroContent()" style="accent-color:var(--teal);width:16px;height:16px;flex-shrink:0;"><span style="font-size:13px;">${l}</span></label>`).join('');
@@ -3333,7 +3263,7 @@ function openDayEdit(el){
 }
 function dayTabClick(i,el){
   if(i===S.dayIdx)openDayEdit(el);
-  else setU({dayIdx:i});
+  else{_dayAnim=i>S.dayIdx?'next':'prev';setU({dayIdx:i});}
 }
 function fabTmpl(el,i){
   S.wlFabOpen=false;
@@ -4049,31 +3979,31 @@ function showWxSheet(dayId, triggerEl){
 
   const card=document.createElement('div');
   card.id='_wxSheet'; card.className='hero-card';
-  card.style.cssText=`top:${src.top}px;left:${src.left}px;width:${src.width}px;height:${src.height}px;border-radius:20px;background:linear-gradient(145deg,#0f5e5e,#1a8a6e);`;
+  card.style.cssText=`top:${src.top}px;left:${src.left}px;width:${src.width}px;height:${src.height}px;border-radius:20px;background:var(--mizu-wash);`;
   card.innerHTML=`<div class="hero-body" style="padding:0;">
-    <div class="wx-sheet-bd" style="color:#fff;">
-      <div class="wx-sheet-city" style="color:rgba(255,255,255,.75);">${TI('map-pin',12)} ${esc(day.city)} 目前天氣</div>
-      <div class="wx-sheet-temp" style="color:#fff;">${wi.e} ${wx.temp}°C</div>
-      <div class="wx-sheet-desc" style="color:rgba(255,255,255,.85);">${wi.d}</div>
+    <div class="wx-sheet-bd" style="color:var(--ink);">
+      <div class="wx-sheet-city" style="color:var(--muted);">${TI('map-pin',12)} ${esc(day.city)} 目前天氣</div>
+      <div class="wx-sheet-temp" style="color:var(--ink);">${wi.e} ${wx.temp}°C</div>
+      <div class="wx-sheet-desc" style="color:var(--muted);">${wi.d}</div>
       <div class="wx-sheet-grid">
-        <div class="wx-sheet-item" style="background:rgba(255,255,255,.15);">
-          <div class="wx-sheet-label" style="color:rgba(255,255,255,.7);">體感溫度</div>
-          <div class="wx-sheet-value" style="color:#fff;">${wx.feels}°C</div>
+        <div class="wx-sheet-item" style="background:var(--washi);">
+          <div class="wx-sheet-label" style="color:var(--muted);">體感溫度</div>
+          <div class="wx-sheet-value" style="color:var(--ink);">${wx.feels}°C</div>
         </div>
-        <div class="wx-sheet-item" style="background:rgba(255,255,255,.15);">
-          <div class="wx-sheet-label" style="color:rgba(255,255,255,.7);">濕度</div>
-          <div class="wx-sheet-value" style="color:#fff;">${TI('droplet',16)} ${wx.humidity}%</div>
+        <div class="wx-sheet-item" style="background:var(--washi);">
+          <div class="wx-sheet-label" style="color:var(--muted);">濕度</div>
+          <div class="wx-sheet-value" style="color:var(--ink);">${TI('droplet',16)} ${wx.humidity}%</div>
         </div>
-        ${wx.wind!=null?`<div class="wx-sheet-item" style="background:rgba(255,255,255,.15);">
-          <div class="wx-sheet-label" style="color:rgba(255,255,255,.7);">風速</div>
-          <div class="wx-sheet-value" style="color:#fff;">${TI('wind',16)} ${wx.wind} m/s</div>
+        ${wx.wind!=null?`<div class="wx-sheet-item" style="background:var(--washi);">
+          <div class="wx-sheet-label" style="color:var(--muted);">風速</div>
+          <div class="wx-sheet-value" style="color:var(--ink);">${TI('wind',16)} ${wx.wind} m/s</div>
         </div>`:''}
-        ${wx.uv!=null?`<div class="wx-sheet-item" style="background:rgba(255,255,255,.15);">
-          <div class="wx-sheet-label" style="color:rgba(255,255,255,.7);">紫外線</div>
-          <div class="wx-sheet-value" style="color:#fff;">${TI('sun',16)} ${wx.uv}</div>
+        ${wx.uv!=null?`<div class="wx-sheet-item" style="background:var(--washi);">
+          <div class="wx-sheet-label" style="color:var(--muted);">紫外線</div>
+          <div class="wx-sheet-value" style="color:var(--ink);">${TI('sun',16)} ${wx.uv}</div>
         </div>`:''}
       </div>
-      <div style="margin-top:18px;font-size:11px;color:rgba(255,255,255,.5);text-align:center;">資料來源：OpenWeather</div>
+      <div style="margin-top:18px;font-size:11px;color:var(--muted);text-align:center;">資料來源：OpenWeather</div>
     </div>
   </div>`;
   document.body.appendChild(card);
@@ -4458,6 +4388,8 @@ function normalizeTravelerIds(){
 }
 load();
 loadFx();
+// 每日地圖已移除：清掉它留在手機裡的地點定位快取（geo: / geocity:），釋放儲存空間
+try{for(let i=localStorage.length-1;i>=0;i--){const k=localStorage.key(i);if(k&&(k.startsWith('geo:')||k.startsWith('geocity:')))localStorage.removeItem(k);}}catch(e){console.warn('[trip]',e);}
 // ── PWA：離線快取（GitHub Pages 為 HTTPS，可直接使用） ──
 if('serviceWorker' in navigator&&location.protocol==='https:'){
   window.addEventListener('load',()=>{
