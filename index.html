@@ -61,17 +61,8 @@ a{text-decoration:none}
 .hdr-title{font-size:26px;line-height:1.15;font-weight:900;letter-spacing:-.5px;cursor:pointer;text-shadow:0 2px 16px rgba(0,0,0,.5);word-break:break-word}
 .hdr-title-edit-icon{font-size:14px;opacity:.65;margin-left:4px;vertical-align:middle}
 .hdr-sub{font-size:12px;color:rgba(255,255,255,.82);text-shadow:0 1px 8px rgba(0,0,0,.4);display:flex;align-items:center;gap:6px;flex-wrap:wrap}
-.hdr-sub-chip{background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.25);border-radius:999px;padding:2px 9px;font-size:11px;font-weight:700;backdrop-filter:blur(6px)}
-.hdr-sync-switch{width:24px;height:24px;border-radius:999px;border:1px solid rgba(255,255,255,.32);background:rgba(255,255,255,.18);color:#fff;display:inline-flex;align-items:center;justify-content:center;font-size:13px;font-weight:900;line-height:1;cursor:pointer;backdrop-filter:blur(8px);box-shadow:0 4px 14px rgba(0,0,0,.12);transition:transform .14s,background .14s,border-color .14s}
-.hdr-sync-switch:hover,.hdr-sync-switch:active{background:rgba(255,255,255,.3);border-color:rgba(255,255,255,.5);transform:translateY(-1px)}
-.hdr-sync-switch:focus-visible{outline:2px solid rgba(255,255,255,.8);outline-offset:2px}
-.stats-strip{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:0;background:var(--card);border-bottom:1px solid var(--line);box-shadow:0 4px 12px rgba(0,0,0,.06)}
-.stat-cell{padding:13px 14px;display:flex;flex-direction:column;gap:3px;position:relative}
-.stat-cell+.stat-cell::before{content:'';position:absolute;left:0;top:18%;height:64%;width:1px;background:var(--line)}
 .stat-n{font-size:20px;font-weight:900;color:var(--ink);letter-spacing:-.5px;line-height:1}
 .stat-l{font-size:11px;color:var(--muted);font-weight:700}
-.trip-brief{display:flex;align-items:center;gap:7px;flex-wrap:wrap;margin-top:3px}
-.trip-brief-chip{display:inline-flex;align-items:center;gap:5px;padding:4px 9px;border-radius:999px;background:rgba(255,255,255,.17);border:1px solid rgba(255,255,255,.25);font-size:11px;font-weight:800;color:#fff;backdrop-filter:blur(8px);text-shadow:0 1px 6px rgba(0,0,0,.35)}
 .cover-actions{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
 .glass{background:rgba(255,255,255,.18);color:#fff;border:1px solid rgba(255,255,255,.26);backdrop-filter:blur(10px)}
 .cover-menu-wrap{position:relative;z-index:80;flex-shrink:0}
@@ -134,14 +125,9 @@ a{text-decoration:none}
 .dtab.on{background:var(--teal-fill-2);color:#fff;border-color:var(--teal-fill-2)}
 .dtab-add{border-style:dashed;background:var(--t-amber-bg);color:var(--t-amber-fg)}
 .section-head{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;margin-bottom:10px}
-.section-title-wrap{display:flex;flex-direction:column;gap:6px;min-width:0;flex:1;}
 .section-title{font-weight:800;font-size:17px;line-height:1.25;min-width:0;word-break:keep-all;color:var(--ink);}
-.section-meta{display:flex;align-items:center;flex-wrap:wrap;gap:8px;}
 .section-meta-date{font-size:12px;font-weight:700;color:var(--muted);display:inline-flex;align-items:center;gap:3px;}
-.day-summary{display:flex;gap:6px;flex-wrap:wrap;margin:0 0 11px}
-.day-summary-chip{display:inline-flex;align-items:center;gap:4px;padding:5px 9px;border-radius:999px;background:var(--soft);border:1px solid var(--line);font-size:11px;font-weight:800;color:var(--muted)}
 .section-actions{display:flex;align-items:center;justify-content:flex-end;gap:6px;flex-wrap:nowrap;position:relative;flex-shrink:0}
-.action-group{display:flex;align-items:center;gap:7px;position:relative;flex-wrap:nowrap}
 .quick-holder{position:relative}
 .card{background:var(--paper);border-radius:var(--r);border:1px solid rgba(217,226,223,.9);margin-bottom:10px;overflow:hidden;box-shadow:0 2px 12px rgba(31,59,53,.05)}
 .loc-wrap{display:block;padding:12px 14px}
@@ -371,16 +357,9 @@ input:focus,select:focus,textarea:focus{border-color:var(--teal-soft);box-shadow
   .mobile-stack{grid-template-columns:1fr!important}
   .mobile-stack > div{min-width:0;max-width:100%;overflow:hidden}
   .mobile-stack input[type=time]{-webkit-appearance:none;appearance:none;text-align:left;min-height:54px}
-  .section-head{display:grid;grid-template-columns:minmax(0,1fr);gap:10px;align-items:start}
-  .section-title{font-size:19px;max-width:100%;word-break:keep-all;overflow-wrap:normal}
-  .section-meta{gap:6px;}
+  .section-title{font-size:19px;max-width:100%;word-break:keep-all;overflow-wrap:anywhere}
   .section-meta-date{font-size:12px;}
   .wx-badge{font-size:12px;padding:3px 9px 3px 5px;}
-  .section-actions{justify-content:space-between;width:100%;gap:8px}
-  .action-group{gap:7px}
-  .action-group.primary{flex:1;justify-content:flex-start}
-  .action-group.manage{justify-content:flex-end}
-  .section-actions .btn{min-height:42px;padding:8px 12px}
   .quick-menu{width:min(92vw,280px)}
   .loc-wrap{padding:12px 13px}
   .loc-body{min-width:0}
@@ -703,18 +682,12 @@ body{background:radial-gradient(ellipse at 5% 5%,var(--journal-gold-wash),transp
 .app{box-shadow:0 0 0 1px var(--app-ring),0 24px 80px rgba(39,53,45,.08)}
 .cover{border-bottom:4px solid #d4b57d}
 .hdr-title{letter-spacing:.015em;line-height:1.22}.cover-bottom{gap:9px;padding-bottom:22px}
-.stats-strip{background:var(--paper);box-shadow:none;border-bottom:0}
-.stat-cell{padding:18px 16px;background:transparent}
-.stat-cell+.stat-cell::before{display:block}
-.stat-cell .stat-n{font-size:26px;color:var(--ink);font-variant-numeric:tabular-nums}
-.stat-cell .stat-l{color:var(--muted);letter-spacing:.035em}
 .nav{padding:12px 14px;gap:7px;box-shadow:0 4px 18px rgba(40,49,37,.035)}
 .nav-btn{border-radius:13px;color:var(--accent);background:var(--accent-wash);border:1px solid transparent;min-height:44px}
 .nav-btn.on{background:var(--accent-fill);color:#fff;box-shadow:0 4px 10px rgba(31,45,37,.15);border-color:var(--accent-fill)}
 .body{background:linear-gradient(180deg,var(--accent-wash),transparent 260px);padding-top:20px}
 .section-head{padding:5px 0 12px}.section-title{font-size:19px;letter-spacing:.02em}
 .dtab{border-radius:12px;box-shadow:none}.dtab.on{background:var(--accent-fill);border-color:var(--accent-fill)}
-.day-summary-chip{background:var(--paper);color:var(--accent);border-color:var(--line)}
 .card,.wl-card,.buy-card,.travel-toolkit,.stat{border-color:var(--line);box-shadow:var(--journal-shadow);border-radius:18px}
 .card{margin-bottom:12px}.loc-wrap{padding:15px}.loc-note{background:var(--accent-wash);border-left-color:var(--accent)}
 .loc-note-text{color:var(--ink)}.note-link{color:var(--t-blue-fg)}
@@ -741,8 +714,8 @@ body{background:radial-gradient(ellipse at 5% 5%,var(--journal-gold-wash),transp
 .app-fab-main{background:linear-gradient(145deg,#a54a32,#874027);box-shadow:0 8px 24px rgba(111,54,30,.3),0 0 0 4px var(--paper)}
 .btn,.btn-ic{box-shadow:0 2px 5px rgba(38,49,36,.025)}
 .cover-menu button:hover,.cover-menu button:active{background:var(--soft)}.cover-menu .mi{background:var(--mint)}
-@media(min-width:700px){.body{padding:24px 26px 90px}.nav{padding-left:24px;padding-right:24px}.nav-btn{font-size:14px}.stat-cell{padding:20px 26px}}
-@media(max-width:480px){.nav{gap:5px;padding:9px 10px}.nav-btn{min-width:60px;padding:8px 6px;font-size:13px}.stat-cell{padding:15px 13px}.stat-cell .stat-n{font-size:24px}.buy-hero{padding:22px 18px}.buy-hero h2{font-size:22px}.travel-toolkit{padding:13px}.buy-card{padding:15px 12px}.hdr-title{font-size:25px}}
+@media(min-width:700px){.body{padding:24px 26px 90px}.nav{padding-left:24px;padding-right:24px}.nav-btn{font-size:14px}}
+@media(max-width:480px){.nav{gap:5px;padding:9px 10px}.nav-btn{min-width:60px;padding:8px 6px;font-size:13px}.buy-hero{padding:22px 18px}.buy-hero h2{font-size:22px}.travel-toolkit{padding:13px}.buy-card{padding:15px 12px}.hdr-title{font-size:25px}}
 
 /* Memo completion views */
 .memo-filters{display:flex;gap:8px;flex-wrap:wrap;margin:18px 0}.memo-filters .btn{min-height:42px;padding:9px 14px}
@@ -858,22 +831,21 @@ button,input,select,textarea{font-family:var(--font-sans)}
 .hdr-title>span:first-child{box-shadow:inset 0 -.42em 0 var(--yellow);padding:0 2px}
 .hdr-title-edit-icon{opacity:.45}
 .hdr-sub{color:var(--muted);text-shadow:none}
-.trip-brief-chip,.hdr-sub-chip{background:var(--washi);border:var(--lw2) solid var(--ink);color:var(--ink);-webkit-backdrop-filter:none;backdrop-filter:none;text-shadow:none;font-weight:400;font-size:12px}
-.trip-brief-chip:first-child{background:var(--mizu-wash)}.trip-brief-chip+.trip-brief-chip{background:var(--yellow-wash)}
-.hdr-sync-switch{background:var(--washi);border:var(--lw2) solid var(--ink);color:var(--ink);-webkit-backdrop-filter:none;backdrop-filter:none;box-shadow:none}
+/* 標題下只留兩行：日期・天數・地點＋倒數，和一行小字同步狀態（點了可切換代碼） */
+.trip-meta{display:flex;align-items:center;flex-wrap:wrap;gap:6px 8px;font-size:14px;color:var(--ink)}
+.trip-meta>svg{color:var(--muted)}
+.trip-countdown{display:inline-flex;align-items:center;padding:2px 10px;border-radius:999px;background:var(--yellow-wash);border:var(--lw2) solid var(--ink);font-size:12.5px;line-height:1.5}
+.hdr-sub{font-size:12px}
+.trip-sync{display:inline-flex;align-items:center;gap:4px;margin:-6px 0;padding:6px 0;border:0;background:none;color:var(--muted);font:inherit;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.trip-sync-code{color:var(--ink);letter-spacing:.03em}
+.trip-sync:hover .trip-sync-code,.trip-sync:active .trip-sync-code{text-decoration:underline;text-underline-offset:3px}
 .sync-quick{background:var(--washi);border:var(--lw2) solid var(--ink);-webkit-backdrop-filter:none;backdrop-filter:none;border-radius:14px}
 .sync-quick input{color:var(--ink)}.sync-quick input::placeholder{color:var(--muted)}
 .sync-quick-btn{background:var(--yellow);color:var(--ink);border:var(--lw2) solid var(--ink);border-radius:10px}
 .sync-quick-btn:hover{background:var(--yellow)}
 .tni{background:var(--washi);border:var(--lw2) solid var(--ink);color:var(--ink)}.tni::placeholder{color:var(--muted)}
 .glass{background:var(--yellow);color:var(--ink);border:var(--lw2) solid var(--ink);-webkit-backdrop-filter:none;backdrop-filter:none}
-/* 封面下的三格統計：三張小票根 */
-.stats-strip{background:transparent!important;border:0;box-shadow:none;gap:8px;padding:10px 18px 4px}
-.stat-cell{background:var(--washi);border:var(--lw) solid var(--ink);border-radius:18px;padding:10px 8px!important;align-items:center;text-align:center}
-.stat-cell+.stat-cell::before{display:none!important}
-.stat-cell:nth-child(1){background:var(--mizu-wash)}.stat-cell:nth-child(2){background:var(--yellow-wash)}.stat-cell:nth-child(3){background:var(--green-wash)}
-.stat-cell .stat-n{font-size:22px;color:var(--ink)}.stat-n{color:var(--ink)}
-.stat-cell .stat-l{color:var(--muted)}
+.stat-n{color:var(--ink)}
 
 /* ── 分頁列、日期列 ── */
 .nav{background:var(--washi);-webkit-backdrop-filter:none;backdrop-filter:none;border-bottom:var(--lw) solid var(--ink);box-shadow:none;padding:8px 10px 10px;gap:6px}
@@ -888,7 +860,11 @@ button,input,select,textarea{font-family:var(--font-sans)}
 .dtab-add{background:var(--yellow-wash);color:var(--ink);border-style:dashed}
 @media (max-width:640px){.day-tabs{top:61px;background:var(--washi);-webkit-backdrop-filter:none;backdrop-filter:none;border-bottom:var(--lw2) solid var(--ink)}}
 .section-title{font-weight:400}
-.day-summary-chip{background:var(--washi);border:1.5px solid var(--ink);color:var(--ink);font-weight:400}
+.section-head{display:flex;flex-direction:column;align-items:stretch;gap:6px;margin-bottom:14px}
+.section-bar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:4px}
+.section-bar .weather-loading{margin-left:0}
+.section-bar .section-actions{margin-left:auto}
+.section-actions .btn{min-height:36px;padding:5px 11px;font-size:13px}
 .wx-badge{background:var(--mizu-wash);border:1.5px solid var(--ink);color:var(--ink);font-weight:400}
 .wx-badge:hover{background:var(--mizu-wash)}
 
@@ -1443,7 +1419,7 @@ function render(){
     const main=root.querySelector('main.body');
     if(main){
       main.classList.toggle('day-prev',_dayAnim==='prev');
-      const sel=S.view==='itinerary'?'.section-head,.day-summary,.tl-item,.body>.empty':'.exp-day-head,.exp-day-head~.card';
+      const sel=S.view==='itinerary'?'.section-head,.tl-item,.body>.empty':'.exp-day-head,.exp-day-head~.card';
       main.querySelectorAll(sel).forEach((el,i)=>{el.style.setProperty('--i',Math.min(i,10));el.classList.add('day-in');});
       const tab=main.querySelector('.dtab.on,.exp-day-tab.on');if(tab)tab.classList.add('pop');
     }
@@ -1549,15 +1525,16 @@ function hdr(te){
   const diff=start?Math.ceil((start-today)/86400000):null;
   const countdown=diff===null?'':diff>0?`倒數 ${diff} 天`:diff===0?'今天出發':tripClock().date<=last?'旅途中':'旅程已結束';
   const locCount=(S.days||[]).reduce((n,d)=>n+(d.locations?.length||0),0);
-  const done=(S.memo||[]).filter(m=>m.kind!=='purchase'&&m.done).length,memoTotal=(S.memo||[]).filter(m=>m.kind!=='purchase').length;
-  const statsStrip=`<div class="stats-strip"><div class="stat-cell"><div class="stat-n">${S.days?.length||0}</div><div class="stat-l">行程天數</div></div><div class="stat-cell"><div class="stat-n">${locCount}</div><div class="stat-l">行程地點</div></div><div class="stat-cell"><div class="stat-n">${done}/${memoTotal}</div><div class="stat-l">行前完成</div></div></div>`;
   const coverStyle=`--cover:url('${esc(S.cover)}');--cover-pos:${S.coverPos||'30%'}`;
   const postcard=`<div class="cover-postcard"><div class="cover-photo" role="img" aria-label="旅程封面"></div>${ART_POSTMARK}${ART_STAMP}</div>`;
-  if(S.editTN)return`<header class="cover" style="${coverStyle}"><div class="topbar">${ART_PLANE}</div>${postcard}<div class="cover-bottom"><div class="title-edit"><input class="tni" id="tn-in" value="${esc(S.tnDraft)}" placeholder="行程名稱" oninput="S.tnDraft=this.value" onkeydown="if(event.key==='Enter')saveTN()" autofocus><button class="btn glass" onclick="saveTN()">完成</button></div></div></header>${statsStrip}`;
+  if(S.editTN)return`<header class="cover" style="${coverStyle}"><div class="topbar">${ART_PLANE}</div>${postcard}<div class="cover-bottom"><div class="title-edit"><input class="tni" id="tn-in" value="${esc(S.tnDraft)}" placeholder="行程名稱" oninput="S.tnDraft=this.value" onkeydown="if(event.key==='Enter')saveTN()" autofocus><button class="btn glass" onclick="saveTN()">完成</button></div></div></header>`;
   const menu=S.menuOpen?`<div class="cover-menu-backdrop" onclick="setU({menuOpen:false})"></div><div class="cover-menu" onclick="event.stopPropagation()"><button onclick="copyShareLink();setU({menuOpen:false})"><span class="mi">${TI('link',16)}</span>分享連結</button>${isStandalone()?'':`<button onclick="S.menuOpen=false;addToHomeScreen(this)"><span class="mi">${TI('home',16)}</span>加入主畫面</button>`}<button onclick="S.menuOpen=false;openModal(this,{t:'tools'})"><span class="mi">${TI('tool',16)}</span>旅程工具</button><button onclick="S.menuOpen=false;openModal(this,{t:'cover'})"><span class="mi">${TI('photo',16)}</span>更換封面</button><button onclick="S.menuOpen=false;openModal(this,{t:'tv'})"><span class="mi">${TI('users',16)}</span>旅伴管理</button><button onclick="S.menuOpen=false;openModal(this,{t:'help'})"><span class="mi">${TI('book',16)}</span>使用說明</button></div>`:'';
-  const syncChip=cloud.tripId?`<span class="hdr-sub-chip">${TI('link',12)} ${esc(cloud.tripId)}</span><button class="hdr-sync-switch" title="切換同步代碼" aria-label="切換同步代碼" onclick="event.stopPropagation();openModal(this,{t:'tools'})">⇄</button>`:'';
-  const brief=(first&&last)?`<div class="trip-brief"><span class="trip-brief-chip">${TI('calendar',12)} ${fmtMd(first)}-${fmtMd(last)}</span>${countdown?`<span class="trip-brief-chip">${TI('clock',12)} ${countdown}</span>`:''}</div>`:'';
-  return`<header class="cover" style="${coverStyle}"><div class="topbar">${ART_PLANE}<div class="cover-menu-wrap"><button class="hamb" aria-label="開啟選單" onclick="event.stopPropagation();setU({menuOpen:!S.menuOpen})"><span></span><span></span><span></span></button>${menu}</div></div>${postcard}<div class="cover-bottom"><div class="hdr-title" onclick="setU({editTN:true,tnDraft:'${jsq(S.tripName)}'})"><span>${esc(S.tripName)}</span><span class="hdr-title-edit-icon">${TI('pencil',16)}</span></div>${brief}<div class="hdr-sub"><span>${esc(cloud.status||'本機儲存')}</span>${syncChip}</div>${!cloud.ready?`<div class="sync-quick"><span style="color:var(--muted);">${TI('link',15)}</span><input id="hdr-sync-inp" type="text" placeholder="輸入同步代碼，Enter 跳轉" autocomplete="off" autocapitalize="none" spellcheck="false" onkeydown="if(event.key==='Enter'){var v=this.value.trim();if(v){var el=document.getElementById('trip-code');if(el)el.value=v;else{S._quickCode=v;}switchTrip(false);}}"><button class="sync-quick-btn" onclick="var v=document.getElementById('hdr-sync-inp').value.trim();if(v){var el=document.getElementById('trip-code');if(el)el.value=v;switchTrip(false);}">跳轉</button></div>`:''}</div></header>${statsStrip}`;
+  const status=esc(cloud.status||'本機儲存');
+  const syncLine=cloud.tripId?`<button class="trip-sync" title="切換同步代碼" aria-label="${status}，同步代碼 ${esc(cloud.tripId)}，點一下可切換" onclick="event.stopPropagation();openModal(this,{t:'tools'})">${TI('cloud',14)} ${status} · <span class="trip-sync-code">${esc(cloud.tripId)}</span> ${TI('arrows-exchange',14)}</button>`:`<span>${status}</span>`;
+  const range=first?(first===last?fmtMd(first):`${fmtMd(first)} – ${fmtMd(last)}`):'';
+  const meta=[range,`${S.days?.length||0} 天`,locCount?`${locCount} 個地點`:''].filter(Boolean).join(' · ');
+  const brief=`<div class="trip-meta">${TI('calendar',15)}<span>${meta}</span>${countdown?`<span class="trip-countdown">${countdown}</span>`:''}</div>`;
+  return`<header class="cover" style="${coverStyle}"><div class="topbar">${ART_PLANE}<div class="cover-menu-wrap"><button class="hamb" aria-label="開啟選單" onclick="event.stopPropagation();setU({menuOpen:!S.menuOpen})"><span></span><span></span><span></span></button>${menu}</div></div>${postcard}<div class="cover-bottom"><div class="hdr-title" onclick="setU({editTN:true,tnDraft:'${jsq(S.tripName)}'})"><span>${esc(S.tripName)}</span><span class="hdr-title-edit-icon">${TI('pencil',16)}</span></div>${brief}<div class="hdr-sub">${syncLine}</div>${!cloud.ready?`<div class="sync-quick"><span style="color:var(--muted);">${TI('link',15)}</span><input id="hdr-sync-inp" type="text" placeholder="輸入同步代碼，Enter 跳轉" autocomplete="off" autocapitalize="none" spellcheck="false" onkeydown="if(event.key==='Enter'){var v=this.value.trim();if(v){var el=document.getElementById('trip-code');if(el)el.value=v;else{S._quickCode=v;}switchTrip(false);}}"><button class="sync-quick-btn" onclick="var v=document.getElementById('hdr-sync-inp').value.trim();if(v){var el=document.getElementById('trip-code');if(el)el.value=v;switchTrip(false);}">跳轉</button></div>`:''}</div></header>`;
 }
 function saveTN(){const v=document.getElementById('tn-in')?.value?.trim()||S.tnDraft.trim()||'未命名旅程';setD({tripName:v,editTN:false});}
 function gnav(){
@@ -1611,9 +1588,10 @@ function itin(day,si){
   }
   // Store detail for sheet
   if(weatherDetail)window['_wx_'+day.id]=weatherDetail;
-  const catCounts=(day.locations||[]).reduce((a,l)=>{const c=l.category||'其他';a[c]=(a[c]||0)+1;return a;},{});
-  const summary=`<div class="day-summary"><span class="day-summary-chip">${TI('map-pin',12)} ${day.locations.length} 個地點</span>${Object.entries(catCounts).slice(0,4).map(([c,n])=>`<span class="day-summary-chip">${esc(c)} ${n}</span>`).join('')}</div>`;
-  return`<div class="day-tabs">${tabs}<button class="dtab dtab-add" onclick="FM={title:'第${nd}天',date:'',city:''};openModal(this,{t:'nd'})">${TI('plus',13)} 新增</button></div><div class="section-head"><div class="section-title-wrap"><div class="section-title" title="點擊編輯這一天" onclick="openDayEdit(this)">${esc(day.title)}<span class="hdr-title-edit-icon" style="color:var(--muted);">${TI('pencil',14)}</span></div>${(day.date||weatherBadge)?`<div class="section-meta">${day.date?`<span class="section-meta-date">${TI('calendar',13)} ${day.date}</span>`:''}${weatherBadge}</div>`:''}</div><div class="section-actions"><div class="action-group primary"><button class="btn" title="跳到現在的行程" onclick="jumpToNow()">${TI('clock-play',14)} 現在</button><button class="btn" title="排序行程" style="${S.sortMode?'background:var(--yellow);':''}" onclick="setU({sortMode:!S.sortMode})">${S.sortMode?TI('check',14)+' 完成排序':TI('arrows-sort',14)+' 排序'}</button></div></div></div>${summary}${day.locations.length?`<div class="tl-list">${locs}</div>`:locs}`;
+  const iso=/^\d{4}-\d{2}-\d{2}$/.test(day.date||'');
+  const dateLabel=!day.date?'':iso?`${Number(day.date.slice(5,7))}/${Number(day.date.slice(8,10))} 週${'日一二三四五六'[new Date(day.date+'T00:00:00Z').getUTCDay()]}`:esc(day.date);
+  const metaText=[dateLabel,day.locations.length?`${day.locations.length} 個地點`:''].filter(Boolean).join(' · ');
+  return`<div class="day-tabs">${tabs}<button class="dtab dtab-add" onclick="FM={title:'第${nd}天',date:'',city:''};openModal(this,{t:'nd'})">${TI('plus',13)} 新增</button></div><div class="section-head"><div class="section-title" title="點擊編輯這一天" onclick="openDayEdit(this)">${esc(day.title)}<span class="hdr-title-edit-icon" style="color:var(--muted);">${TI('pencil',14)}</span></div>${metaText?`<div class="section-meta-date">${TI('calendar',13)} ${metaText}</div>`:''}<div class="section-bar">${weatherBadge}<div class="section-actions"><button class="btn" title="跳到現在的行程" onclick="jumpToNow()">${TI('clock-play',14)} 現在</button>${day.locations.length>1||S.sortMode?`<button class="btn" title="排序行程" style="${S.sortMode?'background:var(--yellow);':''}" onclick="setU({sortMode:!S.sortMode})">${S.sortMode?TI('check',14)+' 完成':TI('arrows-sort',14)+' 排序'}</button>`:''}</div></div></div>${day.locations.length?`<div class="tl-list">${locs}</div>`:locs}`;
 }
 function exps(te){
   const cs=CATS.map(c=>({c,t:S.expenses.filter(e=>e.category===c).reduce((s,e)=>s+expValue(e),0)})).filter(x=>x.t>0);
