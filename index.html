@@ -1059,6 +1059,62 @@ input:focus,select:focus,textarea:focus{border-color:var(--ink);box-shadow:0 0 0
 .trip-scene .trail{animation:trail 1.6s linear infinite}
 .trip-scene .plane{transform-box:fill-box;transform-origin:50% 50%;animation:planeBob 2.4s ease-in-out infinite alternate}
 
+/* ── 每天的插圖：明信片一樣的粗框卡片，裡面的東西各自慢慢動 ── */
+.day-scene{width:100%;max-width:600px;aspect-ratio:3/1;margin:0 0 14px;border:var(--lw) solid var(--ink);border-radius:20px;overflow:hidden;background:var(--washi)}
+.day-scene svg{display:block;width:100%;height:100%}
+.day-scene .ds-spin{animation:dsSpin 24s linear infinite}
+.day-scene .ds-fly{animation:dsFly 5s ease-in-out infinite alternate}
+.day-scene .ds-pulse{opacity:.45;animation:dsPulse 2.6s ease-in-out infinite alternate}
+.day-scene .ds-wave-l{animation:dsWaveL 5s linear infinite}
+.day-scene .ds-wave-r{animation:dsWaveR 7s linear infinite}
+.day-scene .ds-bob{transform-box:fill-box;transform-origin:50% 100%;animation:dsBob 2.8s ease-in-out infinite alternate}
+.day-scene .ds-twinkle{transform-box:fill-box;transform-origin:50% 50%;animation:dsTwinkle 2.4s ease-in-out infinite alternate}
+.day-scene .ds-drift{animation:dsDrift 9s ease-in-out infinite alternate}
+.day-scene .ds-ride{animation:dsRide 9s ease-in-out infinite alternate}
+.day-scene .ds-swing{transform-box:fill-box;transform-origin:50% 0;animation:dsSwing 1.8s ease-in-out infinite alternate}
+.day-scene .ds-sway{transform-box:fill-box;transform-origin:50% 100%;animation:dsSway 3.4s ease-in-out infinite alternate}
+.day-scene .ds-steam{animation:dsSteam 3s ease-out infinite}
+.day-scene .ds-fall{transform-box:fill-box;transform-origin:50% 50%;animation:dsFall 7s linear infinite}
+.day-scene .ds-soak{animation:dsSoak 3.2s ease-in-out infinite alternate}
+.day-scene .ds-blink{animation:dsBlink 3.2s steps(1) infinite}
+.day-scene .ds-run{animation:dsRun 10s linear infinite}
+.day-scene .ds-lift{animation:dsLift 2.2s ease-in-out infinite alternate}
+.day-scene .ds-float{animation:dsFloat 3.6s ease-in-out infinite alternate}
+.day-scene .ds-trail{animation:trail 1.2s linear infinite}
+.day-scene .ds-loop-slow{animation:dsLoop 40s linear infinite}
+.day-scene .ds-loop-fast{animation:dsLoop 16s linear infinite}
+.day-scene .ds-flicker{transform-box:fill-box;transform-origin:50% 100%;animation:dsFlicker .9s ease-in-out infinite alternate}
+.day-scene .ds-rise{animation:dsRise 2.4s ease-out infinite}
+.day-scene .ds-flit{animation:dsFlit 8s ease-in-out infinite}
+.day-scene .ds-flap{transform-box:fill-box;transform-origin:50% 50%;animation:dsFlap .35s ease-in-out infinite alternate}
+.day-scene .ds-bloom{transform-box:fill-box;transform-origin:50% 100%;animation:dsBloom 2.6s ease-in-out infinite alternate}
+.day-scene .ds-d2{animation-delay:-1.1s}.day-scene .ds-d3{animation-delay:-2.2s}
+@keyframes dsSpin{to{transform:rotate(360deg)}}
+@keyframes dsFly{from{transform:translate(0,0)}to{transform:translate(16px,-5px)}}
+@keyframes dsPulse{from{opacity:.15}to{opacity:.6}}
+@keyframes dsWaveL{from{transform:translateX(0)}to{transform:translateX(-40px)}}
+@keyframes dsWaveR{from{transform:translateX(-40px)}to{transform:translateX(0)}}
+@keyframes dsBob{from{transform:translateY(1px) rotate(-4deg)}to{transform:translateY(-2px) rotate(3deg)}}
+@keyframes dsTwinkle{from{opacity:.25;transform:scale(.7)}to{opacity:1;transform:scale(1.05)}}
+@keyframes dsDrift{from{transform:translateX(-10px)}to{transform:translateX(14px)}}
+@keyframes dsRide{from{transform:translate(-140px,-10.3px)}to{transform:translate(140px,10.3px)}}
+@keyframes dsSwing{from{transform:rotate(-4deg)}to{transform:rotate(4deg)}}
+@keyframes dsSway{from{transform:rotate(-3deg)}to{transform:rotate(3deg)}}
+@keyframes dsSteam{0%{opacity:0;transform:translateY(6px)}35%{opacity:1}100%{opacity:0;transform:translateY(-14px)}}
+@keyframes dsFall{0%{opacity:0;transform:translate(0,-6px) rotate(0)}12%{opacity:1}85%{opacity:1}100%{opacity:0;transform:translate(34px,74px) rotate(220deg)}}
+@keyframes dsSoak{from{transform:translateY(1.5px)}to{transform:translateY(-1.5px)}}
+@keyframes dsBlink{0%{opacity:1}50%{opacity:0}}
+@keyframes dsRun{from{transform:translateX(-320px)}to{transform:translateX(320px)}}
+@keyframes dsLift{from{transform:translateY(2px)}to{transform:translateY(-5px)}}
+@keyframes dsFloat{from{transform:translateY(3px) rotate(-1.5deg)}to{transform:translateY(-5px) rotate(1.5deg)}}
+@keyframes dsLoop{from{transform:translateX(0)}to{transform:translateX(-360px)}}
+@keyframes dsFlicker{from{transform:scale(.92,.86)}to{transform:scale(1.04,1.08)}}
+@keyframes dsRise{0%{opacity:0;transform:translateY(8px)}30%{opacity:1}100%{opacity:0;transform:translateY(-22px)}}
+@keyframes dsFlit{0%,100%{transform:translate(0,0)}25%{transform:translate(30px,-10px)}50%{transform:translate(60px,4px)}75%{transform:translate(26px,12px)}}
+@keyframes dsFlap{from{transform:scaleX(1)}to{transform:scaleX(.35)}}
+@keyframes dsBloom{from{transform:scale(.8)}to{transform:scale(1.1)}}
+
+.scene-preview{margin:8px 0 0;border-radius:16px}
 /* ── 切換日期：卡片依序彈進來，選到的日期鈕彈一下 ── */
 .day-in{animation:dayInNext .5s var(--pop) backwards;animation-delay:calc(var(--i,0) * 45ms)}
 .body.day-prev .day-in{animation-name:dayInPrev}
@@ -1432,7 +1488,7 @@ function render(){
     const main=root.querySelector('main.body');
     if(main){
       main.classList.toggle('day-prev',_dayAnim==='prev');
-      const sel=S.view==='itinerary'?'.section-head,.tl-item,.body>.empty':'.exp-day-head,.exp-day-head~.card';
+      const sel=S.view==='itinerary'?'.day-scene,.section-head,.tl-item,.body>.empty':'.exp-day-head,.exp-day-head~.card';
       main.querySelectorAll(sel).forEach((el,i)=>{el.style.setProperty('--i',Math.min(i,10));el.classList.add('day-in');});
       const tab=main.querySelector('.dtab.on,.exp-day-tab.on');if(tab)tab.classList.add('pop');
     }
@@ -1504,6 +1560,137 @@ const ART_STAMP=`<svg class="cover-stamp" viewBox="0 0 62 74" aria-hidden="true"
 const ART_POSTMARK=`<svg class="cover-postmark" viewBox="0 0 88 48" aria-hidden="true"><g fill="none" stroke="#3E3A39" stroke-width="1.8" stroke-linecap="round"><circle cx="24" cy="24" r="19"/><circle cx="24" cy="24" r="13.5"/><path d="M46 14q5-4 10 0t10 0t10 0M46 24q5-4 10 0t10 0t10 0M46 34q5-4 10 0t10 0t10 0"/></g><text x="24" y="29" font-size="13" text-anchor="middle" fill="#3E3A39">旅</text></svg>`;
 // 頁尾：在行李箱上睡午覺的三花貓、底片相機、盆栽、飛過的紙飛機
 const ART_SCENE=`<div class="trip-scene" aria-hidden="true"><svg viewBox="0 0 360 132"><g stroke="#3E3A39" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"><path class="trail" d="M150 40C176 22 200 34 222 20" fill="none" stroke-width="2" stroke-dasharray="3 6"/><g class="plane" stroke-width="2.4"><path d="M222 20 254 6 241 32 234 25Z" fill="#FFFCF6"/><path d="M254 6 234 25 233 34 241 32" fill="#F6D27A"/></g><path d="M66 66v-7a5 5 0 0 1 5-5h18a5 5 0 0 1 5 5v7" fill="none"/><rect x="36" y="66" width="140" height="48" rx="10" fill="#F6D27A"/><path d="M58 66v48M154 66v48" fill="none" stroke-width="2.4"/><circle cx="80" cy="92" r="9" fill="#A8D3E6" stroke-width="2.2"/><path d="M118 99c-4-2.6-6-4.6-6-6.8a3 3 0 0 1 6-1 3 3 0 0 1 6 1c0 2.2-2 4.2-6 6.8Z" fill="#F2A497" stroke-width="2"/><circle cx="54" cy="117.5" r="4.5" fill="#FFFCF6" stroke-width="2.4"/><circle cx="158" cy="117.5" r="4.5" fill="#FFFCF6" stroke-width="2.4"/><g class="tail"><path d="M110 63C98 63 93 55 97 47" fill="none" stroke-width="9"/><path d="M110 63C98 63 93 55 97 47" fill="none" stroke="#FFFCF6" stroke-width="3.6"/></g><g class="breath"><path d="M106 66.5C104 53 116 45 132 45s27 8 25 21.5Z" fill="#FFFCF6"/><ellipse cx="123" cy="57" rx="7" ry="4.5" fill="#F2A497" stroke="none"/><ellipse cx="139" cy="53" rx="5" ry="3.5" fill="#F6D27A" stroke="none"/></g><path d="M150.5 47 152.5 35.5 159.5 44Z" fill="#FFFCF6"/><path d="M161.5 44 168.5 35.5 170.5 47Z" fill="#F2A497"/><circle cx="160.5" cy="55" r="12" fill="#FFFCF6"/><path d="M153.5 55.5q2.5 2.2 5 0M162.5 55.5q2.5 2.2 5 0" fill="none" stroke-width="2.2"/><circle cx="152.5" cy="60.5" r="2.2" fill="#F2A497" stroke="none"/><circle cx="168.5" cy="60.5" r="2.2" fill="#F2A497" stroke="none"/><path d="M159.3 59.5h2.4l-1.2 1.4Z" fill="#3E3A39" stroke-width="1"/><rect x="212" y="74" width="24" height="12" rx="4" fill="#FFFCF6"/><rect x="256" y="77" width="10" height="8" rx="2.5" fill="#F2A497" stroke-width="2.6"/><rect x="202" y="82" width="72" height="32" rx="8" fill="#B9DAA5"/><rect x="208" y="88" width="13" height="8" rx="2.5" fill="#F6D27A" stroke-width="2.4"/><circle cx="239" cy="98" r="12.5" fill="#FFFCF6"/><circle cx="239" cy="98" r="6" fill="#A8D3E6" stroke-width="2.6"/><circle cx="236.6" cy="95.6" r="1.8" fill="#FFFCF6" stroke="none"/><path class="spark" d="M282 62q1.5 6.5 8 8-6.5 1.5-8 8-1.5-6.5-8-8 6.5-1.5 8-8Z" fill="#F6D27A" stroke-width="2"/><g class="plant"><path d="M314 84V50" fill="none"/><path d="M314 70c-13 0-21-8-21-20 12 0 21 8 21 20Z" fill="#B9DAA5" stroke-width="2.6"/><path d="M314 62c13 0 22-8 22-20-12 0-22 8-22 20Z" fill="#B9DAA5" stroke-width="2.6"/><path d="M314 52c-6-7-6-17 0-24 6 7 6 17 0 24Z" fill="#B9DAA5" stroke-width="2.6"/></g><path d="M295 92h38l-5 22h-28Z" fill="#A8D3E6"/><rect x="290" y="82" width="48" height="10" rx="4" fill="#A8D3E6"/><path d="M14 121.5H346" fill="none"/></g><text class="zz" x="174" y="34" font-size="13" fill="#3E3A39">z</text><text class="zz z2" x="181" y="26" font-size="10" fill="#3E3A39">z</text></svg></div>`;
+// ── 每天一張會動的插圖：依當天標題和地點自動挑，也可以在「編輯天數」手動指定（day.scene） ──
+const DAY_SCENES=(()=>{
+const _SC={S:'#EDE6DA',I:'#3E3A39',W:'#FFFCF6',M:'#A8D3E6',ML:'#D4EAF3',MW:'#E4F2F8',C:'#F2A497',Y:'#F6D27A',YL:'#FDF2D2',G:'#B9DAA5',GL:'#DCEDD0',O:'#F7BC8C'};
+// 一段可以無縫左右平移的海浪（每 40 單位一個起伏）
+const _wave=(y,a,fill)=>{let d=`M-40 ${y}`;for(let i=0;i<12;i++)d+=`q10 ${-a} 20 0t20 0`;return `<path d="${d}V130H-40Z" fill="${fill}"/>`;};
+const _cloud=(x,y,s=1,cls='')=>`<path${cls?` class="${cls}"`:''} transform="translate(${x} ${y}) scale(${s})" vector-effect="non-scaling-stroke" stroke-width="2.4" fill="${_SC.W}" d="M0 0h40a7 7 0 0 0 0-14a10 10 0 0 0-19-5a8 8 0 0 0-15 4a7.5 7.5 0 0 0-6 15Z"/>`;
+const _star=(x,y,s,cls='ds-twinkle')=>`<path class="${cls}" d="M${x} ${y-s}q${.19*s} ${.81*s} ${s} ${s}q${-.81*s} ${.19*s} ${-s} ${s}q${-.19*s} ${-.81*s} ${-s} ${-s}q${.81*s} ${-.19*s} ${s} ${-s}Z" fill="${_SC.Y}" stroke-width="1.8"/>`;
+const _birds=(x,y)=>`<g class="ds-fly" fill="none" stroke-width="2.2"><path d="M${x} ${y}q5-5 10 0q5-5 10 0"/><path d="M${x+28} ${y-8}q4-4 8 0q4-4 8 0"/></g>`;
+const _sun=(x,y,r)=>{const a=r+7,b=r+13,k=Math.SQRT1_2;const ray=(dx,dy)=>`M${(x+dx*a).toFixed(1)} ${(y+dy*a).toFixed(1)}L${(x+dx*b).toFixed(1)} ${(y+dy*b).toFixed(1)}`;
+  return `<g class="ds-spin" style="transform-origin:${x}px ${y}px" fill="none" stroke-width="2.6"><path d="${[[0,-1],[0,1],[-1,0],[1,0],[k,k],[k,-k],[-k,k],[-k,-k]].map(([dx,dy])=>ray(dx,dy)).join('')}"/></g><circle cx="${x}" cy="${y}" r="${r}" fill="${_SC.Y}"/>`;};
+const {S,I,W,M,ML,MW,C,Y,YL,G,GL,O}=_SC;
+return{
+sea:{label:'海邊',svg:`${_sun(304,42,14)}${_birds(150,36)}
+<path class="ds-pulse" d="M68 47 132 33v28Z" fill="${Y}" stroke="none"/>
+<path d="M0 98C12 82 38 76 64 78s44 10 56 20Z" fill="${G}"/>
+<path d="M50 82 54 52h12l4 30Z" fill="${W}" stroke="none"/><path d="M53.2 58h13.6l.93 7H52.27ZM51.47 71h17.06l.94 7H50.53Z" fill="${C}" stroke="none"/><path d="M50 82 54 52h12l4 30Z" fill="none"/>
+<rect x="53" y="42" width="14" height="10" rx="2" fill="${Y}" stroke-width="2.4"/><path d="M50 42 60 32l10 10Z" fill="${C}" stroke-width="2.4"/>
+<g class="ds-wave-l">${_wave(92,5,ML)}</g>
+<g class="ds-bob"><path d="M238 90V50" fill="none" stroke-width="2.4"/><path d="M238 50l10 4-10 4Z" fill="${C}" stroke-width="2"/><path d="M241 60l17 26h-17Z" fill="${W}" stroke-width="2.4"/><path d="M235 63l-14 23h14Z" fill="${Y}" stroke-width="2.4"/><path d="M215 90h46l-7 11h-32Z" fill="${C}"/></g>
+<g class="ds-wave-r">${_wave(102,4,M)}</g>
+<g class="ds-twinkle" fill="none" stroke="${W}" stroke-width="2.4"><path d="M120 112q5-3 10 0"/><path d="M300 110q5-3 10 0"/></g>`},
+
+mountain:{label:'山林纜車',svg:`<circle cx="296" cy="48" r="13" fill="${Y}"/>
+<path d="M150 104 226 46l30 24 22-14 92 48Z" fill="${ML}"/>
+<g class="ds-drift">${_cloud(236,44)}</g>
+<path d="M-12 104 72 38l38 30 26-18 84 54Z" fill="${G}"/><path d="M58 49 72 38l14 11-7 3.6-7-4.6-7 4.6Z" fill="${W}" stroke-width="2.4"/>
+<path d="M-10 18 370 46" fill="none" stroke-width="2"/>
+<g transform="translate(180 32)"><g class="ds-ride"><g class="ds-swing"><path d="M0 0v9" fill="none" stroke-width="2.2"/><circle r="2.6" fill="${I}" stroke="none"/><rect x="-12" y="9" width="24" height="19" rx="5" fill="${C}"/><rect x="-8" y="13" width="7" height="7" rx="1.8" fill="${W}" stroke-width="2"/><rect x="1" y="13" width="7" height="7" rx="1.8" fill="${W}" stroke-width="2"/></g></g></g>
+<path d="M-10 104H370V130H-10Z" fill="${GL}"/>
+<g class="ds-sway"><path d="M300 106 311 78l11 28Z" fill="${G}"/></g><g class="ds-sway ds-d2"><path d="M324 106l9-22 9 22Z" fill="${G}"/></g><g class="ds-sway ds-d3"><path d="M22 106l8-20 8 20Z" fill="${G}"/></g>`},
+
+onsen:{label:'溫泉',svg:`<g fill="${GL}" stroke-width="2.2">${Array.from({length:26},(_,i)=>`<rect x="${-6+i*15}" y="44" width="13" height="60" rx="6.5"/>`).join('')}</g><path d="M-10 60H370" fill="none" stroke-width="2"/>
+<path class="ds-fall" d="M70 18c6-7 15-5 15 3-6 7-15 5-15-3Z" fill="${C}" stroke-width="2"/><path class="ds-fall ds-d2" d="M280 12c5-6 13-4 13 3-5 6-13 4-13-3Z" fill="${Y}" stroke-width="2"/>
+<path d="M-10 100H370V130H-10Z" fill="${YL}"/>
+<ellipse cx="180" cy="102" rx="122" ry="17" fill="${M}"/>
+<g class="ds-soak"><path d="M161 104c-3-18 5-30 19-30s22 12 19 30Z" fill="${O}"/><path d="M166 77q14-10 28 0l-2 5h-24Z" fill="${W}" stroke-width="2.2"/><path d="M170 79.5h20" fill="none" stroke="${C}" stroke-width="2"/><path d="M170 90q3 2.5 6 0M184 90q3 2.5 6 0" fill="none" stroke-width="2.2"/><ellipse cx="180" cy="96" rx="4" ry="2.6" fill="${I}" stroke="none"/><circle cx="167" cy="96" r="2.6" fill="${C}" stroke="none"/><circle cx="193" cy="96" r="2.6" fill="${C}" stroke="none"/></g>
+<path d="M58 102q10-3 20 0${'t20 0'.repeat(11)}A122 17 0 0 1 58 102Z" fill="${M}" stroke="none"/><path d="M58 102A122 17 0 0 0 302 102" fill="none"/><path d="M150 103q7.5-3 15 0t15 0t15 0t15 0" fill="none" stroke-width="2"/>
+<g fill="none" stroke-width="2.4"><path class="ds-steam" d="M112 86q-5-5 0-10t0-10"/><path class="ds-steam ds-d2" d="M240 84q-5-5 0-10t0-10"/><path class="ds-steam ds-d3" d="M132 80q-5-5 0-10t0-10"/></g>
+<path d="M28 114c-8-14 8-24 22-16 8-10 28-4 26 14Z" fill="${S}"/><path d="M40 99c4-5 10-6 13-2 4-4 11-3 13 1" fill="none" stroke="${G}" stroke-width="3.4"/>
+<path d="M296 114c-2-14 14-20 24-12 10-6 26 2 22 16Z" fill="${S}"/>
+<path d="M304 82h24l-3 18h-18Z" fill="${Y}"/><path d="M305.3 88h21.4M306.3 94h19.4" fill="none" stroke-width="2"/>`},
+
+city:{label:'城市散步',svg:`<circle cx="276" cy="34" r="10" fill="${Y}"/><g class="ds-drift">${_cloud(34,32,.9)}</g>${_birds(190,22)}
+<rect x="12" y="54" width="40" height="50" fill="${ML}"/><g fill="${W}" stroke-width="2"><rect x="19" y="62" width="10" height="8"/><rect x="35" y="62" width="10" height="8"/><rect x="19" y="76" width="10" height="8"/><rect x="35" y="76" width="10" height="8"/></g>
+<path d="M75 32V18" fill="none" stroke-width="2.2"/><circle class="ds-blink" cx="75" cy="16" r="3.2" fill="${C}" stroke-width="2"/><rect x="58" y="32" width="34" height="72" fill="${Y}"/><g fill="${W}" stroke-width="2"><rect x="64" y="40" width="8" height="8"/><rect x="78" y="40" width="8" height="8"/><rect x="64" y="54" width="8" height="8"/><rect x="78" y="54" width="8" height="8"/><rect x="64" y="68" width="8" height="8"/><rect x="78" y="68" width="8" height="8"/></g>
+<rect x="98" y="62" width="46" height="42" fill="${C}"/><path d="M98 74h46" fill="none" stroke-width="2.4"/><g fill="${W}" stroke-width="2"><rect x="105" y="80" width="12" height="10"/><rect x="125" y="80" width="12" height="10"/></g>
+<path d="M150 104V54l25-20 25 20v50Z" fill="${W}"/><circle cx="175" cy="57" r="6" fill="${Y}" stroke-width="2.2"/><rect x="166" y="80" width="18" height="24" rx="4" fill="${C}" stroke-width="2.4"/>
+<rect x="206" y="42" width="38" height="62" fill="${G}"/><g fill="${W}" stroke-width="2"><rect x="213" y="50" width="8" height="8"/><rect x="229" y="50" width="8" height="8"/><rect x="213" y="64" width="8" height="8"/><rect x="229" y="64" width="8" height="8"/></g>
+<rect x="250" y="60" width="44" height="44" fill="${ML}"/><g fill="${W}" stroke-width="2"><rect x="257" y="68" width="10" height="9"/><rect x="277" y="68" width="10" height="9"/></g>
+<rect x="300" y="38" width="36" height="66" fill="${C}"/><g fill="${W}" stroke-width="2"><rect x="307" y="46" width="8" height="9"/><rect x="321" y="46" width="8" height="9"/><rect x="307" y="60" width="8" height="9"/><rect x="321" y="60" width="8" height="9"/><rect x="307" y="74" width="8" height="9"/><rect x="321" y="74" width="8" height="9"/></g>
+<g fill="${Y}" stroke-width="2"><rect class="ds-blink ds-d2" x="35" y="76" width="10" height="8"/><rect class="ds-blink" x="78" y="54" width="8" height="8"/><rect class="ds-blink ds-d3" x="229" y="64" width="8" height="8"/><rect class="ds-blink ds-d2" x="307" y="60" width="8" height="9"/></g>
+<path d="M-10 104H370V130H-10Z" fill="${YL}"/><path d="M-10 116H370" fill="none" stroke-width="2" stroke-dasharray="10 12"/>
+<g class="ds-run"><rect x="146" y="86" width="70" height="24" rx="7" fill="${C}"/><g fill="${W}" stroke-width="2"><rect x="152" y="91" width="11" height="8" rx="2"/><rect x="167" y="91" width="11" height="8" rx="2"/><rect x="182" y="91" width="11" height="8" rx="2"/><path d="M198 91h10a4 4 0 0 1 4 4v4h-14Z"/></g><circle cx="161" cy="111" r="4.5" fill="${W}" stroke-width="2.4"/><circle cx="201" cy="111" r="4.5" fill="${W}" stroke-width="2.4"/></g>`},
+
+food:{label:'美食',svg:`${_star(92,34,7)}${_star(268,26,6,'ds-twinkle ds-d2')}
+<path d="M-10 98H370V130H-10Z" fill="${YL}"/>
+<ellipse cx="64" cy="100" rx="44" ry="9" fill="${W}"/><path d="M34 98c0-12 8-18 16-18s16 6 16 18Z" fill="${W}"/><path d="M60 98c0-12 8-18 16-18s16 6 16 18Z" fill="${W}"/><path d="M44 84l2 3M50 81v4M56 84l-2 3M70 84l2 3M76 81v4M82 84l-2 3" fill="none" stroke-width="1.8"/>
+<g fill="none" stroke-width="2.4"><path class="ds-steam" d="M146 52q-5-5 0-10t0-10"/><path class="ds-steam ds-d2" d="M166 48q-5-5 0-10t0-10"/></g>
+<path d="M124 68h112c0 30-25 42-56 42s-56-12-56-42Z" fill="${C}"/><path d="M138 86q10.5-6 21 0t21 0t21 0t21 0" fill="none" stroke="${W}" stroke-width="2.6"/>
+<ellipse cx="180" cy="68" rx="56" ry="9" fill="${Y}"/>
+<ellipse cx="158" cy="67" rx="10" ry="5.5" fill="${W}" stroke-width="2.2"/><circle cx="158" cy="67" r="3.2" fill="${O}" stroke-width="1.8"/><circle cx="184" cy="69" r="5.5" fill="${W}" stroke-width="2"/><path d="M181.5 69a2.5 2.5 0 1 1 2.5 2.5" fill="none" stroke="${C}" stroke-width="1.8"/>
+<g class="ds-lift"><path d="M202 44q-4 8 0 12t0 12M208 47q4 7 0 11t1 10" fill="none" stroke-width="5"/><path d="M202 44q-4 8 0 12t0 12M208 47q4 7 0 11t1 10" fill="none" stroke="${Y}" stroke-width="2"/><path d="M200 44 254 10M206 48 264 18" fill="none" stroke-width="7"/><path d="M200 44 254 10M206 48 264 18" fill="none" stroke="${Y}" stroke-width="3"/></g>
+<path d="M212 70V55h13v13Z" fill="${G}" stroke-width="2.2"/>
+<g fill="none" stroke-width="2.2"><path class="ds-steam ds-d3" d="M298 62q-4-4 0-8t0-8"/></g><path d="M282 72h34l-4 28h-26Z" fill="${M}"/><path d="M316 78h4a6 6 0 0 1 0 12h-6" fill="none" stroke-width="2.6"/>`},
+
+flight:{label:'搭飛機',svg:`<circle cx="320" cy="34" r="11" fill="${Y}"/>
+<g class="ds-loop-slow">${[[20,40,.7],[150,30,.6],[250,54,.75]].map(([x,y,s])=>_cloud(x,y,s)+_cloud(x+360,y,s)).join('')}</g>
+<g class="ds-float"><path class="ds-trail" d="M116 61H-10" fill="none" stroke-width="2" stroke-dasharray="3 7"/><path d="M131 51 117 30h13l17 21Z" fill="${C}"/><path d="M120 61c0-6 6-10 18-10h70c14 0 26 5 30 10-4 6-16 10-30 10h-72c-10 0-16-4-16-10Z" fill="${W}"/><path d="M224 53c6 1 10 4 12 8h-12Z" fill="${M}" stroke-width="2"/><g fill="${M}" stroke-width="2">${[150,162,174,186,198].map(x=>`<circle cx="${x}" cy="58" r="2.8"/>`).join('')}</g><path d="M130 65h92" fill="none" stroke="${C}" stroke-width="2.6"/><path d="M172 65 156 88h15l25-23Z" fill="${M}"/></g>
+<g class="ds-loop-fast">${[[0,118,1.3],[90,122,1.1],[170,116,1.4],[270,120,1.2]].map(([x,y,s])=>_cloud(x,y,s)+_cloud(x+360,y,s)).join('')}</g>`},
+
+train:{label:'搭火車',svg:`${_sun(58,38,12)}${_birds(250,30)}
+<path d="M-10 104C30 62 80 58 120 80s80-42 130-32 90 32 120 56Z" fill="${ML}"/>
+<path d="M-10 104c40-22 80-26 120-10s90-18 140-8 80 10 120 18Z" fill="${GL}"/>
+<g class="ds-sway"><path d="M300 92v-8" fill="none" stroke-width="2.4"/><circle cx="300" cy="76" r="9" fill="${G}"/></g><g class="ds-sway ds-d2"><path d="M40 94v-8" fill="none" stroke-width="2.4"/><circle cx="40" cy="78" r="8" fill="${G}"/></g>
+<path d="M-10 104H370V130H-10Z" fill="${YL}"/><path d="M-10 109H370" fill="none" stroke-width="4" stroke-dasharray="2 10"/>
+<g class="ds-run"><rect x="100" y="74" width="52" height="26" rx="6" fill="${M}"/><rect x="158" y="74" width="52" height="26" rx="6" fill="${Y}"/><path d="M216 100V80a6 6 0 0 1 6-6h24c14 0 22 10 24 26Z" fill="${C}"/><g fill="${W}" stroke-width="2"><rect x="108" y="80" width="10" height="9" rx="2"/><rect x="122" y="80" width="10" height="9" rx="2"/><rect x="136" y="80" width="10" height="9" rx="2"/><rect x="166" y="80" width="10" height="9" rx="2"/><rect x="180" y="80" width="10" height="9" rx="2"/><rect x="194" y="80" width="10" height="9" rx="2"/><path d="M248 80h3c6 0 10 4 12 10h-15Z"/></g><path d="M152 92h6M210 92h6" fill="none" stroke-width="2.4"/><circle cx="266" cy="95" r="2" fill="${Y}" stroke-width="1.6"/><g fill="${W}" stroke-width="2.4">${[112,140,170,198,228,256].map(x=>`<circle cx="${x}" cy="101" r="4.5"/>`).join('')}</g></g>
+<path d="M-10 104H370" fill="none"/>`},
+
+camp:{label:'露營星空',svg:`<path d="M-10-10H370V104H-10Z" fill="${MW}" stroke="none"/>
+<path d="M306 22a16 16 0 1 0 14 26 13 13 0 0 1-14-26Z" fill="${Y}"/>
+${_star(40,30,6)}${_star(120,22,5,'ds-twinkle ds-d2')}${_star(200,36,6,'ds-twinkle ds-d3')}${_star(250,20,4,'ds-twinkle ds-d2')}${_star(90,52,4,'ds-twinkle ds-d3')}
+<path d="M-10 104 56 58l34 24 44-36 66 58Z" fill="${ML}"/>
+<path d="M-10 102H370V130H-10Z" fill="${GL}"/>
+<g class="ds-sway"><path d="M18 106l10-28 10 28Z" fill="${G}"/></g><g class="ds-sway ds-d2"><path d="M40 106l8-20 8 20Z" fill="${G}"/></g>
+<path d="M222 106 264 52l42 54Z" fill="${C}"/><path d="M252 106 264 76l12 30Z" fill="${W}"/><path d="M264 52V40l10 4-10 4" fill="${Y}" stroke-width="2"/>
+<g fill="none" stroke-linecap="round"><path d="M132 106l36-9M132 97l36 9" stroke-width="8"/><path d="M132 106l36-9M132 97l36 9" stroke="${O}" stroke-width="3.5"/></g>
+<g class="ds-flicker"><path d="M150 99c-13-4-15-17-7-27 0 8 4 8 6 4 4-6 0-12 4-19 9 9 15 21 9 33-2 6-6 9-12 9Z" fill="${C}"/><path d="M151 98c-5-2-6-8-2-13 1 4 3 4 4 1 4 4 5 9 2 12Z" fill="${Y}" stroke-width="2"/></g>
+<g fill="${Y}" stroke-width="1.6"><circle class="ds-rise" cx="146" cy="58" r="2"/><circle class="ds-rise ds-d2" cx="158" cy="54" r="1.8"/></g>`},
+
+field:{label:'田野花海',svg:`${_sun(52,38,12)}<g class="ds-drift">${_cloud(150,34,.85)}</g>
+<path d="M-10 94c50-30 110-30 160-10s100-26 150-16 60 14 70 18V104H-10Z" fill="${GL}"/>
+<path d="M276 104l4-50h10l4 50Z" fill="${W}"/><rect x="280" y="88" width="10" height="16" rx="4" fill="${C}" stroke-width="2.2"/><path d="M276 56l9-10 9 10Z" fill="${C}" stroke-width="2.4"/>
+<g class="ds-spin" style="transform-origin:285px 50px">${[0,90,180,270].map(r=>`<path transform="rotate(${r} 285 50)" d="M285 50V18l11 3-4 29Z" fill="${Y}" stroke-width="2.2"/>`).join('')}</g><circle cx="285" cy="50" r="3.4" fill="${I}" stroke="none"/>
+<path d="M-10 100c60-10 120-10 190-2s130 6 190-4V130H-10Z" fill="${G}"/>
+<path d="M10 112q80-8 170-2M150 118q90-8 210-4" fill="none" stroke-width="2"/>
+<g stroke-width="1.8">${[[30,104,C],[62,110,Y],[96,103,W],[130,108,C],[208,104,Y],[240,110,C],[318,106,W],[346,112,Y]].map(([x,y,f],i)=>`<circle class="ds-bloom${i%3?' ds-d'+(i%3+1):''}" cx="${x}" cy="${y}" r="3.6" fill="${f}"/>`).join('')}</g>
+<g class="ds-flit"><g class="ds-flap"><path d="M170 66c-8-10-17-6-13 2 2 4 9 2 13-2Zm0 0c8-10 17-6 13 2-2 4-9 2-13-2Z" fill="${C}" stroke-width="1.8"/></g></g>`},
+
+balloon:{label:'熱氣球',svg:`<g class="ds-drift">${_cloud(40,40,.8)}</g><g class="ds-drift ds-d2">${_cloud(300,30,.7)}</g>${_birds(80,60)}
+<path d="M-10 104c40-18 80-22 120-8s80-18 130-10 80 14 120 18V130H-10Z" fill="${GL}"/>
+<g fill="${G}" stroke-width="2.2"><circle cx="40" cy="98" r="6"/><circle cx="54" cy="100" r="5"/><circle cx="300" cy="99" r="6"/></g>
+<g class="ds-float"><path d="M145 72c-12-8-19-19-19-29a24 24 0 0 1 48 0c0 10-7 21-19 29Z" fill="${C}"/><path d="M150 19c-8 10-10 32-5 53h10c5-21 3-43-5-53Z" fill="${Y}" stroke-width="2.4"/><path d="M145 72l-3 9M155 72l3 9" fill="none" stroke-width="2"/><path d="M141 81h18l-2 10h-14Z" fill="${W}" stroke-width="2.4"/></g>
+<g class="ds-float ds-d2"><path d="M258.5 68c-7.5-5-12-12-12-18a15 15 0 0 1 30 0c0 6-4.5 13-12 18Z" fill="${M}" stroke-width="2.4"/><path d="M262 35c-5 6-6 20-3.5 33h7c2.5-13 1.5-27-3.5-33Z" fill="${W}" stroke-width="2"/><path d="M258.5 68l-2 6M265.5 68l2 6" fill="none" stroke-width="1.8"/><path d="M255.5 74h13l-1.5 7h-10Z" fill="${Y}" stroke-width="2"/></g>`},
+};
+})();
+const dayScene=k=>`<svg viewBox="0 0 360 120" preserveAspectRatio="xMidYMax slice" aria-hidden="true" focusable="false"><g stroke="#3E3A39" stroke-width="3" stroke-linejoin="round" stroke-linecap="round">${DAY_SCENES[k].svg}</g></svg>`;
+// 關鍵字：標題命中權重最高（標題是使用者自己對這天的總結），地點名稱和分類只用來打破平手
+const SCENE_HINTS={
+  flight:['機場','飛機','航班','登機','搭機','出境','入境','航廈','airport','flight'],
+  train:['火車','高鐵','台鐵','新幹線','列車','鐵道','車站','回程','返程','返家','賦歸','出發'],
+  onsen:['溫泉','泡湯','湯屋','風呂','礁溪','北投','烏來','知本','箱根','別府','spa','onsen'],
+  sea:['海','灣','港','沙灘','澳','島','碼頭','漁','浮潛','衝浪','潛水','燈塔','渡輪','賞鯨','beach'],
+  mountain:['山','步道','登山','健行','森林','瀑布','峽谷','神木','纜車','國家公園','hiking'],
+  camp:['露營','營地','星空','夜景','煙火','螢火蟲','camping'],
+  field:['農場','牧場','花海','稻','單車','自行車','腳踏車','果園','茶園','採果','farm'],
+  balloon:['熱氣球','balloon'],
+  food:['美食','小吃','夜市','烤肉','燒肉','拉麵','火鍋','早餐','午餐','晚餐','餐','甜點','咖啡'],
+  city:['市區','街','商圈','百貨','購物','逛街','老街','博物館','美術館','outlet','mall'],
+};
+const SCENE_CAT={餐飲:'food',購物:'city',交通:'train'};
+function autoScene(day,i){
+  const score={};
+  const add=(text,w)=>{const t=String(text||'').toLowerCase();for(const k in SCENE_HINTS)if(SCENE_HINTS[k].some(h=>t.includes(h)))score[k]=(score[k]||0)+w;};
+  add(day?.title,10);
+  (day?.locations||[]).forEach(l=>{add(l.name,1);const c=SCENE_CAT[l.category];if(c)score[c]=(score[c]||0)+.3;});
+  if(score.food)score.food*=.5; // 每天都有吃飯，美食只在標題特別提到時才會勝出
+  let best='',top=0;
+  for(const k in SCENE_HINTS)if((score[k]||0)>top){top=score[k];best=k;}
+  return best||['balloon','field','city'][(i||0)%3];
+}
+const sceneKey=(day,i)=>DAY_SCENES[day?.scene]?day.scene:autoScene(day,i);
 /* ── 加入主畫面：Android／電腦用瀏覽器自己的安裝視窗；iPhone 沒有這種 API，改顯示步驟說明 ── */
 let _installPrompt=null;
 window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();_installPrompt=e;});
@@ -1606,7 +1793,7 @@ function itin(day,si){
   const iso=/^\d{4}-\d{2}-\d{2}$/.test(day.date||'');
   const dateLabel=!day.date?'':iso?`${Number(day.date.slice(5,7))}/${Number(day.date.slice(8,10))} 週${'日一二三四五六'[new Date(day.date+'T00:00:00Z').getUTCDay()]}`:esc(day.date);
   const metaText=[dateLabel,day.locations.length?`${day.locations.length} 個地點`:''].filter(Boolean).join(' · ');
-  return`<div class="day-tabs">${tabs}<button class="dtab dtab-add" onclick="FM={title:'第${nd}天',date:'',city:''};openModal(this,{t:'nd'})">${TI('plus',13)} 新增</button></div><div class="section-head"><div class="section-title" title="點擊編輯這一天" onclick="openDayEdit(this)">${esc(day.title)}<span class="hdr-title-edit-icon" style="color:var(--muted);">${TI('pencil',14)}</span></div>${metaText?`<div class="section-meta-date">${TI('calendar',13)} ${metaText}</div>`:''}<div class="section-bar">${weatherBadge}<div class="section-actions"><button class="btn" title="跳到現在的行程" onclick="jumpToNow()">${TI('clock-play',14)} 現在</button>${day.locations.length>1||S.sortMode?`<button class="btn" title="排序行程" style="${S.sortMode?'background:var(--yellow);':''}" onclick="setU({sortMode:!S.sortMode})">${S.sortMode?TI('check',14)+' 完成':TI('arrows-sort',14)+' 排序'}</button>`:''}</div></div></div>${day.locations.length?`<div class="tl-list">${locs}</div>`:locs}`;
+  return`<div class="day-tabs">${tabs}<button class="dtab dtab-add" onclick="FM={title:'第${nd}天',date:'',city:''};openModal(this,{t:'nd'})">${TI('plus',13)} 新增</button></div>${(()=>{const k=sceneKey(day,si);return`<div class="day-scene" data-scene="${k}" role="img" aria-label="${esc(day.title)}：${DAY_SCENES[k].label}插圖">${dayScene(k)}</div>`;})()}<div class="section-head"><div class="section-title" title="點擊編輯這一天" onclick="openDayEdit(this)">${esc(day.title)}<span class="hdr-title-edit-icon" style="color:var(--muted);">${TI('pencil',14)}</span></div>${metaText?`<div class="section-meta-date">${TI('calendar',13)} ${metaText}</div>`:''}<div class="section-bar">${weatherBadge}<div class="section-actions"><button class="btn" title="跳到現在的行程" onclick="jumpToNow()">${TI('clock-play',14)} 現在</button>${day.locations.length>1||S.sortMode?`<button class="btn" title="排序行程" style="${S.sortMode?'background:var(--yellow);':''}" onclick="setU({sortMode:!S.sortMode})">${S.sortMode?TI('check',14)+' 完成':TI('arrows-sort',14)+' 排序'}</button>`:''}</div></div></div>${day.locations.length?`<div class="tl-list">${locs}</div>`:locs}`;
 }
 function exps(te){
   const cs=CATS.map(c=>({c,t:S.expenses.filter(e=>e.category===c).reduce((s,e)=>s+expValue(e),0)})).filter(x=>x.t>0);
@@ -1699,10 +1886,24 @@ function mLoc(){
 function mDay(){
   const isE=S.modal.t==='ed';
   return`<div class="mhd"><div class="mt">${isE?'編輯天數':'新增天數'}</div><div class="mcl" onclick="setU({modal:null})">✕</div></div>
-<div class="fg"><label class="fl">標題 *</label><input type="text" value="${esc(FM.title||'')}" placeholder="例：第一天" oninput="FM.title=this.value"></div>
+<div class="fg"><label class="fl">標題 *</label><input type="text" value="${esc(FM.title||'')}" placeholder="例：第一天" oninput="FM.title=this.value;updateScenePreview()"></div>
 <div class="mobile-stack" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;"><div><label class="fl">日期</label><input type="date" value="${esc(FM.date||'')}" oninput="FM.date=this.value"></div><div><label class="fl">城市（查天氣用）</label><input type="text" value="${esc(FM.city||'')}" placeholder="例：Tokyo、大阪、台北" oninput="FM.city=this.value"></div></div>
+<div class="fg"><label class="fl" for="scene-sel">插圖</label><select id="scene-sel" onchange="FM.scene=this.value;updateScenePreview()">${sceneOptions()}</select><div class="day-scene scene-preview" id="scene-prev">${dayScene(scenePreviewKey())}</div></div>
 <div class="ar"><button class="btn bp" style="flex:1;padding:10px;" onclick="sDay()">儲存</button><button class="btn" style="flex:1;padding:10px;" onclick="setU({modal:null})">取消</button></div>
 ${isE&&S.days.length>1?`<button class="btn br" style="width:100%;margin-top:12px;padding:10px;" onclick="dDayFromModal()">${TI('trash',14)} 刪除這一天（含當天所有地點）</button>`:''}`;
+}
+// 「編輯天數」的插圖選單：自動挑選時，編輯沿用這天的地點來判斷，新增的一天只看標題
+function sceneAutoKey(){
+  const i=S.modal?.t==='ed'?S.days.findIndex(d=>d.id===S.modal.dayId):S.days.length;
+  return autoScene({title:FM.title,locations:S.days[i]?.locations||[]},i);
+}
+const scenePreviewKey=()=>DAY_SCENES[FM.scene]?FM.scene:sceneAutoKey();
+function sceneOptions(){
+  return `<option value="">自動挑選（${DAY_SCENES[sceneAutoKey()].label}）</option>`+Object.entries(DAY_SCENES).map(([k,v])=>`<option value="${k}"${FM.scene===k?' selected':''}>${v.label}</option>`).join('');
+}
+function updateScenePreview(){
+  const el=document.getElementById('scene-prev');if(el)el.innerHTML=dayScene(scenePreviewKey());
+  const sel=document.getElementById('scene-sel');if(sel)sel.options[0].text=`自動挑選（${DAY_SCENES[sceneAutoKey()].label}）`;
 }
 function mExp(){
   const tOpts=`<option value=""${!FM.paidBy?' selected':''}>無 / 請選擇</option>`+S.travelers.map(t=>`<option value="${esc(t)}"${FM.paidBy===t?' selected':''}>${esc(t)}</option>`).join('');
@@ -2031,8 +2232,9 @@ function sLoc(){
 function sDay(){
   if(!FM.title?.trim()){alert('請輸入標題');return;}
   const days=JSON.parse(JSON.stringify(S.days));
-  if(S.modal.t==='ed'){const i=days.findIndex(d=>d.id===S.modal.dayId);days[i]={...days[i],title:FM.title,date:FM.date||'',city:FM.city||''};}
-  else days.push({id:uid(),title:FM.title,date:FM.date||'',city:FM.city||'',locations:[]});
+  const scene=DAY_SCENES[FM.scene]?FM.scene:'';
+  if(S.modal.t==='ed'){const i=days.findIndex(d=>d.id===S.modal.dayId);days[i]={...days[i],title:FM.title,date:FM.date||'',city:FM.city||'',scene};}
+  else days.push({id:uid(),title:FM.title,date:FM.date||'',city:FM.city||'',scene,locations:[]});
   setD({days,modal:null});
 }
 function sExp(){
@@ -3123,6 +3325,7 @@ ${sec(TI('route',19),'行程規劃',[
   [TI('map-2',15),'點「地圖」以名稱＋地址搜尋 Google Maps；「導航」直接開啟導航。'],
   [TI('phone',15),'點電話號碼可直接撥打。'],
   [TI('arrows-sort',15),'點「排序」進入排序模式：拖曳把手或點上下箭頭調整地點順序。'],
+  [TI('photo',15),'每一天上方有一張會動的插圖（海邊、山林纜車、溫泉、城市、美食、飛機、火車、露營、田野、熱氣球），會依標題和地點自動挑；想換的話再點一次目前的日期分頁，在「插圖」選單裡選。'],
   [TI('dots',15),'點地點卡片的「⋯」（或長按卡片）可編輯、存到清單、刪除；刪除後 6 秒內可按「復原」救回。'],
 ])}
 ${sec(TI('star',19),'旅遊清單',[
@@ -3287,7 +3490,7 @@ function openDayEdit(el){
   const si=Math.min(S.dayIdx,S.days.length-1);
   const d=S.days[si];
   if(!d)return;
-  FM={title:d.title,date:d.date||'',city:d.city||''};
+  FM={title:d.title,date:d.date||'',city:d.city||'',scene:DAY_SCENES[d.scene]?d.scene:''};
   openModal(el,{t:'ed',dayId:d.id});
 }
 function dayTabClick(i,el){
