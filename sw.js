@@ -4,12 +4,12 @@
  * - CDN 靜態資源（Firebase SDK、Tesseract、Google Fonts 的 Huninn 字型）：cache-first —— 版本固定，快取後離線可用
  * - Firestore / 匯率 API：不攔截，維持即時性
  */
-const VERSION = 'v7';
+const VERSION = 'v8';
 const SHELL_CACHE = 'shell-' + VERSION;
 const CDN_CACHE = 'cdn-' + VERSION;
 
 // 僅預快取專案中確實存在的檔案，避免 addAll 因 404 讓整個 SW 安裝失敗。
-const SHELL = ['./', './index.html', './firebase-config.js'];
+const SHELL = ['./', './index.html', './firebase-config.js', './manifest.json', './icon-192.png', './icon-512.png'];
 
 const CDN_HOSTS = ['cdn.jsdelivr.net', 'www.gstatic.com', 'fonts.googleapis.com', 'fonts.gstatic.com'];
 const SKIP_HOSTS = ['firestore.googleapis.com', 'open.er-api.com'];

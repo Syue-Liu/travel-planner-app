@@ -1,0 +1,14 @@
+{
+  "name": "互動旅遊行程規劃器",
+  "short_name": "旅遊行程",
+  "description": "旅遊行程、記帳與分帳的小幫手，可離線使用、多人同步。",
+  "lang": "zh-Hant",
+  "display": "standalone",
+  "background_color": "#FFFCF6",
+  "theme_color": "#FFFCF6",
+  "icons": [
+    { "src": "./icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "./icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "./icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
