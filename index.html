@@ -1041,6 +1041,20 @@ input:focus,select:focus,textarea:focus{border-color:var(--ink);box-shadow:0 0 0
 .memo-cb{border:var(--lw2) solid var(--ink);border-radius:8px}
 .memo-cb.on{background:var(--wakatake);color:var(--ink);border-color:var(--ink)}
 
+/* ── 勾選完成：一條墨線從左畫到右（多行會一行接一行畫），項目留在原位 ── */
+.strike{background:linear-gradient(var(--ink),var(--ink)) no-repeat 0 58%/0 2.5px;transition:color .3s}
+.memo-item.done .strike,.buy-card.done .strike{background-size:100% 2.5px}
+.memo-item.done .memo-text,.buy-card.done .buy-name{text-decoration:none;opacity:1;color:var(--muted)}
+.strike-in .strike{animation:strikeIn .5s cubic-bezier(.55,.1,.3,1) both}
+.strike-out .strike{animation:strikeOut .32s ease-in both}
+@keyframes strikeIn{from{background-size:0 2.5px}to{background-size:100% 2.5px}}
+@keyframes strikeOut{from{background-size:100% 2.5px}to{background-size:0 2.5px}}
+.memo-item.strike-in .memo-cb.on{animation:tabPop .4s var(--pop)}
+/* 勾完會離開目前篩選的項目：線畫完後淡出 */
+.leaving{animation:leaveOut .22s ease-in .42s both;pointer-events:none}
+.leaving.strike-out{animation-delay:.24s}
+@keyframes leaveOut{to{opacity:0;transform:translateX(14px) scale(.97)}}
+
 /* ── 記帳、分帳 ── */
 .exp-day-total{color:var(--accent)}
 .cat-ic{border:var(--lw2) solid var(--ink)}
@@ -1466,6 +1480,11 @@ function render(){
       const tab=main.querySelector('.dtab.on,.exp-day-tab.on');if(tab)tab.classList.add('pop');
     }
     _dayAnim='';
+  }
+  // 剛勾選的備忘／待買：在重畫後的那一項播刪除線（畫上或擦掉）
+  if(_strike){
+    if(Date.now()-_strike.at<1000){const el=strikeEl(_strike.id);if(el)el.classList.add(el.classList.contains('done')?'strike-in':'strike-out');}
+    _strike=null;
   }
 
   setTimeout(()=>{
@@ -2705,7 +2724,7 @@ function clearBuyStoreSearch(){
   const input=document.getElementById('buy-store-search');if(input){input.value='';input.focus({preventScroll:true});}updateBuyStoreSearch('');
 }
 function buyVisibleItems(){
-  return buyItems().filter(m=>(buyFilter==='all'||(buyFilter==='done'?m.done:!m.done))&&(buyCategoryFilter==='all'||buyCategories(m).includes(buyCategoryFilter))&&buyMatchesStore(m)).slice().sort((a,b)=>Number(a.done)-Number(b.done));
+  return buyItems().filter(m=>(buyFilter==='all'||(buyFilter==='done'?m.done:!m.done))&&(buyCategoryFilter==='all'||buyCategories(m).includes(buyCategoryFilter))&&buyMatchesStore(m)); // 買好的留在原位，只畫刪除線
 }
 function buyResults(){
   const visible=buyVisibleItems();
@@ -2723,7 +2742,7 @@ function buyView(){
 }
 function buyCard(m){
   const photo=safeBuyImage(m.image);
-  return `<article class="buy-card${m.done?' done':''}"><input class="buy-check" type="checkbox" ${m.done?'checked':''} aria-label="${esc(m.text)}：已買" onchange="toggleMemo('${m.id}')"><div class="buy-main"><div class="buy-name">${esc(m.text)} <span style="font-size:12px;color:var(--muted)">× ${Number(m.quantity)||1}</span></div>${buyCategories(m).map(c=>`<span class="buy-category" data-category="${esc(c)}">${esc(c)}</span>`).join(' ')}${buyValues(m.recipients).length?`<div class="buy-meta buy-recipient">幫誰買｜${esc(buyValues(m.recipients).join('、'))}</div>`:''}${m.shop?`<div class="buy-meta">哪裡買｜${esc(m.shop)}</div>`:''}${m.note?`<div class="buy-meta">${esc(m.note)}</div>`:''}${photo?`<details class="buy-photo" ${buyPhotoOpen.has(m.id)?'open':''} ontoggle="if(this.open)buyPhotoOpen.add('${m.id}');else buyPhotoOpen.delete('${m.id}')"><summary>商品圖片 · 點擊展開／收合</summary><img loading="lazy" src="${photo}" alt="${esc(m.text)} 商品參考圖"></details>`:''}</div><div class="buy-actions"><button class="btn-ic" aria-label="編輯商品" onclick="openBuy(this,'${m.id}')">${TI('pencil',16)}</button><button class="btn-ic" aria-label="刪除商品" onclick="deleteBuy('${m.id}')">${TI('trash',16)}</button></div></article>`;
+  return `<article class="buy-card${m.done?' done':''}"><input class="buy-check" type="checkbox" ${m.done?'checked':''} aria-label="${esc(m.text)}：已買" onchange="checkItem('${m.id}')"><div class="buy-main"><div class="buy-name"><span class="strike">${esc(m.text)}</span> <span style="font-size:12px;color:var(--muted)">× ${Number(m.quantity)||1}</span></div>${buyCategories(m).map(c=>`<span class="buy-category" data-category="${esc(c)}">${esc(c)}</span>`).join(' ')}${buyValues(m.recipients).length?`<div class="buy-meta buy-recipient">幫誰買｜${esc(buyValues(m.recipients).join('、'))}</div>`:''}${m.shop?`<div class="buy-meta">哪裡買｜${esc(m.shop)}</div>`:''}${m.note?`<div class="buy-meta">${esc(m.note)}</div>`:''}${photo?`<details class="buy-photo" ${buyPhotoOpen.has(m.id)?'open':''} ontoggle="if(this.open)buyPhotoOpen.add('${m.id}');else buyPhotoOpen.delete('${m.id}')"><summary>商品圖片 · 點擊展開／收合</summary><img loading="lazy" src="${photo}" alt="${esc(m.text)} 商品參考圖"></details>`:''}</div><div class="buy-actions"><button class="btn-ic" aria-label="編輯商品" onclick="openBuy(this,'${m.id}')">${TI('pencil',16)}</button><button class="btn-ic" aria-label="刪除商品" onclick="deleteBuy('${m.id}')">${TI('trash',16)}</button></div></article>`;
 }
 function openBuy(el,id=''){
   const item=buyItems().find(m=>m.id===id);
@@ -3070,13 +3089,14 @@ function memoView(){
   const renderGroups=list=>[...new Set([...MEMO_CATS,...list.map(m=>m.cat||'其他')])].map(cat=>{
     const its=list.filter(m=>(m.cat||'其他')===cat);
     if(!its.length)return'';
-    return`<div class="memo-cat-hd">${TI(MEMO_TI[cat]||'map-pin',13)} ${esc(cat)} <span class="memo-cat-count">${its.length}</span></div>${its.map(m=>`<div class="memo-item${m.done?' done':''}" id="memo-${m.id}"><button type="button" class="memo-cb${m.done?' on':''}" aria-label="${esc(m.text)}：完成狀態" aria-pressed="${!!m.done}" onclick="toggleMemo('${m.id}')">${m.done?'✓':''}</button><div class="memo-text" onclick="editMemo('${m.id}')">${linkify(m.text)}</div><div class="memo-actions"><button class="memo-edit" onclick="editMemo('${m.id}')" title="編輯">${TI('pencil',13)}</button><button class="memo-del" onclick="delMemo('${m.id}')" title="刪除">×</button></div></div>`).join('')}`;
+    return`<div class="memo-cat-hd">${TI(MEMO_TI[cat]||'map-pin',13)} ${esc(cat)} <span class="memo-cat-count">${its.length}</span></div>${its.map(m=>`<div class="memo-item${m.done?' done':''}" id="memo-${m.id}"><button type="button" class="memo-cb${m.done?' on':''}" aria-label="${esc(m.text)}：完成狀態" aria-pressed="${!!m.done}" onclick="checkItem('${m.id}')">${m.done?'✓':''}</button><div class="memo-text" onclick="editMemo('${m.id}')"><span class="strike">${linkify(m.text)}</span></div><div class="memo-actions"><button class="memo-edit" onclick="editMemo('${m.id}')" title="編輯">${TI('pencil',13)}</button><button class="memo-del" onclick="delMemo('${m.id}')" title="刪除">×</button></div></div>`).join('')}`;
   }).join('');
   const filters=`<div class="memo-filters" aria-label="備忘完成狀態">${[['all','全部',items.length],['pending','未完成',pending.length],['done','已完成',done]].map(([key,label,count])=>`<button type="button" class="btn ${memoFilter===key?'bp':''}" aria-pressed="${memoFilter===key}" onclick="memoFilter='${key}';render()">${label} ${count}</button>`).join('')}</div>`;
   let groups='';
-  if(memoFilter!=='done'&&pending.length)groups+=`<section aria-label="未完成備忘"><h3 class="memo-status-heading">未完成 <span>${pending.length} 項待確認</span></h3>${renderGroups(pending)}</section>`;
+  // 「全部」：完成的項目留在原位，只畫上刪除線（不再移到下方的「已完成」區）
+  if(memoFilter==='all'&&items.length)groups=`<section aria-label="全部備忘"><h3 class="memo-status-heading">行前清單 <span>${pending.length?`還有 ${pending.length} 項未完成`:'全部完成了！'}</span></h3>${renderGroups(items)}</section>`;
+  if(memoFilter==='pending'&&pending.length)groups=`<section aria-label="未完成備忘"><h3 class="memo-status-heading">未完成 <span>${pending.length} 項待確認</span></h3>${renderGroups(pending)}</section>`;
   if(memoFilter==='done'&&done)groups=`<section aria-label="已完成備忘"><h3 class="memo-status-heading">已完成 <span>${done} 項</span></h3>${renderGroups(completed)}</section>`;
-  if(memoFilter==='all'&&done)groups+=`<details class="memo-completed" ${pending.length?'':'open'}><summary>已完成 ${done} 項<span>展開／收合</span></summary>${renderGroups(completed)}</details>`;
   const empty=items.length?(memoFilter==='pending'?'全部完成了，出發前再確認一次就好！':'目前還沒有已完成的備忘。'):'還沒有備忘項目，點右下角「＋」開始新增。';
   const progress=items.length?`<div style="margin-bottom:14px;"><div style="display:flex;justify-content:space-between;font-size:12px;font-weight:700;color:var(--muted);margin-bottom:5px;"><span>行前清單進度</span><span>${done} / ${items.length} 完成</span></div><div class="budget-line"><div class="budget-fill" style="width:${items.length?Math.round(done/items.length*100):0}%;"></div></div></div>`:'';
   const catSel=MEMO_CATS.map(c=>`<option value="${c}">${MEMO_IC[c]} ${c}</option>`).join('');
@@ -3166,6 +3186,28 @@ function addMemo(){
 function toggleMemo(id){
   const memo=(S.memo||[]).map(m=>m.id===id?{...m,done:!m.done}:m);
   setD({memo});
+}
+// ── 勾選備忘／待買：在原位畫上（或擦掉）一條刪除線 ──
+var _strike=null; // 剛勾的那一項：render 完後讓它播刪除線動畫（用 var，render 比這行早執行也不會出錯）
+function strikeEl(id){return document.getElementById('memo-'+id)||document.querySelector(`.buy-check[onchange*="'${id}'"]`)?.closest('.buy-card');}
+function checkItem(id){
+  const m=(S.memo||[]).find(x=>x.id===id);if(!m)return;
+  const willDone=!m.done,filter=m.kind==='purchase'?buyFilter:memoFilter;
+  // 勾了之後會從目前的篩選消失（例如「未完成」裡勾完成）：先在原地畫完線、淡出，再真的切換
+  const leaves=(filter==='pending'&&willDone)||(filter==='done'&&!willDone);
+  const calm=window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if(leaves&&!calm){
+    const el=strikeEl(id);
+    if(el){
+      if(el.classList.contains('leaving'))return;
+      el.classList.add('leaving',willDone?'strike-in':'strike-out');el.classList.toggle('done',willDone);
+      const cb=el.querySelector('.memo-cb');if(cb){cb.classList.toggle('on',willDone);cb.textContent=willDone?'✓':'';}
+      setTimeout(()=>toggleMemo(id),willDone?650:450);
+      return;
+    }
+  }
+  _strike={id,at:Date.now()};
+  toggleMemo(id);
 }
 
 function editMemo(id){
