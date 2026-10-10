@@ -1171,6 +1171,12 @@ button.bk-chip{cursor:pointer}
 .bk-seg{display:inline-flex;align-items:center;gap:4px;padding:6px 11px;font:inherit;font-size:13px;color:var(--ink);background:var(--washi);border:var(--lw2) solid var(--ink);border-radius:999px;cursor:pointer}
 .bk-seg.on{background:var(--bk);box-shadow:0 2px 0 var(--ink)}
 .bk-pair{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.bk-steps{margin:0 0 12px;padding-left:20px;font-size:13px;line-height:1.7;color:var(--ink)}
+.bk-prev{padding:8px 0;border-bottom:1px solid var(--line)}
+.bk-prev:last-child{border-bottom:0}
+.bk-prev.skip{opacity:.5}
+.bk-prev strong{display:flex;align-items:center;gap:5px;font-weight:400;font-size:13.5px}
+.bk-prev-note{color:var(--coral-ink);white-space:pre-wrap}
 .bk-pair>.fg{min-width:0}
 /* ── 切換日期：卡片依序彈進來，選到的日期鈕彈一下 ── */
 .day-in{animation:dayInNext .5s var(--pop) backwards;animation-delay:calc(var(--i,0) * 45ms)}
@@ -1584,7 +1590,7 @@ function fabConfig(){
     itinerary:{manual:'手動新增地點',manualSub:'新增一個行程地點',manualIcon:TI('plus',20),ai:'AI 匯入行程',aiSub:'貼上 AI 行程一次建立',aiIcon:TI('sparkles',19)},
     wishlist:{manual:'手動新增清單',manualSub:'加入想去的店家或景點',manualIcon:TI('plus',20),ai:'AI 匯入清單',aiSub:'批次加入推薦地點',aiIcon:TI('sparkles',19)},
     expenses:{manual:'新增記帳',manualSub:'手動輸入日常花費',manualIcon:TI('coin',20),ai:'AI 收據記帳',aiSub:'上傳收據自動帶入金額分類',aiIcon:TI('camera',19)},
-    bookings:{actions:[['新增航班／交通','飛機、火車、巴士、船、租車',TI('plane',20),"openBooking(this,'flight')"],['新增住宿','飯店、民宿的入住資訊',TI('bed',20),"openBooking(this,'stay')"]]},
+    bookings:{actions:[['新增航班／交通','飛機、火車、巴士、船、租車',TI('plane',20),"openBooking(this,'flight')"],['新增住宿','飯店、民宿的入住資訊',TI('bed',20),"openBooking(this,'stay')"],['AI 匯入','貼上訂位確認信或截圖，AI 幫你整理',TI('sparkles',19),"openBookingImport(this)",'ai']]},
     memo:{manual:'新增備忘',manualSub:'加入行前清單項目',manualIcon:TI('checklist',20),ai:'AI 產生備忘',aiSub:'自動產生旅行待辦清單',aiIcon:TI('sparkles',19)}
   };
   return cfg[S.view]||null;
@@ -1593,7 +1599,7 @@ function globalFab(){
   const cfg=fabConfig();
   if(!cfg)return'';
   const tmplRow=(S.view==='itinerary'&&S.wlFabOpen)?`<div class="app-fab-tmpls">${TMPL.map((t,i)=>`<button class="app-fab-tmpl" style="background:${CB[t.cat]};color:${CF[t.cat]};" onclick="fabTmpl(this,${i})">${TI(CTI[t.cat]||'map-pin',13)} ${esc(t.name)}</button>`).join('')}</div>`:'';
-  const actions=cfg.actions?cfg.actions.map(([title,sub,ic,fn])=>`<button class="app-fab-action" onclick="S.wlFabOpen=false;${fn}"><span class="app-fab-action-ic">${ic}</span><span><div class="app-fab-action-title">${title}</div><div class="app-fab-action-sub">${sub}</div></span></button>`).join(''):'';
+  const actions=cfg.actions?cfg.actions.map(([title,sub,ic,fn,cls])=>`<button class="app-fab-action${cls?' '+cls:''}" onclick="S.wlFabOpen=false;${fn}"><span class="app-fab-action-ic">${ic}</span><span><div class="app-fab-action-title">${title}</div><div class="app-fab-action-sub">${sub}</div></span></button>`).join(''):'';
   const sheet=S.wlFabOpen?`<div class="app-fab-backdrop" onclick="closeWlFab()"></div><div class="app-fab-sheet">${tmplRow}${actions||`
     <button class="app-fab-action" onclick="fabManual(this)"><span class="app-fab-action-ic">${cfg.manualIcon}</span><span><div class="app-fab-action-title">${cfg.manual}</div><div class="app-fab-action-sub">${cfg.manualSub}</div></span></button>
     <button class="app-fab-action ai" onclick="fabAi(this)"><span class="app-fab-action-ic">${cfg.aiIcon}</span><span><div class="app-fab-action-title">${cfg.ai}</div><div class="app-fab-action-sub">${cfg.aiSub}</div></span></button>`}
@@ -1769,6 +1775,7 @@ const BK_TYPES={
   stay:{label:'住宿',icon:'bed',fill:'var(--coral)'},
 };
 const BK_GROUPS=[['航班','plane','var(--mizu-wash)',['flight']],['交通','train','var(--yellow-wash)',['train','bus','ship','car']],['住宿','bed','var(--coral-wash)',['stay']]];
+const BK_FIELDS=['date','time','endDate','endTime','from','to','number','seat','code','name','address','phone','note'];
 const bookingItems=()=>(S.memo||[]).filter(m=>m.kind==='booking');
 const bkType=b=>BK_TYPES[b?.type]?b.type:'train';
 const bkIso=d=>/^\d{4}-\d{2}-\d{2}$/.test(d||'');
@@ -1822,7 +1829,7 @@ function bookingCard(b,st,isNext,today){
 }
 function bookingsView(){
   const items=bookingItems();
-  const addBtns=`<button class="btn" onclick="openBooking(this,'flight')">${TI('plane',15)} 新增航班</button><button class="btn" onclick="openBooking(this,'train')">${TI('train',15)} 新增交通</button><button class="btn" onclick="openBooking(this,'stay')">${TI('bed',15)} 新增住宿</button>`;
+  const addBtns=`<button class="btn" onclick="openBooking(this,'flight')">${TI('plane',15)} 新增航班</button><button class="btn" onclick="openBooking(this,'train')">${TI('train',15)} 新增交通</button><button class="btn" onclick="openBooking(this,'stay')">${TI('bed',15)} 新增住宿</button><button class="btn" onclick="openBookingImport(this)">${TI('sparkles',15)} AI 匯入</button>`;
   if(!items.length)return `<div class="bk-empty"><div class="day-scene">${dayScene('flight')}</div><p>把航班、火車、住宿的訂位資訊放在這裡，<br>出發前打開就看得到，不用再翻信箱。</p><div class="empty-cta">${addBtns}</div></div>`;
   const clock=tripClock(),now=`${clock.date} ${String(Math.floor(clock.minutes/60)).padStart(2,'0')}:${String(clock.minutes%60).padStart(2,'0')}`;
   const sorted=items.slice().sort((a,b)=>(bkSpan(a).s||'9999').localeCompare(bkSpan(b).s||'9999'));
@@ -1838,7 +1845,7 @@ function openBooking(el,type,id=''){
   const b=bookingItems().find(m=>m.id===id);
   const pick=k=>b?.[k]||'';
   FM={bkId:b?.id||'',bkType:b?bkType(b):(BK_TYPES[type]?type:'flight')};
-  ['date','time','endDate','endTime','from','to','number','seat','code','name','address','phone','note'].forEach(k=>FM[k]=pick(k));
+  BK_FIELDS.forEach(k=>FM[k]=pick(k));
   openModal(el,{t:'booking'});
 }
 function bkSetType(t){FM.bkType=t;_refreshHeroContent();}
@@ -1858,17 +1865,24 @@ function bookingModal(){
 <div class="ar"><button class="btn bp" type="submit" style="flex:1;padding:10px;">儲存</button><button class="btn" type="button" style="flex:1;padding:10px;" onclick="setU({modal:null})">取消</button></div>
 ${FM.bkId?`<button type="button" class="btn br" style="width:100%;margin-top:12px;padding:10px;" onclick="deleteBooking('${FM.bkId}')">${TI('trash',14)} 刪除這筆</button>`:''}</form>`;
 }
-function saveBooking(){
-  const t=BK_TYPES[FM.bkType]?FM.bkType:'flight',stay=t==='stay',car=t==='car';
-  const v=(k,n=120)=>String(FM[k]||'').trim().slice(0,n);
-  if(stay&&!v('name')){alert('請填寫住宿名稱');return;}
-  if(!stay&&!['date','number','from','to'].some(k=>v(k))){alert('請至少填寫日期、班次或起訖地點');return;}
-  if(bkIso(v('date'))&&bkIso(v('endDate'))&&v('endDate')<v('date')){alert(`${stay?'退房':'還車'}日期不能早於${stay?'入住':'取車'}日期`);return;}
-  const old=bookingItems().find(m=>m.id===FM.bkId);
-  if(FM.bkId&&!old){alert('這筆資料已被刪除，請重新新增');return;}
-  const item={id:old?.id||uid(),kind:'booking',cat:'預訂',done:false,type:t,date:v('date',10),time:v('time',5),endDate:stay||car?v('endDate',10):'',endTime:v('endTime',5),code:v('code',60),note:v('note',1000),
+// 手動儲存和 AI 匯入共用：檢查欄位並組成一筆（不含 id）；有問題就丟出給使用者看的訊息
+function bkBuild(t,get){
+  const stay=t==='stay',car=t==='car';
+  const v=(k,n=120)=>String(get(k)??'').trim().slice(0,n);
+  if(stay&&!v('name'))throw Error('請填寫住宿名稱');
+  if(!stay&&!['date','number','from','to'].some(k=>v(k)))throw Error('請至少填寫日期、班次或起訖地點');
+  if(bkIso(v('date'))&&bkIso(v('endDate'))&&v('endDate')<v('date'))throw Error(`${stay?'退房':'還車'}日期不能早於${stay?'入住':'取車'}日期`);
+  const item={kind:'booking',cat:'預訂',done:false,type:t,date:v('date',10),time:v('time',5),endDate:stay||car?v('endDate',10):'',endTime:v('endTime',5),code:v('code',60),note:v('note',1000),
     ...(stay?{name:v('name'),address:v('address',200),phone:v('phone',40)}:{number:v('number',60),from:v('from',80),to:v('to',80),seat:v('seat',60)})};
   item.text=`${BK_TYPES[t].label}：${bkTitle(item)}`;
+  return item;
+}
+function saveBooking(){
+  let item;
+  try{item=bkBuild(BK_TYPES[FM.bkType]?FM.bkType:'flight',k=>FM[k]);}catch(e){alert(e.message);return;}
+  const old=bookingItems().find(m=>m.id===FM.bkId);
+  if(FM.bkId&&!old){alert('這筆資料已被刪除，請重新新增');return;}
+  item={id:old?.id||uid(),...item};
   setD({memo:old?S.memo.map(m=>m.id===old.id?item:m):[...(S.memo||[]),item],modal:null});
 }
 function deleteBooking(id){
@@ -1882,6 +1896,127 @@ function bkCopy(btn){
   const done=()=>{btn.classList.add('copied');setTimeout(()=>btn.classList.remove('copied'),1600);};
   const fallback=()=>{const ta=document.createElement('textarea');ta.value=code;ta.style.cssText='position:fixed;opacity:0;top:0;left:0;';document.body.appendChild(ta);ta.select();try{document.execCommand('copy');}catch(e){console.warn('[booking-copy]',e);}ta.remove();done();};
   if(navigator.clipboard?.writeText)navigator.clipboard.writeText(code).then(done).catch(fallback);else fallback();
+}
+// ── 航班住宿的 AI 匯入：把確認信交給任何 AI 整理成 JSON，貼回來預覽後一次新增 ──
+const BK_IMPORT_PROMPT=`請把我提供的訂位確認信、電子機票、車票、訂房資料或截圖整理成 JSON 陣列，只輸出 JSON，不要加說明。
+每一段交通或每一間住宿一筆：來回機票拆成去程、回程兩筆，轉機的每一段航班也各自一筆。
+欄位如下，不知道的填空字串 ""，不要猜：
+type：類型，只能是 "flight"（飛機）、"train"（火車、高鐵、新幹線）、"bus"（巴士、客運）、"ship"（船）、"car"（租車）、"stay"（住宿）
+date：出發／入住／取車日期，格式 YYYY-MM-DD
+time：出發／入住／取車時間，24 小時制 HH:MM，用當地時間
+endDate：退房或還車日期 YYYY-MM-DD（只有 stay、car 需要）
+endTime：抵達／退房／還車時間 HH:MM，用當地時間
+number：航班編號、車次、路線或租車車款，例如 "CI188"、"高鐵 803"
+from：出發機場（含航廈）、上車站或取車地點
+to：抵達機場（含航廈）、下車站或還車地點
+seat：座位、車廂或租車方案
+name：住宿名稱（stay 必填）
+address：住宿地址
+phone：住宿電話
+code：訂位代號、訂房代號或訂單編號
+note：要提醒的事，例如報到截止時間、行李限額、含早餐、入住須知（最多 1000 字）
+每次最多 50 筆。不要輸出價格、信用卡、護照號碼等個人資料。`;
+const BK_TYPE_ALIAS={flight:'flight',plane:'flight',air:'flight',飛機:'flight',航班:'flight',班機:'flight',train:'train',rail:'train',火車:'train',高鐵:'train',台鐵:'train',新幹線:'train',鐵路:'train',bus:'bus',巴士:'bus',客運:'bus',公車:'bus',ship:'ship',ferry:'ship',boat:'ship',船:'ship',渡輪:'ship',car:'car',租車:'car',stay:'stay',hotel:'stay',住宿:'stay',飯店:'stay',民宿:'stay',酒店:'stay'};
+function bkNormDate(v){
+  const m=String(v).trim().match(/^(\d{4})[-/.年](\d{1,2})[-/.月](\d{1,2})日?$/);if(!m)return '';
+  const d=`${m[1]}-${m[2].padStart(2,'0')}-${m[3].padStart(2,'0')}`;
+  return !isNaN(Date.parse(d+'T00:00:00Z'))&&new Date(d+'T00:00:00Z').toISOString().slice(0,10)===d?d:'';
+}
+function bkNormTime(v){const m=String(v).trim().match(/^(\d{1,2})[:：](\d{2})$/);return m&&+m[1]<24&&+m[2]<60?`${m[1].padStart(2,'0')}:${m[2]}`:'';}
+function parseBookingImport(text){
+  if(typeof text!=='string'||text.length>200000)throw Error('內容太長，請分批貼上（每次最多 50 筆）。');
+  const source=text.trim().replace(/^```(?:json)?\s*\n?([\s\S]*?)\n?```$/i,'$1');
+  let rows;
+  try{rows=JSON.parse(source);}catch{throw Error('JSON 格式無法讀取，請貼上完整的 [ … ] 陣列，不要包含額外說明。');}
+  if(rows&&typeof rows==='object'&&!Array.isArray(rows))rows=[rows];
+  if(!Array.isArray(rows)||!rows.length)throw Error('請提供至少一筆資料的 JSON 陣列。');
+  if(rows.length>50)throw Error('一次最多匯入 50 筆，請分批貼上。');
+  return rows.map((row,i)=>{
+    const fail=message=>{throw Error(`第 ${i+1} 筆：${message}`);};
+    if(!row||typeof row!=='object'||Array.isArray(row))fail('每一筆必須是 JSON 物件。');
+    const type=BK_TYPE_ALIAS[String(row.type??'').trim().toLowerCase()];
+    if(!type)fail('type 只能是 flight、train、bus、ship、car 或 stay。');
+    const f={};
+    for(const k of BK_FIELDS){
+      const value=row[k]??'';
+      if(typeof value!=='string'&&typeof value!=='number')fail(`${k} 請填文字。`);
+      f[k]=String(value).trim();
+    }
+    if(f.note.length>1000)fail('note 最多 1000 字。');
+    for(const k of ['date','endDate'])if(f[k]&&!(f[k]=bkNormDate(f[k])))fail(`${k} 請用 YYYY-MM-DD 格式的有效日期。`);
+    for(const k of ['time','endTime'])if(f[k]&&!(f[k]=bkNormTime(f[k])))fail(`${k} 請用 24 小時制 HH:MM。`);
+    try{return bkBuild(type,k=>f[k]);}catch(e){fail(e.message);}
+  });
+}
+function bkImportKey(b){
+  const n=v=>String(v||'').normalize('NFKC').trim().replace(/\s+/g,' ').toLowerCase();
+  return JSON.stringify([b.type,b.date,b.time,n(b.number),n(b.name),n(b.from),n(b.to)]);
+}
+function bookingImportPlan(text){
+  if(!text.trim())return {items:[],rows:[],duplicates:0,error:''};
+  try{
+    const seen=new Set(bookingItems().map(bkImportKey)),items=[];
+    let duplicates=0;
+    const rows=parseBookingImport(text).map(item=>{
+      const key=bkImportKey(item),duplicate=seen.has(key);seen.add(key);
+      if(duplicate)duplicates++;
+      const skip=duplicate&&FM.bkImportSkip!==false;
+      if(!skip)items.push(item);
+      return {item,duplicate,skip};
+    });
+    return {items,rows,duplicates,error:''};
+  }catch(e){return {items:[],rows:[],duplicates:0,error:e.message};}
+}
+function bookingImportPreviewHtml(text){
+  const plan=bookingImportPlan(text);
+  if(plan.error)return `<div class="import-err">${esc(plan.error)}<br>尚未匯入任何資料，修正後會重新預覽。</div>`;
+  if(!plan.rows.length)return '<p class="tip">貼上後會在這裡顯示預覽。</p>';
+  return `<p><strong>可新增 ${plan.items.length} 筆</strong> · ${plan.duplicates} 筆重複${FM.bkImportSkip!==false?'（已略過）':''}</p><div class="import-preview">${plan.rows.map(({item:b,duplicate,skip})=>{
+    const when=[bkDate(b.date),esc(b.time)].filter(Boolean).join(' ');
+    const until=b.type==='stay'||b.type==='car'?[bkDate(b.endDate),esc(b.endTime)].filter(Boolean).join(' '):esc(b.endTime);
+    return `<div class="bk-prev${skip?' skip':''}"><strong>${TI(BK_TYPES[b.type].icon,14)} ${esc(bkTitle(b))}</strong>${duplicate?` · ${skip?'略過重複':'重複，仍新增'}`:''}<div>${BK_TYPES[b.type].label}${when?` · ${when}`:''}${until?` → ${until}`:''}</div>${b.code?`<div>代號｜${esc(b.code)}</div>`:''}${b.note?`<div class="bk-prev-note">${esc(b.note)}</div>`:''}</div>`;
+  }).join('')}</div>`;
+}
+function openBookingImport(el){
+  FM={bkImportText:'',bkImportSkip:true};
+  openModal(el,{t:'booking_import'});
+}
+function bookingImportModal(){
+  return `<div class="mhd"><div class="mt">${TI('sparkles',17)} AI 匯入航班住宿</div><button class="mcl" aria-label="關閉" onclick="setU({modal:null})">✕</button></div>
+  <ol class="bk-steps"><li>按「複製 AI 指令」，貼給 ChatGPT、Gemini 或 Claude 等任何 AI</li><li>接著貼上訂位確認信、電子機票、訂房資料，或直接上傳截圖</li><li>把 AI 回覆的 JSON 貼到下面，確認預覽後匯入</li></ol>
+  <details><summary>給 AI 的指令</summary><textarea id="bk-import-prompt" class="import-area" readonly aria-label="給 AI 的指令">${esc(BK_IMPORT_PROMPT)}</textarea></details>
+  <div class="ar" style="margin:12px 0"><button type="button" class="btn" onclick="copyBookingImportPrompt(this)">${TI('copy',14)} 複製 AI 指令</button><button type="button" class="btn" onclick="pasteClipboard('bk-import-box','previewBookingImport')">從剪貼簿貼上</button></div>
+  <label class="fl" for="bk-import-box">AI 輸出的 JSON（每次最多 50 筆）</label>
+  <textarea id="bk-import-box" class="import-area" maxlength="200000" placeholder='[{"type":"flight","date":"2026-11-11","time":"07:40","endTime":"10:50","number":"CI188","from":"桃園 T1","to":"釜山 T1","code":"ABC123","note":"出發前 2 天網路報到"}]' oninput="previewBookingImport()">${esc(FM.bkImportText||'')}</textarea>
+  <label style="display:flex;align-items:center;gap:8px;margin-top:12px"><input type="checkbox" style="width:auto" ${FM.bkImportSkip!==false?'checked':''} onchange="FM.bkImportSkip=this.checked;previewBookingImport()">略過重複資料</label>
+  <p class="tip">類型、日期、時間、班次、住宿名稱和起訖地點都相同就視為重複（含這次貼上的內容）。既有資料不會被覆蓋。請不要貼上護照號碼、信用卡號等個資。</p>
+  <div id="bk-import-preview" role="status" aria-live="polite">${bookingImportPreviewHtml(FM.bkImportText||'')}</div>
+  <div class="ar"><button type="button" class="btn" onclick="setU({modal:null})">取消</button><button id="bk-import-confirm" type="button" class="btn bp" onclick="confirmBookingImport()" ${bookingImportPlan(FM.bkImportText||'').items.length?'':'disabled'}>確認匯入</button></div>`;
+}
+async function copyBookingImportPrompt(button){
+  try{await navigator.clipboard.writeText(BK_IMPORT_PROMPT);button.textContent='已複製 AI 指令';}
+  catch{
+    const input=document.getElementById('bk-import-prompt');
+    if(input){input.parentElement.open=true;input.focus();input.select();}
+    alert('請長按或使用複製快捷鍵，複製已選取的 AI 指令。');
+  }
+}
+function previewBookingImport(){
+  const input=document.getElementById('bk-import-box');if(input)FM.bkImportText=input.value;
+  const text=FM.bkImportText||'',preview=document.getElementById('bk-import-preview'),button=document.getElementById('bk-import-confirm');
+  if(preview)preview.innerHTML=bookingImportPreviewHtml(text);
+  if(button)button.disabled=!bookingImportPlan(text).items.length;
+}
+function confirmBookingImport(){
+  if(S.modal?.t!=='booking_import')return;
+  previewBookingImport();
+  // 送出前用最新的同步資料再比一次重複，包含旅伴剛加的
+  const plan=bookingImportPlan(FM.bkImportText||'');
+  if(plan.error||!plan.items.length)return;
+  const memo=[...(S.memo||[]),...plan.items.map(item=>({...item,id:uid(),_u:Date.now()}))];
+  if(new Blob([JSON.stringify({...S,memo})]).size>850000){alert('旅程資料接近同步容量上限，請減少這次匯入的筆數。尚未匯入任何資料。');return;}
+  setD({memo,modal:null});
+  alert(`已新增 ${plan.items.length} 筆航班住宿資料${FM.bkImportSkip!==false&&plan.duplicates?`，略過 ${plan.duplicates} 筆重複`:''}。`);
 }
 /* ── 加入主畫面：Android／電腦用瀏覽器自己的安裝視窗；iPhone 沒有這種 API，改顯示步驟說明 ── */
 let _installPrompt=null;
@@ -3517,7 +3652,7 @@ ${sec(TI('route',19),'行程規劃',[
   [TI('map-2',15),'點「地圖」以名稱＋地址搜尋 Google Maps；「導航」直接開啟導航。'],
   [TI('phone',15),'點電話號碼可直接撥打。'],
   [TI('arrows-sort',15),'點「排序」進入排序模式：拖曳把手或點上下箭頭調整地點順序。'],
-  [TI('plane',15),'「航班住宿」分頁可以記下航班、火車、巴士、船、租車和住宿：時間、起訖、座位、訂位代號（點一下複製）和提醒。最上面會提醒「接下來」要搭的車或要入住的地方。'],
+  [TI('plane',15),'「航班住宿」分頁可以記下航班、火車、巴士、船、租車和住宿：時間、起訖、座位、訂位代號（點一下複製）和提醒。最上面會提醒「接下來」要搭的車或要入住的地方。也可以按右下角＋選「AI 匯入」，把訂位確認信或截圖交給任何 AI 整理後一次貼上。'],
   [TI('photo',15),'每一天上方有一張會動的插圖（海邊、山林纜車、溫泉、城市、美食、飛機、火車、露營、田野、熱氣球），會依標題和地點自動挑；想換的話再點一次目前的日期分頁，在「插圖」選單裡選。'],
   [TI('dots',15),'點地點卡片的「⋯」（或長按卡片）可編輯、存到清單、刪除；刪除後 6 秒內可按「復原」救回。'],
 ])}
@@ -4146,7 +4281,7 @@ function wlConfirmImport(){
 
 // ════ HERO & SHEET modal engine ════════════════════════
 // Hero modal types (large forms) — open from trigger element
-const HERO_TYPES=new Set(['loc','exp','nd','ed','wl_add','wl_import','wl_edit','wl_day','wl_cat','import','tv','tvEdit','cover','tools','help','a2hs','note','memo_add','memo_import','buy_edit','buy_import','cloud_images','tripGate','booking']);
+const HERO_TYPES=new Set(['loc','exp','nd','ed','wl_add','wl_import','wl_edit','wl_day','wl_cat','import','tv','tvEdit','cover','tools','help','a2hs','note','memo_add','memo_import','buy_edit','buy_import','cloud_images','tripGate','booking','booking_import']);
 // Sheet modal types (compact) — slide up from bottom
 const SHEET_TYPES=new Set([]);
 
@@ -4190,6 +4325,7 @@ function _getModalContent(m){
   if(m.t==='tripGate')c=mTripGate();
   else if(m.t==='buy_edit')c=buyModal();
   else if(m.t==='booking')c=bookingModal();
+  else if(m.t==='booking_import')c=bookingImportModal();
   else if(m.t==='buy_import')c=buyImportModal();
   else if(m.t==='cloud_images')c=cloudImagesModal();
   else if(m.t==='loc')c=mLoc();
