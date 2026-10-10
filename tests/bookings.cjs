@@ -50,10 +50,10 @@ ctx.S.modal={t:'booking_import'};ctx.FM={bkImportText:'[{"type":"flight","number
 ctx.S.modal=null;ctx.FM={bkImportText:'[{"type":"flight","number":"Z2"}]'};ctx.confirmBookingImport();assert.equal(ctx.bookingItems().length,n);
 
 // View: next reminder, escaping, delete + undo.
-const view=ctx.bookingsView();assert(view.includes('接下來'));assert(view.includes('入住中'));assert(view.includes('AI 匯入'));
+const view=ctx.bookingsView();assert(view.includes('接下來'));assert(view.includes('入住中'));assert(!/openBooking\(this,'(flight|train|stay)'\)|openBookingImport/.test(view),'adding lives in the ＋ button only');assert(view.includes("openBooking(this,'',"));
 ctx.S.memo.push({id:'x1',kind:'booking',type:'flight',number:'<script>',note:'<img>'});assert(!ctx.bookingsView().includes('<script>'));
 const stay=ctx.bookingItems().find(b=>b.type==='stay');ctx.confirm=()=>true;vm.runInContext('confirm=()=>true',ctx);ctx.deleteBooking(stay.id);assert(ctx.S.trash[stay.id]);assert(!ctx.bookingItems().some(b=>b.id===stay.id));undo();assert(ctx.bookingItems().some(b=>b.name==='礁溪老爺酒店'&&b.id!==stay.id));
-ctx.S.memo=[];assert(ctx.bookingsView().includes('bk-empty'));
+ctx.S.memo=[];assert(ctx.bookingsView().includes('bk-empty'));assert(!ctx.bookingsView().includes('<button'));
 
 // Wiring that lives outside the block.
 assert(html.includes("m.kind!=='purchase'&&m.kind!=='booking'"));

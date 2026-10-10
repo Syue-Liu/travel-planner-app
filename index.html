@@ -1163,10 +1163,10 @@ button.bk-chip{cursor:pointer}
 .bk-acts .btn{min-height:32px;padding:4px 11px;font-size:12.5px;text-decoration:none}
 .bk-note{display:flex;align-items:flex-start;gap:6px;margin-top:12px;padding-top:10px;font-size:14px;line-height:1.55;color:var(--coral-ink);white-space:pre-wrap;word-break:break-word;border-top:1.5px dashed var(--line-2)}
 .bk-note svg{flex-shrink:0;margin-top:3px}
-.bk-add{display:flex;flex-wrap:wrap;justify-content:center;gap:8px;margin:4px 0 8px}
 .bk-empty{text-align:center;color:var(--muted)}
 .bk-empty .day-scene{margin:4px auto 16px}
-.bk-empty p{margin:0 0 16px;font-size:14px;line-height:1.7}
+.bk-empty p{margin:0 0 10px;font-size:14px;line-height:1.7}
+.bk-empty .bk-empty-hint{font-size:13px;color:var(--coral-ink)}
 .bk-segs{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 14px}
 .bk-seg{display:inline-flex;align-items:center;gap:4px;padding:6px 11px;font:inherit;font-size:13px;color:var(--ink);background:var(--washi);border:var(--lw2) solid var(--ink);border-radius:999px;cursor:pointer}
 .bk-seg.on{background:var(--bk);box-shadow:0 2px 0 var(--ink)}
@@ -1829,8 +1829,7 @@ function bookingCard(b,st,isNext,today){
 }
 function bookingsView(){
   const items=bookingItems();
-  const addBtns=`<button class="btn" onclick="openBooking(this,'flight')">${TI('plane',15)} 新增航班</button><button class="btn" onclick="openBooking(this,'train')">${TI('train',15)} 新增交通</button><button class="btn" onclick="openBooking(this,'stay')">${TI('bed',15)} 新增住宿</button><button class="btn" onclick="openBookingImport(this)">${TI('sparkles',15)} AI 匯入</button>`;
-  if(!items.length)return `<div class="bk-empty"><div class="day-scene">${dayScene('flight')}</div><p>把航班、火車、住宿的訂位資訊放在這裡，<br>出發前打開就看得到，不用再翻信箱。</p><div class="empty-cta">${addBtns}</div></div>`;
+  if(!items.length)return `<div class="bk-empty"><div class="day-scene">${dayScene('flight')}</div><p>把航班、火車、住宿的訂位資訊放在這裡，<br>出發前打開就看得到，不用再翻信箱。</p><p class="bk-empty-hint">按右下角的＋新增，或用 AI 匯入確認信</p></div>`;
   const clock=tripClock(),now=`${clock.date} ${String(Math.floor(clock.minutes/60)).padStart(2,'0')}:${String(clock.minutes%60).padStart(2,'0')}`;
   const sorted=items.slice().sort((a,b)=>(bkSpan(a).s||'9999').localeCompare(bkSpan(b).s||'9999'));
   const next=sorted.find(b=>bkStatus(b,now)==='upcoming');
@@ -1839,7 +1838,7 @@ function bookingsView(){
     const list=sorted.filter(b=>types.includes(bkType(b)));
     return list.length?`<section class="bk-sec"><h2 class="bk-sec-h"><span class="bk-sec-ic" style="background:${wash}">${TI(icon,19)}</span>${label}</h2><div class="bk-list">${list.map(b=>bookingCard(b,bkStatus(b,now),b===next,clock.date)).join('')}</div></section>`:'';
   }).join('');
-  return `${nextBox}${sections}<div class="bk-add">${addBtns}</div>`;
+  return `${nextBox}${sections}`;
 }
 function openBooking(el,type,id=''){
   const b=bookingItems().find(m=>m.id===id);
@@ -3652,7 +3651,7 @@ ${sec(TI('route',19),'行程規劃',[
   [TI('map-2',15),'點「地圖」以名稱＋地址搜尋 Google Maps；「導航」直接開啟導航。'],
   [TI('phone',15),'點電話號碼可直接撥打。'],
   [TI('arrows-sort',15),'點「排序」進入排序模式：拖曳把手或點上下箭頭調整地點順序。'],
-  [TI('plane',15),'「航班住宿」分頁可以記下航班、火車、巴士、船、租車和住宿：時間、起訖、座位、訂位代號（點一下複製）和提醒。最上面會提醒「接下來」要搭的車或要入住的地方。也可以按右下角＋選「AI 匯入」，把訂位確認信或截圖交給任何 AI 整理後一次貼上。'],
+  [TI('plane',15),'「航班住宿」分頁（按右下角＋新增）可以記下航班、火車、巴士、船、租車和住宿：時間、起訖、座位、訂位代號（點一下複製）和提醒。最上面會提醒「接下來」要搭的車或要入住的地方。也可以在＋裡選「AI 匯入」，把訂位確認信或截圖交給任何 AI 整理後一次貼上。'],
   [TI('photo',15),'每一天上方有一張會動的插圖（海邊、山林纜車、溫泉、城市、美食、飛機、火車、露營、田野、熱氣球），會依標題和地點自動挑；想換的話再點一次目前的日期分頁，在「插圖」選單裡選。'],
   [TI('dots',15),'點地點卡片的「⋯」（或長按卡片）可編輯、存到清單、刪除；刪除後 6 秒內可按「復原」救回。'],
 ])}
