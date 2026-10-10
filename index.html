@@ -795,6 +795,7 @@ body{background:radial-gradient(ellipse at 5% 5%,var(--journal-gold-wash),transp
 .app[data-view="buy"],.nav-btn[data-view="buy"]{--accent:var(--green-ink);--accent-fill:var(--wakatake);--accent-wash:var(--green-wash)}
 .app[data-view="expenses"],.nav-btn[data-view="expenses"]{--accent:var(--yellow-ink);--accent-fill:var(--yellow);--accent-wash:var(--yellow-wash)}
 .app[data-view="split"],.nav-btn[data-view="split"]{--accent:var(--mizu-ink);--accent-fill:var(--mizu);--accent-wash:var(--mizu-wash)}
+.app[data-view="bookings"],.nav-btn[data-view="bookings"]{--accent:var(--coral-ink);--accent-fill:var(--coral);--accent-wash:var(--coral-wash)}
 
 /* Huninn 只有一種粗細：關掉假粗體，層次改用字級 */
 html{background:var(--washi);font-synthesis:none}
@@ -854,7 +855,8 @@ button,input,select,textarea{font-family:var(--font-sans)}
 .nav-logo{flex-shrink:0;width:40px;height:40px;margin-left:-3px;padding:0;border:0;background:none;cursor:pointer;display:grid;place-items:center;-webkit-tap-highlight-color:transparent}
 .nav-logo svg{display:block;width:36px;height:36px;transition:transform .3s var(--pop)}
 .nav-logo:active svg{transform:rotate(-8deg) scale(.92)}
-.nav-tabs{flex:1;min-width:0;display:flex;justify-content:flex-end;overflow-x:auto;scrollbar-width:none}
+.nav-tabs{flex:1;min-width:0;display:flex;overflow-x:auto;scrollbar-width:none}
+.nav-tabs>:first-child{margin-left:auto}
 .nav-tabs::-webkit-scrollbar{display:none}
 .nav-btn{flex:0 0 auto;min-width:0;min-height:42px;padding:6px 7px;border:0;border-radius:10px;background:none;box-shadow:none;color:var(--muted);font-size:15px;font-weight:400;letter-spacing:.04em}
 .nav-btn span{padding:0 1px;transition:box-shadow .25s ease}
@@ -864,7 +866,9 @@ button,input,select,textarea{font-family:var(--font-sans)}
 .nav .cover-menu-wrap{margin-left:4px}
 .nav .hamb{width:40px;height:40px;border-radius:13px}
 .nav .cover-menu{right:0;top:50px}
-@media (max-width:400px){.nav{padding:0 8px 0 10px}.nav-btn{padding:6px 5px;font-size:14px;letter-spacing:0}}
+@media (max-width:430px){.nav{gap:2px;padding:0 6px 0 8px}.nav-logo{width:34px;margin-left:-2px}.nav-logo svg{width:32px;height:32px}.nav-btn{padding:6px 3px;font-size:14px;letter-spacing:0}}
+@media (max-width:380px){.nav-logo{display:none}}
+@media (max-width:340px){.nav-btn{padding:6px 2px;font-size:13px}}
 @media (min-width:700px){.nav{padding:0 22px}.nav-btn{padding:6px 12px;font-size:16px}}
 .body{background:var(--washi)!important}
 .day-tabs{padding:4px 2px 12px}
@@ -1115,6 +1119,59 @@ input:focus,select:focus,textarea:focus{border-color:var(--ink);box-shadow:0 0 0
 @keyframes dsBloom{from{transform:scale(.8)}to{transform:scale(1.1)}}
 
 .scene-preview{margin:8px 0 0;border-radius:16px}
+/* ── 航班住宿：像登機證的卡片，最上面一張「接下來」提醒 ── */
+.bk-next{display:block;width:100%;margin:0 0 20px;padding:12px 14px;text-align:left;font:inherit;color:var(--ink);background:var(--yellow-wash);border:var(--lw) solid var(--ink);border-radius:18px;box-shadow:var(--hard);cursor:pointer}
+.bk-next:active{transform:translateY(2px);box-shadow:none}
+.bk-next-k{display:flex;align-items:center;gap:5px;font-size:12.5px;color:var(--yellow-ink)}
+.bk-next-t{display:flex;align-items:center;gap:6px;margin-top:4px;font-size:16px;line-height:1.4}
+.bk-next-note{display:block;margin-top:5px;font-size:13px;color:var(--coral-ink)}
+.bk-sec{margin:0 0 22px}
+.bk-sec-h{display:flex;align-items:center;gap:10px;margin:0 0 12px;font-size:20px;font-weight:400;color:var(--ink)}
+.bk-sec-ic{width:40px;height:40px;flex-shrink:0;border-radius:50%;border:var(--lw) solid var(--ink);display:grid;place-items:center}
+.bk-list{display:grid;gap:12px}
+@media (min-width:760px){.bk-list{grid-template-columns:1fr 1fr}}
+.bk-card{background:var(--washi);border:var(--lw) solid var(--ink);border-radius:20px;overflow:hidden;scroll-margin:120px}
+.bk-card.next{box-shadow:0 4px 0 var(--ink)}
+.bk-card.past{opacity:.55}
+.bk-head{display:flex;align-items:center;gap:8px;min-height:46px;padding:7px 8px 7px 14px;background:var(--bk);border-bottom:var(--lw) solid var(--ink)}
+.bk-type{display:inline-flex;align-items:center;gap:6px;font-size:15px;white-space:nowrap}
+.bk-num{min-width:0;margin-left:auto;overflow:hidden;font-size:15px;letter-spacing:.04em;white-space:nowrap;text-overflow:ellipsis}
+.bk-edit{flex-shrink:0;display:grid;place-items:center;width:32px;height:32px;padding:0;color:var(--ink);background:var(--washi);border:var(--lw2) solid var(--ink);border-radius:50%;cursor:pointer}
+.bk-badge{display:inline-flex;align-items:center;gap:3px;padding:2px 8px;font-size:11.5px;white-space:nowrap;background:var(--washi);border:1.5px solid var(--ink);border-radius:999px}
+.bk-badge.next{background:var(--yellow)}
+.bk-badge.now{background:var(--green-wash)}
+.bk-body{padding:13px 14px 14px}
+.bk-route{display:grid;grid-template-columns:auto minmax(24px,1fr) auto;align-items:start;gap:10px}
+.bk-time{font-size:30px;line-height:1;letter-spacing:.02em;font-variant-numeric:tabular-nums}
+.bk-time sup{margin-left:2px;font-size:12px;color:var(--coral-ink)}
+.bk-place{margin-top:6px;font-size:14px;line-height:1.35;word-break:break-word}
+.bk-pt.r{text-align:right}
+.bk-line{position:relative;display:grid;place-items:center;height:30px;color:var(--ink)}
+.bk-line::before{content:'';position:absolute;left:0;right:0;top:50%;border-top:3px dotted var(--ink)}
+.bk-line svg{position:relative;box-sizing:content-box;padding:0 5px;background:var(--washi)}
+.bk-name{margin-bottom:8px;font-size:19px;line-height:1.35;word-break:break-word}
+.bk-rows{display:grid;gap:4px;font-size:14px}
+.bk-k{display:inline-block;min-width:38px;color:var(--muted)}
+.bk-meta{display:flex;flex-wrap:wrap;gap:6px;margin-top:12px}
+.bk-chip{display:inline-flex;align-items:center;gap:5px;padding:4px 10px;font:inherit;font-size:12.5px;color:var(--ink);background:var(--washi);border:1.5px solid var(--ink);border-radius:999px}
+button.bk-chip{cursor:pointer}
+.bk-chip b{font-weight:400;letter-spacing:.06em}
+.bk-chip.copied{background:var(--green-wash)}
+.bk-chip.copied::after{content:'已複製';font-size:11px;color:var(--green-ink)}
+.bk-addr{margin-top:10px;font-size:13px;color:var(--muted);word-break:break-word}
+.bk-acts{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.bk-acts .btn{min-height:32px;padding:4px 11px;font-size:12.5px;text-decoration:none}
+.bk-note{display:flex;align-items:flex-start;gap:6px;margin-top:12px;padding-top:10px;font-size:14px;line-height:1.55;color:var(--coral-ink);white-space:pre-wrap;word-break:break-word;border-top:1.5px dashed var(--line-2)}
+.bk-note svg{flex-shrink:0;margin-top:3px}
+.bk-add{display:flex;flex-wrap:wrap;justify-content:center;gap:8px;margin:4px 0 8px}
+.bk-empty{text-align:center;color:var(--muted)}
+.bk-empty .day-scene{margin:4px auto 16px}
+.bk-empty p{margin:0 0 16px;font-size:14px;line-height:1.7}
+.bk-segs{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 14px}
+.bk-seg{display:inline-flex;align-items:center;gap:4px;padding:6px 11px;font:inherit;font-size:13px;color:var(--ink);background:var(--washi);border:var(--lw2) solid var(--ink);border-radius:999px;cursor:pointer}
+.bk-seg.on{background:var(--bk);box-shadow:0 2px 0 var(--ink)}
+.bk-pair{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.bk-pair>.fg{min-width:0}
 /* ── 切換日期：卡片依序彈進來，選到的日期鈕彈一下 ── */
 .day-in{animation:dayInNext .5s var(--pop) backwards;animation-delay:calc(var(--i,0) * 45ms)}
 .body.day-prev .day-in{animation-name:dayInPrev}
@@ -1175,6 +1232,13 @@ const CE={交通:'🚗',餐飲:'🍜',住宿:'🏨',景點:'🎫',購物:'🛍�
 const CTI={交通:'car',餐飲:'tools-kitchen-2',住宿:'bed',景點:'ticket',購物:'shopping-bag',其他:'map-pin'};
 const _ICONS_EXTRA={"coffee":"<path d=\"M3 14c.83 .642 2.077 1.017 3.5 1c1.423 .017 2.67 -.358 3.5 -1c.83 -.642 2.077 -1.017 3.5 -1c1.423 -.017 2.67 .358 3.5 1\" /> <path d=\"M8 3a2.4 2.4 0 0 0 -1 2a2.4 2.4 0 0 0 1 2\" /> <path d=\"M12 3a2.4 2.4 0 0 0 -1 2a2.4 2.4 0 0 0 1 2\" /> <path d=\"M3 10h14v5a6 6 0 0 1 -6 6h-2a6 6 0 0 1 -6 -6v-5z\" /> <path d=\"M16.746 16.726a3 3 0 1 0 .252 -5.555\" />","gift":"<path d=\"M3 8m0 1a1 1 0 0 1 1 -1h16a1 1 0 0 1 1 1v2a1 1 0 0 1 -1 1h-16a1 1 0 0 1 -1 -1z\" /> <path d=\"M12 8l0 13\" /> <path d=\"M19 12v7a2 2 0 0 1 -2 2h-10a2 2 0 0 1 -2 -2v-7\" /> <path d=\"M7.5 8a2.5 2.5 0 0 1 0 -5a4.8 8 0 0 1 4.5 5a4.8 8 0 0 1 4.5 -5a2.5 2.5 0 0 1 0 5\" />","layout-grid":"<path d=\"M4 4m0 1a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v4a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1z\" /> <path d=\"M14 4m0 1a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v4a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1z\" /> <path d=\"M4 14m0 1a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v4a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1z\" /> <path d=\"M14 14m0 1a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v4a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1z\" />","glass-cocktail":"<path d=\"M8 21h8\" /> <path d=\"M12 15v6\" /> <path d=\"M12 5m-7 0a7 2 0 1 0 14 0a7 2 0 1 0 -14 0\" /> <path d=\"M5 5v.388c0 .432 .126 .853 .362 1.206l5 7.509c.633 .951 1.88 1.183 2.785 .517c.191 -.141 .358 -.316 .491 -.517l5 -7.509c.236 -.353 .362 -.774 .362 -1.206v-.388\" />","beer":"<path d=\"M9 21h6a1 1 0 0 0 1 -1v-3.625c0 -1.397 .29 -2.775 .845 -4.025l.31 -.7c.556 -1.25 .845 -2.253 .845 -3.65v-4a1 1 0 0 0 -1 -1h-10a1 1 0 0 0 -1 1v4c0 1.397 .29 2.4 .845 3.65l.31 .7a9.931 9.931 0 0 1 .845 4.025v3.625a1 1 0 0 0 1 1z\" /> <path d=\"M6 8h12\" />",moon:"<path d=\"M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454z\" />",'sun-moon':"<path d=\"M9.173 14.83a4 4 0 1 1 5.657 -5.657\" /> <path d=\"M11.294 12.707l.174 .247a7.5 7.5 0 0 0 8.845 2.492a9 9 0 0 1 -14.671 2.914\" /> <path d=\"M3 12h1\" /> <path d=\"M12 3v1\" /> <path d=\"M5.6 5.6l.7 .7\" /> <path d=\"M3 21l18 -18\" />"};
 const _ICONS={"alert-triangle":"<path d=\"M12 9v4\" /> <path d=\"M10.363 3.591l-8.106 13.534a1.914 1.914 0 0 0 1.636 2.871h16.214a1.914 1.914 0 0 0 1.636 -2.87l-8.106 -13.536a1.914 1.914 0 0 0 -3.274 0z\" /> <path d=\"M12 16h.01\" />","arrow-down":"<path d=\"M12 5l0 14\" /> <path d=\"M18 13l-6 6\" /> <path d=\"M6 13l6 6\" />","arrow-right":"<path d=\"M5 12l14 0\" /> <path d=\"M13 18l6 -6\" /> <path d=\"M13 6l6 6\" />","arrow-up":"<path d=\"M12 5l0 14\" /> <path d=\"M18 11l-6 -6\" /> <path d=\"M6 11l6 -6\" />","arrows-exchange":"<path d=\"M7 10h14l-4 -4\" /> <path d=\"M17 14h-14l4 4\" />","arrows-sort":"<path d=\"M3 9l4 -4l4 4m-4 -4v14\" /> <path d=\"M21 15l-4 4l-4 -4m4 4v-14\" />","aspect-ratio":"<path d=\"M3 5m0 2a2 2 0 0 1 2 -2h14a2 2 0 0 1 2 2v10a2 2 0 0 1 -2 2h-14a2 2 0 0 1 -2 -2z\" /> <path d=\"M7 12v-3h3\" /> <path d=\"M17 12v3h-3\" />","bed":"<path d=\"M7 9m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0\" /> <path d=\"M22 17v-3h-20\" /> <path d=\"M2 8v9\" /> <path d=\"M12 14h10v-2a3 3 0 0 0 -3 -3h-7v5z\" />","book":"<path d=\"M3 19a9 9 0 0 1 9 0a9 9 0 0 1 9 0\" /> <path d=\"M3 6a9 9 0 0 1 9 0a9 9 0 0 1 9 0\" /> <path d=\"M3 6l0 13\" /> <path d=\"M12 6l0 13\" /> <path d=\"M21 6l0 13\" />","calendar":"<path d=\"M4 7a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v12a2 2 0 0 1 -2 2h-12a2 2 0 0 1 -2 -2v-12z\" /> <path d=\"M16 3v4\" /> <path d=\"M8 3v4\" /> <path d=\"M4 11h16\" /> <path d=\"M11 15h1\" /> <path d=\"M12 15v3\" />","calendar-check":"<path d=\"M11.5 21h-5.5a2 2 0 0 1 -2 -2v-12a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v6\" /> <path d=\"M16 3v4\" /> <path d=\"M8 3v4\" /> <path d=\"M4 11h16\" /> <path d=\"M15 19l2 2l4 -4\" />","camera":"<path d=\"M5 7h1a2 2 0 0 0 2 -2a1 1 0 0 1 1 -1h6a1 1 0 0 1 1 1a2 2 0 0 0 2 2h1a2 2 0 0 1 2 2v9a2 2 0 0 1 -2 2h-14a2 2 0 0 1 -2 -2v-9a2 2 0 0 1 2 -2\" /> <path d=\"M9 13a3 3 0 1 0 6 0a3 3 0 0 0 -6 0\" />","car":"<path d=\"M7 17m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0\" /> <path d=\"M17 17m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0\" /> <path d=\"M5 17h-2v-6l2 -5h9l4 5h1a2 2 0 0 1 2 2v4h-2m-4 0h-6m-6 -6h15m-6 0v-5\" />","chart-bar":"<path d=\"M3 13a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v6a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1z\" /> <path d=\"M15 9a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v10a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1z\" /> <path d=\"M9 5a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v14a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1z\" /> <path d=\"M4 20h14\" />","check":"<path d=\"M5 12l5 5l10 -10\" />","checkbox":"<path d=\"M9 11l3 3l8 -8\" /> <path d=\"M20 12v6a2 2 0 0 1 -2 2h-12a2 2 0 0 1 -2 -2v-12a2 2 0 0 1 2 -2h9\" />","checklist":"<path d=\"M9.615 20h-2.615a2 2 0 0 1 -2 -2v-12a2 2 0 0 1 2 -2h8a2 2 0 0 1 2 2v8\" /> <path d=\"M14 19l2 2l4 -4\" /> <path d=\"M9 8h4\" /> <path d=\"M9 12h2\" />","chevron-down":"<path d=\"M6 9l6 6l6 -6\" />","chevron-up":"<path d=\"M6 15l6 -6l6 6\" />","circle-check":"<path d=\"M12 12m-9 0a9 9 0 1 0 18 0a9 9 0 1 0 -18 0\" /> <path d=\"M9 12l2 2l4 -4\" />","clipboard-text":"<path d=\"M9 5h-2a2 2 0 0 0 -2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2v-12a2 2 0 0 0 -2 -2h-2\" /> <path d=\"M9 3m0 2a2 2 0 0 1 2 -2h2a2 2 0 0 1 2 2v0a2 2 0 0 1 -2 2h-2a2 2 0 0 1 -2 -2z\" /> <path d=\"M9 12h6\" /> <path d=\"M9 16h6\" />","clock-play":"<path d=\"M12 7v5l2 2\" /> <path d=\"M17 22l5 -3l-5 -3z\" /> <path d=\"M13.017 20.943a9 9 0 1 1 7.831 -7.292\" />","cloud":"<path d=\"M6.657 18c-2.572 0 -4.657 -2.007 -4.657 -4.483c0 -2.475 2.085 -4.482 4.657 -4.482c.393 -1.762 1.794 -3.2 3.675 -3.773c1.88 -.572 3.956 -.193 5.444 1c1.488 1.19 2.162 3.007 1.77 4.769h.99c1.913 0 3.464 1.56 3.464 3.486c0 1.927 -1.551 3.487 -3.465 3.487h-11.878\" />","coin":"<path d=\"M12 12m-9 0a9 9 0 1 0 18 0a9 9 0 1 0 -18 0\" /> <path d=\"M14.8 9a2 2 0 0 0 -1.8 -1h-2a2 2 0 1 0 0 4h2a2 2 0 1 1 0 4h-2a2 2 0 0 1 -1.8 -1\" /> <path d=\"M12 7v10\" />","copy":"<path d=\"M7 7m0 2.667a2.667 2.667 0 0 1 2.667 -2.667h8.666a2.667 2.667 0 0 1 2.667 2.667v8.666a2.667 2.667 0 0 1 -2.667 2.667h-8.666a2.667 2.667 0 0 1 -2.667 -2.667z\" /> <path d=\"M4.012 16.737a2.005 2.005 0 0 1 -1.012 -1.737v-10c0 -1.1 .9 -2 2 -2h10c.75 0 1.158 .385 1.5 1\" />","dots":"<path d=\"M5 12m-1 0a1 1 0 1 0 2 0a1 1 0 1 0 -2 0\" /> <path d=\"M12 12m-1 0a1 1 0 1 0 2 0a1 1 0 1 0 -2 0\" /> <path d=\"M19 12m-1 0a1 1 0 1 0 2 0a1 1 0 1 0 -2 0\" />","droplet":"<path d=\"M7.502 19.423c2.602 2.105 6.395 2.105 8.996 0c2.602 -2.105 3.262 -5.708 1.566 -8.546l-4.89 -7.26c-.42 -.625 -1.287 -.803 -1.936 -.397a1.376 1.376 0 0 0 -.41 .397l-4.893 7.26c-1.695 2.838 -1.035 6.441 1.567 8.546z\" />","grip-vertical":"<path d=\"M9 5m-1 0a1 1 0 1 0 2 0a1 1 0 1 0 -2 0\" /> <path d=\"M9 12m-1 0a1 1 0 1 0 2 0a1 1 0 1 0 -2 0\" /> <path d=\"M9 19m-1 0a1 1 0 1 0 2 0a1 1 0 1 0 -2 0\" /> <path d=\"M15 5m-1 0a1 1 0 1 0 2 0a1 1 0 1 0 -2 0\" /> <path d=\"M15 12m-1 0a1 1 0 1 0 2 0a1 1 0 1 0 -2 0\" /> <path d=\"M15 19m-1 0a1 1 0 1 0 2 0a1 1 0 1 0 -2 0\" />","home":"<path d=\"M5 12l-2 0l9 -9l9 9l-2 0\" /> <path d=\"M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2v-7\" /> <path d=\"M9 21v-6a2 2 0 0 1 2 -2h2a2 2 0 0 1 2 2v6\" />","id":"<path d=\"M3 4m0 3a3 3 0 0 1 3 -3h12a3 3 0 0 1 3 3v10a3 3 0 0 1 -3 3h-12a3 3 0 0 1 -3 -3z\" /> <path d=\"M9 10m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0\" /> <path d=\"M15 8l2 0\" /> <path d=\"M15 12l2 0\" /> <path d=\"M7 16l10 0\" />","link":"<path d=\"M9 15l6 -6\" /> <path d=\"M11 6l.463 -.536a5 5 0 0 1 7.071 7.072l-.534 .464\" /> <path d=\"M13 18l-.397 .534a5.068 5.068 0 0 1 -7.127 0a4.972 4.972 0 0 1 0 -7.071l.524 -.463\" />","list":"<path d=\"M9 6l11 0\" /> <path d=\"M9 12l11 0\" /> <path d=\"M9 18l11 0\" /> <path d=\"M5 6l0 .01\" /> <path d=\"M5 12l0 .01\" /> <path d=\"M5 18l0 .01\" />","luggage":"<path d=\"M6 6m0 2a2 2 0 0 1 2 -2h8a2 2 0 0 1 2 2v10a2 2 0 0 1 -2 2h-8a2 2 0 0 1 -2 -2z\" /> <path d=\"M9 6v-1a2 2 0 0 1 2 -2h2a2 2 0 0 1 2 2v1\" /> <path d=\"M6 10h12\" /> <path d=\"M6 16h12\" /> <path d=\"M9 20v1\" /> <path d=\"M15 20v1\" />","map-2":"<path d=\"M12 18.5l-3 -1.5l-6 3v-13l6 -3l6 3l6 -3v7.5\" /> <path d=\"M9 4v13\" /> <path d=\"M15 7v5.5\" /> <path d=\"M21.121 20.121a3 3 0 1 0 -4.242 0c.418 .419 1.125 1.045 2.121 1.879c1.051 -.89 1.759 -1.516 2.121 -1.879z\" /> <path d=\"M19 18v.01\" />","map-pin":"<path d=\"M9 11a3 3 0 1 0 6 0a3 3 0 0 0 -6 0\" /> <path d=\"M17.657 16.657l-4.243 4.243a2 2 0 0 1 -2.827 0l-4.244 -4.243a8 8 0 1 1 11.314 0z\" />","message-circle":"<path d=\"M3 20l1.3 -3.9c-2.324 -3.437 -1.426 -7.872 2.1 -10.374c3.526 -2.501 8.59 -2.296 11.845 .48c3.255 2.777 3.695 7.266 1.029 10.501c-2.666 3.235 -7.615 4.215 -11.574 2.293l-4.7 1\" />","navigation":"<path d=\"M12 18.5l7.265 2.463c.196 .077 .42 .032 .57 -.116a.548 .548 0 0 0 .134 -.572l-7.969 -17.275l-7.97 17.275c-.07 .2 -.017 .424 .135 .572c.15 .148 .374 .193 .57 .116l7.265 -2.463\" />","notes":"<path d=\"M5 3m0 2a2 2 0 0 1 2 -2h10a2 2 0 0 1 2 2v14a2 2 0 0 1 -2 2h-10a2 2 0 0 1 -2 -2z\" /> <path d=\"M9 7l6 0\" /> <path d=\"M9 11l6 0\" /> <path d=\"M9 15l4 0\" />","pencil":"<path d=\"M4 20h4l10.5 -10.5a2.828 2.828 0 1 0 -4 -4l-10.5 10.5v4\" /> <path d=\"M13.5 6.5l4 4\" />","phone":"<path d=\"M5 4h4l2 5l-2.5 1.5a11 11 0 0 0 5 5l1.5 -2.5l5 2v4a2 2 0 0 1 -2 2a16 16 0 0 1 -15 -15a2 2 0 0 1 2 -2\" />","photo":"<path d=\"M15 8h.01\" /> <path d=\"M3 6a3 3 0 0 1 3 -3h12a3 3 0 0 1 3 3v12a3 3 0 0 1 -3 3h-12a3 3 0 0 1 -3 -3v-12z\" /> <path d=\"M3 16l5 -5c.928 -.893 2.072 -.893 3 0l5 5\" /> <path d=\"M14 14l1 -1c.928 -.893 2.072 -.893 3 0l3 3\" />","plus":"<path d=\"M12 5l0 14\" /> <path d=\"M5 12l14 0\" />","receipt":"<path d=\"M5 21v-16a2 2 0 0 1 2 -2h10a2 2 0 0 1 2 2v16l-3 -2l-2 2l-2 -2l-2 2l-2 -2l-3 2m4 -14h6m-6 4h6m-2 4h2\" />","refresh":"<path d=\"M20 11a8.1 8.1 0 0 0 -15.5 -2m-.5 -4v4h4\" /> <path d=\"M4 13a8.1 8.1 0 0 0 15.5 2m.5 4v-4h-4\" />","route":"<path d=\"M3 19a2 2 0 1 0 4 0a2 2 0 0 0 -4 0\" /> <path d=\"M19 7a2 2 0 1 0 0 -4a2 2 0 0 0 0 4z\" /> <path d=\"M11 19h5.5a3.5 3.5 0 0 0 0 -7h-8a3.5 3.5 0 0 1 0 -7h4.5\" />","scale":"<path d=\"M7 20l10 0\" /> <path d=\"M6 6l6 -1l6 1\" /> <path d=\"M12 3l0 17\" /> <path d=\"M9 12l-3 -6l-3 6a3 3 0 0 0 6 0\" /> <path d=\"M21 12l-3 -6l-3 6a3 3 0 0 0 6 0\" />","search":"<path d=\"M10 10m-7 0a7 7 0 1 0 14 0a7 7 0 1 0 -14 0\" /> <path d=\"M21 21l-6 -6\" />","shopping-bag":"<path d=\"M6.331 8h11.339a2 2 0 0 1 1.977 2.304l-1.255 8.152a3 3 0 0 1 -2.966 2.544h-6.852a3 3 0 0 1 -2.965 -2.544l-1.255 -8.152a2 2 0 0 1 1.977 -2.304z\" /> <path d=\"M9 11v-5a3 3 0 0 1 6 0v5\" />","sparkles":"<path d=\"M16 18a2 2 0 0 1 2 2a2 2 0 0 1 2 -2a2 2 0 0 1 -2 -2a2 2 0 0 1 -2 2zm0 -12a2 2 0 0 1 2 2a2 2 0 0 1 2 -2a2 2 0 0 1 -2 -2a2 2 0 0 1 -2 2zm-7 12a6 6 0 0 1 6 -6a6 6 0 0 1 -6 -6a6 6 0 0 1 -6 6a6 6 0 0 1 6 6z\" />","star":"<path d=\"M12 17.75l-6.172 3.245l1.179 -6.873l-5 -4.867l6.9 -1l3.086 -6.253l3.086 6.253l6.9 1l-5 4.867l1.179 6.873z\" />","sun":"<path d=\"M12 12m-4 0a4 4 0 1 0 8 0a4 4 0 1 0 -8 0\" /> <path d=\"M3 12h1m8 -9v1m8 8h1m-9 8v1m-6.4 -15.4l.7 .7m12.1 -.7l-.7 .7m0 11.4l.7 .7m-12.1 -.7l-.7 .7\" />","target":"<path d=\"M12 12m-1 0a1 1 0 1 0 2 0a1 1 0 1 0 -2 0\" /> <path d=\"M12 12m-5 0a5 5 0 1 0 10 0a5 5 0 1 0 -10 0\" /> <path d=\"M12 12m-9 0a9 9 0 1 0 18 0a9 9 0 1 0 -18 0\" />","ticket":"<path d=\"M15 5l0 2\" /> <path d=\"M15 11l0 2\" /> <path d=\"M15 17l0 2\" /> <path d=\"M5 5h14a2 2 0 0 1 2 2v3a2 2 0 0 0 0 4v3a2 2 0 0 1 -2 2h-14a2 2 0 0 1 -2 -2v-3a2 2 0 0 0 0 -4v-3a2 2 0 0 1 2 -2\" />","tool":"<path d=\"M7 10h3v-3l-3.5 -3.5a6 6 0 0 1 8 8l6 6a2 2 0 0 1 -3 3l-6 -6a6 6 0 0 1 -8 -8l3.5 3.5\" />","tools-kitchen-2":"<path d=\"M19 3v12h-5c-.023 -3.681 .184 -7.406 5 -12zm0 12v6h-1v-3m-10 -14v17m-3 -17v3a3 3 0 1 0 6 0v-3\" />","trash":"<path d=\"M4 7l16 0\" /> <path d=\"M10 11l0 6\" /> <path d=\"M14 11l0 6\" /> <path d=\"M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2 -2l1 -12\" /> <path d=\"M9 7v-3a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v3\" />","user":"<path d=\"M8 7a4 4 0 1 0 8 0a4 4 0 0 0 -8 0\" /> <path d=\"M6 21v-2a4 4 0 0 1 4 -4h4a4 4 0 0 1 4 4v2\" />","users":"<path d=\"M9 7m-4 0a4 4 0 1 0 8 0a4 4 0 1 0 -8 0\" /> <path d=\"M3 21v-2a4 4 0 0 1 4 -4h4a4 4 0 0 1 4 4v2\" /> <path d=\"M16 3.13a4 4 0 0 1 0 7.75\" /> <path d=\"M21 21v-2a4 4 0 0 0 -3 -3.85\" />","wind":"<path d=\"M5 8h8.5a2.5 2.5 0 1 0 -2.34 -3.24\" /> <path d=\"M3 12h15.5a2.5 2.5 0 1 1 -2.34 3.24\" /> <path d=\"M4 16h5.5a2.5 2.5 0 1 1 -2.34 3.24\" />","world":"<path d=\"M3 12a9 9 0 1 0 18 0a9 9 0 0 0 -18 0\" /> <path d=\"M3.6 9h16.8\" /> <path d=\"M3.6 15h16.8\" /> <path d=\"M11.5 3a17 17 0 0 0 0 18\" /> <path d=\"M12.5 3a17 17 0 0 1 0 18\" />","clock":"<path d=\"M3 12a9 9 0 1 0 18 0a9 9 0 0 0 -18 0\" /> <path d=\"M12 7v5l3 3\" />","minus":"<path d=\"M5 12l14 0\" />"};
+Object.assign(_ICONS,{
+  plane:'<path d="M16 10h4a2 2 0 0 1 0 4h-4l-4 7h-3l2 -7h-4l-2 2h-3l2 -4l-2 -4h3l2 2h4l-2 -7h3z" />',
+  train:'<path d="M7 3h10a3 3 0 0 1 3 3v8a3 3 0 0 1 -3 3h-10a3 3 0 0 1 -3 -3v-8a3 3 0 0 1 3 -3z" /> <path d="M4 10h16" /> <path d="M8 14h.01" /> <path d="M16 14h.01" /> <path d="M9 17l-2 4" /> <path d="M15 17l2 4" />',
+  bus:'<path d="M7 3h10a2 2 0 0 1 2 2v11a2 2 0 0 1 -2 2h-10a2 2 0 0 1 -2 -2v-11a2 2 0 0 1 2 -2z" /> <path d="M5 11h14" /> <path d="M5 7h14" /> <path d="M8 14.5h.01" /> <path d="M16 14.5h.01" /> <path d="M7 18v2" /> <path d="M17 18v2" />',
+  ship:'<path d="M3 15h18l-2.5 5h-13z" /> <path d="M6 15v-5h12v5" /> <path d="M10 10v-4h4v4" />',
+  bell:'<path d="M10 5a2 2 0 1 1 4 0a7 7 0 0 1 4 6v3a4 4 0 0 0 2 3h-16a4 4 0 0 0 2 -3v-3a7 7 0 0 1 4 -6" /> <path d="M9 17v1a3 3 0 0 0 6 0v-1" />'
+});
 Object.assign(_ICONS,_ICONS_EXTRA);
 const TI=(n,s)=>{const p=_ICONS[n]||_ICONS['map-pin'];const z=s||16;return `<svg width="${z}" height="${z}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-2px;display:inline-block;">${p}</svg>`;};
 // 將文字中的網址轉成可點選的超連結(先 escape 再比對,避免 XSS)
@@ -1482,7 +1546,7 @@ function render(){
   const ad=S.days[si];
   const te=S.expenses.reduce((s,e)=>s+expValue(e),0);
   const {b,tx}=settle(S.expenses,S.travelers);
-  root.innerHTML=`<div class="app" data-view="${esc(S.view)}">${gnav()}${hdr(te)}<main class="body">${S.view==='memo'?memoView():''}${S.view==='buy'?buyView():''}${S.view==='itinerary'?itin(ad,si):''}${S.view==='wishlist'?wishlistView():''}${S.view==='expenses'?exps(te):''}${S.view==='split'?splt(b,tx,te):''}${ART_SCENE}</main></div>${globalFab()}`;
+  root.innerHTML=`<div class="app" data-view="${esc(S.view)}">${gnav()}${hdr(te)}<main class="body">${S.view==='memo'?memoView():''}${S.view==='buy'?buyView():''}${S.view==='itinerary'?itin(ad,si):''}${S.view==='bookings'?bookingsView():''}${S.view==='wishlist'?wishlistView():''}${S.view==='expenses'?exps(te):''}${S.view==='split'?splt(b,tx,te):''}${ART_SCENE}</main></div>${globalFab()}`;
   // 切換日期：這一天的卡片依序彈進來，選到的日期鈕彈一下（只在切換那次，之後重畫不會再彈）
   if(_dayAnim){
     const main=root.querySelector('main.body');
@@ -1520,6 +1584,7 @@ function fabConfig(){
     itinerary:{manual:'手動新增地點',manualSub:'新增一個行程地點',manualIcon:TI('plus',20),ai:'AI 匯入行程',aiSub:'貼上 AI 行程一次建立',aiIcon:TI('sparkles',19)},
     wishlist:{manual:'手動新增清單',manualSub:'加入想去的店家或景點',manualIcon:TI('plus',20),ai:'AI 匯入清單',aiSub:'批次加入推薦地點',aiIcon:TI('sparkles',19)},
     expenses:{manual:'新增記帳',manualSub:'手動輸入日常花費',manualIcon:TI('coin',20),ai:'AI 收據記帳',aiSub:'上傳收據自動帶入金額分類',aiIcon:TI('camera',19)},
+    bookings:{actions:[['新增航班／交通','飛機、火車、巴士、船、租車',TI('plane',20),"openBooking(this,'flight')"],['新增住宿','飯店、民宿的入住資訊',TI('bed',20),"openBooking(this,'stay')"]]},
     memo:{manual:'新增備忘',manualSub:'加入行前清單項目',manualIcon:TI('checklist',20),ai:'AI 產生備忘',aiSub:'自動產生旅行待辦清單',aiIcon:TI('sparkles',19)}
   };
   return cfg[S.view]||null;
@@ -1528,9 +1593,10 @@ function globalFab(){
   const cfg=fabConfig();
   if(!cfg)return'';
   const tmplRow=(S.view==='itinerary'&&S.wlFabOpen)?`<div class="app-fab-tmpls">${TMPL.map((t,i)=>`<button class="app-fab-tmpl" style="background:${CB[t.cat]};color:${CF[t.cat]};" onclick="fabTmpl(this,${i})">${TI(CTI[t.cat]||'map-pin',13)} ${esc(t.name)}</button>`).join('')}</div>`:'';
-  const sheet=S.wlFabOpen?`<div class="app-fab-backdrop" onclick="closeWlFab()"></div><div class="app-fab-sheet">${tmplRow}
+  const actions=cfg.actions?cfg.actions.map(([title,sub,ic,fn])=>`<button class="app-fab-action" onclick="S.wlFabOpen=false;${fn}"><span class="app-fab-action-ic">${ic}</span><span><div class="app-fab-action-title">${title}</div><div class="app-fab-action-sub">${sub}</div></span></button>`).join(''):'';
+  const sheet=S.wlFabOpen?`<div class="app-fab-backdrop" onclick="closeWlFab()"></div><div class="app-fab-sheet">${tmplRow}${actions||`
     <button class="app-fab-action" onclick="fabManual(this)"><span class="app-fab-action-ic">${cfg.manualIcon}</span><span><div class="app-fab-action-title">${cfg.manual}</div><div class="app-fab-action-sub">${cfg.manualSub}</div></span></button>
-    <button class="app-fab-action ai" onclick="fabAi(this)"><span class="app-fab-action-ic">${cfg.aiIcon}</span><span><div class="app-fab-action-title">${cfg.ai}</div><div class="app-fab-action-sub">${cfg.aiSub}</div></span></button>
+    <button class="app-fab-action ai" onclick="fabAi(this)"><span class="app-fab-action-ic">${cfg.aiIcon}</span><span><div class="app-fab-action-title">${cfg.ai}</div><div class="app-fab-action-sub">${cfg.aiSub}</div></span></button>`}
   </div>`:'';
   return`<div class="app-fab-wrap${S.wlFabOpen?' open':''}">${sheet}<button class="app-fab-main" onclick="toggleWlFab(event)" aria-label="新增">${TI('plus',26)}</button></div>`;
 }
@@ -1691,6 +1757,132 @@ function autoScene(day,i){
   return best||['balloon','field','city'][(i||0)%3];
 }
 const sceneKey=(day,i)=>DAY_SCENES[day?.scene]?day.scene:autoScene(day,i);
+// ── 航班住宿：飛機、火車、巴士、船、租車、住宿等重要資訊 ──
+// 存在 memo 裡（kind:'booking'），沿用既有的逐筆合併與刪除墓碑，不必修改 Firestore 欄位白名單；
+// cat 設成「預訂」，還沒更新的舊版 App 會把它當成一般備忘列在「預訂」分類下，不會弄丟。
+const BK_TYPES={
+  flight:{label:'航班',icon:'plane',fill:'var(--mizu)',num:'航班編號',from:'出發機場',to:'抵達機場',ph:['例：CI188','例：桃園 T1','例：釜山 T1']},
+  train:{label:'火車',icon:'train',fill:'var(--yellow)',num:'車次',from:'上車站',to:'下車站',ph:['例：高鐵 803','例：台北','例：左營']},
+  bus:{label:'巴士',icon:'bus',fill:'var(--wakatake)',num:'路線／班次',from:'上車地點',to:'下車地點',ph:['例：1572 國光客運','例：台北轉運站','例：宜蘭轉運站']},
+  ship:{label:'船',icon:'ship',fill:'var(--mizu)',num:'船班',from:'出發港口',to:'抵達港口',ph:['例：龜山島航班','例：烏石港','例：龜山島']},
+  car:{label:'租車',icon:'car',fill:'var(--coral)',num:'車款／車牌',from:'取車地點',to:'還車地點',ph:['例：Toyota Yaris','例：宜蘭車站','例：宜蘭車站']},
+  stay:{label:'住宿',icon:'bed',fill:'var(--coral)'},
+};
+const BK_GROUPS=[['航班','plane','var(--mizu-wash)',['flight']],['交通','train','var(--yellow-wash)',['train','bus','ship','car']],['住宿','bed','var(--coral-wash)',['stay']]];
+const bookingItems=()=>(S.memo||[]).filter(m=>m.kind==='booking');
+const bkType=b=>BK_TYPES[b?.type]?b.type:'train';
+const bkIso=d=>/^\d{4}-\d{2}-\d{2}$/.test(d||'');
+const bkDays=(a,b)=>Math.round((Date.parse(b+'T00:00:00Z')-Date.parse(a+'T00:00:00Z'))/86400000);
+const bkAddDays=(d,n)=>new Date(Date.parse(d+'T00:00:00Z')+n*86400000).toISOString().slice(0,10);
+const bkDate=d=>bkIso(d)?`${+d.slice(5,7)}/${+d.slice(8,10)} 週${'日一二三四五六'[new Date(d+'T00:00:00Z').getUTCDay()]}`:esc(d||'');
+function bkTitle(b){
+  if(b.type==='stay')return b.name||'住宿';
+  const route=[b.from,b.to].filter(Boolean).join(' → ');
+  return [b.number,route].filter(Boolean).join(' ')||BK_TYPES[bkType(b)].label;
+}
+// 開始、結束時間（"YYYY-MM-DD HH:MM"），用來排序和判斷「接下來／進行中／已結束」
+function bkSpan(b){
+  if(!bkIso(b.date))return {s:'',e:''};
+  const stay=b.type==='stay';
+  let end=bkIso(b.endDate)?b.endDate:b.date;
+  if(!stay&&!bkIso(b.endDate)&&b.endTime&&b.time&&b.endTime<b.time)end=bkAddDays(b.date,1); // 跨夜抵達
+  return {s:`${b.date} ${b.time||'00:00'}`,e:`${end} ${b.endTime||(stay?'11:00':b.time||'23:59')}`};
+}
+function bkStatus(b,now){
+  const {s,e}=bkSpan(b);
+  if(!s)return '';
+  if(e<now)return 'past';
+  return s<=now?'now':'upcoming';
+}
+function bkWhen(b,today){
+  const d=bkDays(today,b.date);
+  if(d===0)return `今天${b.time?' '+b.time:''}`;
+  if(d===1)return `明天${b.time?' '+b.time:''}`;
+  if(d===2)return `後天${b.time?' '+b.time:''}`;
+  return `還有 ${d} 天`;
+}
+function bookingCard(b,st,isNext,today){
+  const ty=bkType(b),t=BK_TYPES[ty],stay=ty==='stay',car=ty==='car';
+  const nights=stay&&bkIso(b.date)&&bkIso(b.endDate)?bkDays(b.date,b.endDate):0;
+  const badge=isNext?`<span class="bk-badge next">${TI('bell',12)} ${bkWhen(b,today)}</span>`:st==='now'?`<span class="bk-badge now">${stay?'入住中':car?'租車中':'進行中'}</span>`:st==='past'?'<span class="bk-badge">已結束</span>':'';
+  const headLeft=stay?`住宿${nights>0?` · ${nights} 晚`:''}`:(bkDate(b.date)||t.label);
+  const head=`<div class="bk-head" style="--bk:${t.fill}"><span class="bk-type">${TI(t.icon,16)} ${headLeft}</span>${badge}<span class="bk-num">${stay||car?'':esc(b.number||'')}</span><button class="bk-edit" aria-label="編輯「${esc(bkTitle(b))}」" onclick="openBooking(this,'','${b.id}')">${TI('pencil',14)}</button></div>`;
+  let main='';
+  if(stay||car){
+    const row=(k,d,tm,place)=>(d||tm||place)?`<div><span class="bk-k">${k}</span>${[bkDate(d),esc(tm||'')].filter(Boolean).join(' ')}${place?` · ${esc(place)}`:''}</div>`:'';
+    main=`<div class="bk-name">${esc(stay?b.name:(b.number||'租車'))}</div><div class="bk-rows">${stay?row('入住',b.date,b.time)+row('退房',b.endDate,b.endTime):row('取車',b.date,b.time,b.from)+row('還車',b.endDate||b.date,b.endTime,b.to)}</div>`;
+  }else{
+    const plus=bkIso(b.date)?Math.max(0,bkDays(b.date,bkSpan(b).e.slice(0,10))):0;
+    main=`<div class="bk-route"><div class="bk-pt"><div class="bk-time">${esc(b.time||'--:--')}</div><div class="bk-place">${esc(b.from||'')}</div></div><div class="bk-line" aria-hidden="true">${TI(t.icon,16)}</div><div class="bk-pt r"><div class="bk-time">${esc(b.endTime||'--:--')}${plus&&b.endTime?`<sup>+${plus}</sup>`:''}</div><div class="bk-place">${esc(b.to||'')}</div></div></div>`;
+  }
+  const chips=[b.seat?`<span class="bk-chip">${car?'方案':'座位'} ${esc(b.seat)}</span>`:'',b.code?`<button type="button" class="bk-chip bk-code" data-code="${esc(b.code)}" onclick="bkCopy(this)" aria-label="複製 ${esc(b.code)}">${stay?'訂房代號':car?'訂單編號':'訂位代號'} <b>${esc(b.code)}</b> ${TI('copy',13)}</button>`:''].join('');
+  const where=stay?b.address:'';
+  const acts=[where?`<a class="btn bp" href="${mu(`${b.name||''} ${where}`)}" target="_blank" rel="noopener">${TI('map-pin',13)} 地圖</a><a class="btn ba" href="${nu(where)}" target="_blank" rel="noopener">${TI('navigation',13)} 導航</a>`:'',stay&&b.phone?`<a class="btn" href="tel:${esc(b.phone)}">${TI('phone',13)} ${esc(b.phone)}</a>`:''].join('');
+  return `<article class="bk-card${st==='past'?' past':''}${isNext?' next':''}" id="bk-${b.id}">${head}<div class="bk-body">${main}${chips?`<div class="bk-meta">${chips}</div>`:''}${where?`<div class="bk-addr">${esc(where)}</div>`:''}${acts?`<div class="bk-acts">${acts}</div>`:''}${b.note?`<div class="bk-note">${TI('bell',15)}<span>${linkify(b.note)}</span></div>`:''}</div></article>`;
+}
+function bookingsView(){
+  const items=bookingItems();
+  const addBtns=`<button class="btn" onclick="openBooking(this,'flight')">${TI('plane',15)} 新增航班</button><button class="btn" onclick="openBooking(this,'train')">${TI('train',15)} 新增交通</button><button class="btn" onclick="openBooking(this,'stay')">${TI('bed',15)} 新增住宿</button>`;
+  if(!items.length)return `<div class="bk-empty"><div class="day-scene">${dayScene('flight')}</div><p>把航班、火車、住宿的訂位資訊放在這裡，<br>出發前打開就看得到，不用再翻信箱。</p><div class="empty-cta">${addBtns}</div></div>`;
+  const clock=tripClock(),now=`${clock.date} ${String(Math.floor(clock.minutes/60)).padStart(2,'0')}:${String(clock.minutes%60).padStart(2,'0')}`;
+  const sorted=items.slice().sort((a,b)=>(bkSpan(a).s||'9999').localeCompare(bkSpan(b).s||'9999'));
+  const next=sorted.find(b=>bkStatus(b,now)==='upcoming');
+  const nextBox=next?`<button type="button" class="bk-next" onclick="document.getElementById('bk-${next.id}')?.scrollIntoView({behavior:'smooth',block:'center'})"><span class="bk-next-k">${TI('bell',15)} 接下來 · ${bkWhen(next,clock.date)}</span><span class="bk-next-t">${TI(BK_TYPES[bkType(next)].icon,17)} ${esc(next.type==='stay'?`入住 ${next.name||''}`:next.type==='car'?`取車 ${[next.number,next.from].filter(Boolean).join(' · ')}`:bkTitle(next))}</span>${next.note?`<span class="bk-next-note">${esc(next.note.split('\n')[0])}</span>`:''}</button>`:'';
+  const sections=BK_GROUPS.map(([label,icon,wash,types])=>{
+    const list=sorted.filter(b=>types.includes(bkType(b)));
+    return list.length?`<section class="bk-sec"><h2 class="bk-sec-h"><span class="bk-sec-ic" style="background:${wash}">${TI(icon,19)}</span>${label}</h2><div class="bk-list">${list.map(b=>bookingCard(b,bkStatus(b,now),b===next,clock.date)).join('')}</div></section>`:'';
+  }).join('');
+  return `${nextBox}${sections}<div class="bk-add">${addBtns}</div>`;
+}
+function openBooking(el,type,id=''){
+  const b=bookingItems().find(m=>m.id===id);
+  const pick=k=>b?.[k]||'';
+  FM={bkId:b?.id||'',bkType:b?bkType(b):(BK_TYPES[type]?type:'flight')};
+  ['date','time','endDate','endTime','from','to','number','seat','code','name','address','phone','note'].forEach(k=>FM[k]=pick(k));
+  openModal(el,{t:'booking'});
+}
+function bkSetType(t){FM.bkType=t;_refreshHeroContent();}
+function bookingModal(){
+  const t=FM.bkType,ty=BK_TYPES[t],stay=t==='stay',car=t==='car';
+  const segs=Object.entries(BK_TYPES).map(([k,v])=>`<button type="button" class="bk-seg${k===t?' on':''}" style="--bk:${v.fill}" aria-pressed="${k===t}" onclick="bkSetType('${k}')">${TI(v.icon,15)} ${v.label}</button>`).join('');
+  const inp=(f,label,ph='',type='text')=>`<div class="fg"><label class="fl" for="bk-${f}">${label}</label><input id="bk-${f}" type="${type}" value="${esc(FM[f]||'')}" placeholder="${esc(ph)}" oninput="FM.${f}=this.value"></div>`;
+  const pair=(a,b)=>`<div class="bk-pair">${a}${b}</div>`;
+  const s=stay?'入住':car?'取車':'出發',e=stay?'退房':car?'還車':'抵達';
+  const body=stay
+    ?inp('name','住宿名稱 *','例：礁溪老爺酒店')+pair(inp('date','入住日期','','date'),inp('time','入住時間','','time'))+pair(inp('endDate','退房日期','','date'),inp('endTime','退房時間','','time'))+inp('address','地址','填了可以直接開地圖導航')+pair(inp('phone','電話','','tel'),inp('code','訂房代號'))
+    :pair(inp('date',`${s}日期`,'','date'),inp('number',ty.num,ty.ph[0]))+pair(inp('time',`${s}時間`,'','time'),car?inp('endDate','還車日期','','date'):inp('endTime',`${e}時間`,'','time'))+(car?pair(inp('endTime','還車時間','','time'),inp('code','訂單編號')):'')+pair(inp('from',ty.from,ty.ph[1]),inp('to',ty.to,ty.ph[2]))+(car?inp('seat','保險／方案','例：全險、甲租乙還'):pair(inp('seat','座位／車廂','例：32A、5 車 12A'),inp('code','訂位代號')));
+  return `<div class="mhd"><div class="mt">${FM.bkId?'編輯':'新增'}${ty.label}</div><button class="mcl" aria-label="關閉" onclick="setU({modal:null})">✕</button></div>
+<div class="bk-segs" role="group" aria-label="類型">${segs}</div>
+<form onsubmit="event.preventDefault();saveBooking()">${body}
+<div class="fg"><label class="fl" for="bk-note">提醒</label><textarea id="bk-note" rows="2" placeholder="${stay?'例：15:00 後入住、含早餐、停車場在後門':'例：出發前 2 天網路報到、提早 2 小時到機場'}" oninput="FM.note=this.value">${esc(FM.note||'')}</textarea></div>
+<div class="ar"><button class="btn bp" type="submit" style="flex:1;padding:10px;">儲存</button><button class="btn" type="button" style="flex:1;padding:10px;" onclick="setU({modal:null})">取消</button></div>
+${FM.bkId?`<button type="button" class="btn br" style="width:100%;margin-top:12px;padding:10px;" onclick="deleteBooking('${FM.bkId}')">${TI('trash',14)} 刪除這筆</button>`:''}</form>`;
+}
+function saveBooking(){
+  const t=BK_TYPES[FM.bkType]?FM.bkType:'flight',stay=t==='stay',car=t==='car';
+  const v=(k,n=120)=>String(FM[k]||'').trim().slice(0,n);
+  if(stay&&!v('name')){alert('請填寫住宿名稱');return;}
+  if(!stay&&!['date','number','from','to'].some(k=>v(k))){alert('請至少填寫日期、班次或起訖地點');return;}
+  if(bkIso(v('date'))&&bkIso(v('endDate'))&&v('endDate')<v('date')){alert(`${stay?'退房':'還車'}日期不能早於${stay?'入住':'取車'}日期`);return;}
+  const old=bookingItems().find(m=>m.id===FM.bkId);
+  if(FM.bkId&&!old){alert('這筆資料已被刪除，請重新新增');return;}
+  const item={id:old?.id||uid(),kind:'booking',cat:'預訂',done:false,type:t,date:v('date',10),time:v('time',5),endDate:stay||car?v('endDate',10):'',endTime:v('endTime',5),code:v('code',60),note:v('note',1000),
+    ...(stay?{name:v('name'),address:v('address',200),phone:v('phone',40)}:{number:v('number',60),from:v('from',80),to:v('to',80),seat:v('seat',60)})};
+  item.text=`${BK_TYPES[t].label}：${bkTitle(item)}`;
+  setD({memo:old?S.memo.map(m=>m.id===old.id?item:m):[...(S.memo||[]),item],modal:null});
+}
+function deleteBooking(id){
+  const item=bookingItems().find(m=>m.id===id);
+  if(!item||!confirm(`刪除「${bkTitle(item)}」？`))return;
+  tomb(id);setD({memo:S.memo.filter(m=>m.id!==id),modal:null});
+  undoToast('已刪除一筆航班住宿資料',()=>setD({memo:[...S.memo,{...item,id:uid(),_u:Date.now()}]}));
+}
+function bkCopy(btn){
+  const code=btn.dataset.code||'';
+  const done=()=>{btn.classList.add('copied');setTimeout(()=>btn.classList.remove('copied'),1600);};
+  const fallback=()=>{const ta=document.createElement('textarea');ta.value=code;ta.style.cssText='position:fixed;opacity:0;top:0;left:0;';document.body.appendChild(ta);ta.select();try{document.execCommand('copy');}catch(e){console.warn('[booking-copy]',e);}ta.remove();done();};
+  if(navigator.clipboard?.writeText)navigator.clipboard.writeText(code).then(done).catch(fallback);else fallback();
+}
 /* ── 加入主畫面：Android／電腦用瀏覽器自己的安裝視窗；iPhone 沒有這種 API，改顯示步驟說明 ── */
 let _installPrompt=null;
 window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();_installPrompt=e;});
@@ -1738,7 +1930,7 @@ function hdr(te){
 }
 function saveTN(){const v=document.getElementById('tn-in')?.value?.trim()||S.tnDraft.trim()||'未命名旅程';setD({tripName:v,editTN:false});}
 function gnav(){
-  const ts=[['memo','備忘'],['itinerary','行程'],['wishlist','清單'],['buy','待買'],['expenses','記帳'],['split','分帳']];
+  const ts=[['memo','備忘'],['itinerary','行程'],['bookings','航班住宿'],['wishlist','清單'],['buy','待買'],['expenses','記帳'],['split','分帳']];
   const menu=S.menuOpen?`<div class="cover-menu-backdrop" onclick="setU({menuOpen:false})"></div><div class="cover-menu" onclick="event.stopPropagation()"><button onclick="copyShareLink();setU({menuOpen:false})"><span class="mi">${TI('link',16)}</span>分享連結</button>${isStandalone()?'':`<button onclick="S.menuOpen=false;addToHomeScreen(this)"><span class="mi">${TI('home',16)}</span>加入主畫面</button>`}<button onclick="S.menuOpen=false;openModal(this,{t:'tools'})"><span class="mi">${TI('tool',16)}</span>旅程工具</button><button onclick="S.menuOpen=false;openModal(this,{t:'cover'})"><span class="mi">${TI('photo',16)}</span>更換封面</button><button onclick="S.menuOpen=false;openModal(this,{t:'tv'})"><span class="mi">${TI('users',16)}</span>旅伴管理</button><button onclick="S.menuOpen=false;openModal(this,{t:'help'})"><span class="mi">${TI('book',16)}</span>使用說明</button></div>`:'';
   const tabs=ts.map(([k,l])=>`<button class="nav-btn${S.view===k?' on':''}" data-view="${k}" aria-current="${S.view===k?'page':'false'}" onclick="switchTab('${k}')"><span>${l}</span></button>`).join('');
   return`<nav class="nav${S.menuOpen?' menu-open':''}" aria-label="分頁"><button class="nav-logo" aria-label="回到最上面" onclick="window.scrollTo({top:0,behavior:'smooth'})">${ART_LOGO}</button><div class="nav-tabs">${tabs}</div><div class="cover-menu-wrap"><button class="hamb" aria-label="開啟選單" aria-expanded="${!!S.menuOpen}" onclick="event.stopPropagation();setU({menuOpen:!S.menuOpen})"><span></span><span></span><span></span></button>${menu}</div></nav>`;
@@ -3273,7 +3465,7 @@ function confirmBuyImport(){
 }
 let memoFilter='all';
 function memoView(){
-  const items=(S.memo||[]).filter(m=>m.kind!=='purchase');
+  const items=(S.memo||[]).filter(m=>m.kind!=='purchase'&&m.kind!=='booking');
   const completed=items.filter(m=>m.done),pending=items.filter(m=>!m.done),done=completed.length;
   const renderGroups=list=>[...new Set([...MEMO_CATS,...list.map(m=>m.cat||'其他')])].map(cat=>{
     const its=list.filter(m=>(m.cat||'其他')===cat);
@@ -3325,6 +3517,7 @@ ${sec(TI('route',19),'行程規劃',[
   [TI('map-2',15),'點「地圖」以名稱＋地址搜尋 Google Maps；「導航」直接開啟導航。'],
   [TI('phone',15),'點電話號碼可直接撥打。'],
   [TI('arrows-sort',15),'點「排序」進入排序模式：拖曳把手或點上下箭頭調整地點順序。'],
+  [TI('plane',15),'「航班住宿」分頁可以記下航班、火車、巴士、船、租車和住宿：時間、起訖、座位、訂位代號（點一下複製）和提醒。最上面會提醒「接下來」要搭的車或要入住的地方。'],
   [TI('photo',15),'每一天上方有一張會動的插圖（海邊、山林纜車、溫泉、城市、美食、飛機、火車、露營、田野、熱氣球），會依標題和地點自動挑；想換的話再點一次目前的日期分頁，在「插圖」選單裡選。'],
   [TI('dots',15),'點地點卡片的「⋯」（或長按卡片）可編輯、存到清單、刪除；刪除後 6 秒內可按「復原」救回。'],
 ])}
@@ -3953,7 +4146,7 @@ function wlConfirmImport(){
 
 // ════ HERO & SHEET modal engine ════════════════════════
 // Hero modal types (large forms) — open from trigger element
-const HERO_TYPES=new Set(['loc','exp','nd','ed','wl_add','wl_import','wl_edit','wl_day','wl_cat','import','tv','tvEdit','cover','tools','help','a2hs','note','memo_add','memo_import','buy_edit','buy_import','cloud_images','tripGate']);
+const HERO_TYPES=new Set(['loc','exp','nd','ed','wl_add','wl_import','wl_edit','wl_day','wl_cat','import','tv','tvEdit','cover','tools','help','a2hs','note','memo_add','memo_import','buy_edit','buy_import','cloud_images','tripGate','booking']);
 // Sheet modal types (compact) — slide up from bottom
 const SHEET_TYPES=new Set([]);
 
@@ -3996,6 +4189,7 @@ function _getModalContent(m){
   let c='';
   if(m.t==='tripGate')c=mTripGate();
   else if(m.t==='buy_edit')c=buyModal();
+  else if(m.t==='booking')c=bookingModal();
   else if(m.t==='buy_import')c=buyImportModal();
   else if(m.t==='cloud_images')c=cloudImagesModal();
   else if(m.t==='loc')c=mLoc();
